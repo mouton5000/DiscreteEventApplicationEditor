@@ -281,7 +281,6 @@ class SceneWidget(QGraphicsScene):
         else:
             item = self.mouseGrabberItem()
             try:
-                print 'ici'
                 item.keyReleaseEvent(event)
             except AttributeError:
                 pass
@@ -510,8 +509,8 @@ class ArcItem(QGraphicsPathItem):
     def __init__(self, node1, node2, parent=None, scene=None):
         super(ArcItem, self).__init__(parent, scene)
 
-        self._node1 = node1
-        self._node2 = node2
+        self.node1 = node1
+        self.node2 = node2
 
         self.setBrush(QBrush(QtCore.Qt.black))
 
@@ -536,13 +535,13 @@ class ArcItem(QGraphicsPathItem):
         self.drawPath()
 
     def getIndex(self):
-        return self._node1.outputArcs.index(self)
+        return self.node1.outputArcs.index(self)
 
     def getMaxIndex(self):
-        return len(self._node1.outputArcs)
+        return len(self.node1.outputArcs)
 
     def setIndex(self, i):
-        arcs = self._node1.outputArcs
+        arcs = self.node1.outputArcs
         arcs.remove(self)
         arcs.insert(i, self)
         for j in range(len(arcs)):
@@ -572,8 +571,8 @@ class ArcItem(QGraphicsPathItem):
 
     def initPath(self):
         cls = []
-        for a in self._node1.outputArcs:
-            if a._node2 == self._node2:
+        for a in self.node1.outputArcs:
+            if a.node2 == self.node2:
                 cls.append((int(a._cl)+30)/60)
         cl = 0
         b = True
@@ -605,8 +604,8 @@ class ArcItem(QGraphicsPathItem):
 
         x = event.scenePos().x()
         y = event.scenePos().y()
-        v1 = self._node1.getXY()
-        v2 = self._node2.getXY()
+        v1 = self.node1.getXY()
+        v2 = self.node2.getXY()
         v = vector(x, y) - v1
         u = v2 - v1
         n = (u.rotate(pi/2)).norm()
@@ -624,14 +623,14 @@ class ArcItem(QGraphicsPathItem):
         self.setBrush(QBrush(QtCore.Qt.black))
 
     def remove(self):
-        self._node1.outputArcs.remove(self)
-        self._node2.inputArcs.remove(self)
+        self.node1.outputArcs.remove(self)
+        self.node2.inputArcs.remove(self)
 
     def __str__(self):
-        return str(self._node1)+' '+str(self._node2)
+        return str(self.node1)+' '+str(self.node2)
 
     def __repr__(self):
-        return str(self._node1)+' '+str(self._node2)
+        return str(self.node1)+' '+str(self.node2)
 
     def drawPath(self):
         """
@@ -643,8 +642,8 @@ class ArcItem(QGraphicsPathItem):
         # Il est conseillé de prendre une feuille est un stylo pour dessiner en lisant les commentaires
         # de cette méthode
 
-        v1 = self._node1.getXY()
-        v2 = self._node2.getXY()
+        v1 = self.node1.getXY()
+        v2 = self.node2.getXY()
 
         u = v2 - v1  # Vecteur reliant v1 à v2
         n = (u.rotate(pi/2)).norm()  # Vecteur unitaire perpendiculaire à u
@@ -739,7 +738,7 @@ class CycleArcItem(ArcItem):
 
         x = event.scenePos().x()
         y = event.scenePos().y()
-        v1 = self._node1.getXY()
+        v1 = self.node1.getXY()
         v = vector(x, y) - v1
         cl = v.mag
         if cl < 50:
@@ -761,7 +760,7 @@ class CycleArcItem(ArcItem):
         # Il est conseillé de prendre une feuille est un stylo pour dessiner en lisant les commentaires
         # de cette méthode
 
-        v1 = v2 = self._node1.getXY()
+        v1 = v2 = self.node1.getXY()
 
         # m1 et o sont des points définis plus loin, mais on peut calculer et on a besoin de calculer leur distance
         # dès maintenant
