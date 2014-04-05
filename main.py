@@ -6,7 +6,7 @@ import sys
 from PyQt4 import QtCore
 
 from PyQt4.QtCore import QRectF, QPointF
-from PyQt4.QtGui import QApplication as QApp, QVBoxLayout, QHBoxLayout, QTextEdit, QIcon, QGraphicsSimpleTextItem, QGraphicsLineItem, QPen, QRadialGradient, QColor
+from PyQt4.QtGui import QApplication as QApp, QVBoxLayout, QHBoxLayout, QTextEdit, QIcon, QGraphicsSimpleTextItem, QGraphicsLineItem, QPen, QRadialGradient, QColor, QAction, QFileDialog
 from PyQt4.QtGui import QMainWindow, QWidget, QDesktopWidget, QLabel, QComboBox
 from PyQt4.QtGui import QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsPathItem
 from PyQt4.QtGui import QBrush, QPainterPath
@@ -15,6 +15,8 @@ from visual import vector
 from math import pi, cos, degrees, atan
 from random import uniform
 from copy import copy
+
+import json
 
 
 class MainWindow(QMainWindow):
@@ -25,11 +27,129 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         widget = MainWidget(self)
         self.setCentralWidget(widget)
+        self.initMenu()
 
         self.setGeometry(0, 0, 800, 640)
         self.setWindowTitle('GraphEditor')
         self.center()
         self.show()
+
+    def initMenu(self):
+        newAction = QAction('&New', self)
+        newAction.setShortcut('Ctrl+N')
+        newAction.triggered.connect(self.new)
+
+        saveAction = QAction('&Save', self)
+        saveAction.setShortcut('Ctrl+S')
+        saveAction.triggered.connect(self.save)
+
+        loadAction = QAction('&Load', self)
+        loadAction.setShortcut('Ctrl+O')
+        loadAction.triggered.connect(self.load)
+
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(newAction)
+        fileMenu.addAction(saveAction)
+        fileMenu.addAction(loadAction)
+
+        undoAction = QAction('&Undo', self)
+        undoAction.setShortcut('Ctrl+Z')
+        undoAction.triggered.connect(self.undo)
+
+        redoAction = QAction('&Redo', self)
+        redoAction.setShortcut('Ctrl+Y')
+        redoAction.triggered.connect(self.redo)
+
+        editMenu = menubar.addMenu('&Edit')
+        editMenu.addAction(undoAction)
+        editMenu.addAction(redoAction)
+
+    def scene(self):
+        return self.centralWidget().drawing.scene()
+
+    def new(self):
+        scene = self.scene()
+        scene.clear()
+        return scene
+
+    def save(self):
+        scene = self.scene()
+        nodes = scene.nodes
+
+        def nodeDict(node):
+            d = dict()
+            xy = node.getXY()
+            d['x'], d['y'] = xy.x, xy.y
+            d['isActive'] = node.isActive()
+            return d
+
+        def arcDict(arc):
+            d = dict()
+            d['n1'] = nodes.index(arc.node1)
+            d['n2'] = nodes.index(arc.node2)
+            d['cl'] = arc.getCl()
+            try:
+                d['delta'] = arc.getDelta()
+            except AttributeError:
+                pass
+            d['label'] = arc.getLabel()
+            d['formula'] = arc.getFormula()
+            d['consequences'] = arc.getConsequences()
+            offset = arc.getLabelItem().getOffset()
+            d['labelItemOffset'] = [offset.x, offset.y]
+            return d
+
+        from itertools import chain
+        d = {
+            "nodes": [nodeDict(node) for node in nodes],
+            "arcs": [arcDict(arc) for arc in chain.from_iterable(node.outputArcs for node in nodes)]}
+
+        fname = QFileDialog.getOpenFileName(self, 'Choose save destination', '/home')
+
+        with open(fname, 'w') as f:
+            json.dump(d, f)
+
+    def load(self):
+        scene = self.new()
+        fname = QFileDialog.getOpenFileName(self, 'Choose file to open', '/home')
+
+        with open(fname) as f:
+            d = json.load(f)
+
+            def addNode(node):
+                x = node['x']
+                y = node['y']
+                n = scene.addNode(x, y)
+                n.setActive(node['isActive'])
+                return n
+
+            nodes = [addNode(node) for node in d['nodes']]
+
+            def addArc(arc):
+                n1 = nodes[arc['n1']]
+                n2 = nodes[arc['n2']]
+                a = scene.addArc(n1, n2)
+                if n1 == n2:
+                    a.setClAndDelta(arc['cl'], arc['delta'])
+                else:
+                    a.setCl(arc['cl'])
+                a.setLabel(arc['label'])
+                a.setFormula(arc['formula'])
+                a.setConsequences(arc['consequences'])
+                lioff = arc['labelItemOffset']
+                a.getLabelItem().setOffset(vector(lioff[0], lioff[1]))
+
+            for arc in d['arcs']:
+                addArc(arc)
+
+            scene.clearActionsToUndo()
+
+    def undo(self):
+        pass
+
+    def redo(self):
+        pass
 
     def center(self):
         qr = self.frameGeometry()
@@ -53,11 +173,11 @@ class MainWidget(QWidget):
         super(MainWidget, self).__init__(parent)
 
         vbox = QVBoxLayout()
-        drawing = ViewWidget(self)
-        params = ArcParamEditorWidget(self)
-        drawing.setArcParamEditor(params)
-        vbox.addWidget(drawing)
-        vbox.addWidget(params)
+        self.drawing = ViewWidget(self)
+        self.params = ArcParamEditorWidget(self)
+        self.drawing.setArcParamEditor(self.params)
+        vbox.addWidget(self.drawing)
+        vbox.addWidget(self.params)
         self.setLayout(vbox)
 
 
@@ -93,6 +213,12 @@ class ArcParamEditorWidget(QWidget):
         self._consequencesTE.textChanged.connect(self.consequencesChanged)
 
         self.setMaximumHeight(200)
+
+    def init(self):
+        self._indexQCB.clear()
+        self.setLabel('Etiquette de l\'arc.')
+        self.setFormula('Formule d\'acceptance de l\'arc.')
+        self.setConsequences('Consequences du passage par l\'arc.')
 
     def setIndexes(self, maxIndex, index):
         self._indexQCB.clear()
@@ -138,16 +264,10 @@ class ArcParamEditorWidget(QWidget):
             self.setIndexes(a.getMaxIndex(), a.getIndex())
             self.setLabel(a.getLabel())
             self.setFormula(a.getFormula())
-            self.setConsequences(a.getConsequences())
+            self.setConsequences(a.getConsequencesStr())
             self._indexQCB.currentIndexChanged.connect(a.setIndex)
         except AttributeError:
             self.init()
-
-    def init(self):
-        self._indexQCB.clear()
-        self.setLabel('Etiquette de l\'arc.')
-        self.setFormula('Formule d\'acceptance de l\'arc.')
-        self.setConsequences('Consequences du passage par l\'arc.')
 
 
 class ViewWidget(QGraphicsView):
@@ -212,23 +332,47 @@ class SceneWidget(QGraphicsScene):
 
     def __init__(self, parent=None):
         super(SceneWidget, self).__init__(parent)
+        self.init()
+
+    def init(self):
+        self.nodes = []
         self._nodeId = 0
         self._selected = None
         self._mode = None
         self.setNodeMode()
-        self._actions = []
-        self.cancelledActions = []
+        self._actionsToUndo = []
+        self._actionsToRedo = []
+
+    def clear(self):
+        super(SceneWidget, self).clear()
+        self.init()
+
+    def addNode(self, x, y):
+        node = NodeItem(x, y, self._nodeId, scene=self)
+        self._nodeId += 1
+        self.setSelected(node)
+        self.nodes.append(node)
+        return node
+
+    def addArc(self, n1, n2):
+        if n1 == n2:
+            arc = CycleArcItem(n1, scene=self)
+        else:
+            arc = ArcItem(n1, n2, scene=self)
+        if self.isPathMode():
+            self.setSelected(n2)
+        return arc
 
     def mouseReleaseEvent(self, event):
         item = self.mouseGrabberItem()
         if self.isNodeMode():
             if not item:
                 x, y = event.scenePos().x(), event.scenePos().y()
-                node = NodeItem(x-20, y-20, self._nodeId, scene=self)
-                self._nodeId += 1
-                self.setSelected(node)
+                self.addNode(x, y)
             elif isinstance(item, NodeItem):
                 self.setSelected(item)
+                item.mouseReleaseEvent(event)
+            else:
                 item.mouseReleaseEvent(event)
         elif self.isArcMode():
             if not item:
@@ -236,12 +380,7 @@ class SceneWidget(QGraphicsScene):
             else:
                 if isinstance(item, NodeItem):
                     if isinstance(self._selected, NodeItem):
-                        if self._selected == item:
-                            CycleArcItem(self._selected, scene=self)
-                        else:
-                            ArcItem(self._selected, item, scene=self)
-                        if self.isPathMode():
-                            self.setSelected(item)
+                        self.addArc(self._selected, item)
                     else:
                         self.setSelected(item)
                 else:
@@ -274,10 +413,6 @@ class SceneWidget(QGraphicsScene):
         elif event.key() == QtCore.Qt.Key_Delete:
             if self._selected:
                 self.deleteSelected()
-        elif event.key() == QtCore.Qt.Key_Z and event.modifiers() == QtCore.Qt.ControlModifier:
-            self.cancelLastAction()
-        elif event.key() == QtCore.Qt.Key_Y and event.modifiers() == QtCore.Qt.ControlModifier:
-            self.cancelLastCancelledAction()
         else:
             item = self.mouseGrabberItem()
             try:
@@ -321,68 +456,74 @@ class SceneWidget(QGraphicsScene):
     def deleteItem(self, item, addAction=True):
         item.remove()
         if addAction:
-            self._actions.append(['Delete', item])
+            self._actionsToUndo.append(['Delete', item])
         self.removeItem(item)
 
-    def cancelLastAction(self):
-        if len(self._actions) == 0:
-            return
-        lastAction = self._actions[-1]
-        self.cancelledActions.append(lastAction)
-        del self._actions[-1]
+    def clearActionsToUndo(self):
+        del self._actionsToUndo[:]
 
-        if lastAction[0] == 'MovingNode':
-            lastAction[1].setXY(lastAction[2], lastAction[3])
-        elif lastAction[0] == 'MovingArc':
-            lastAction[1].setCl(lastAction[2])
-        elif lastAction[0] == 'MovingCycleArc':
-            lastAction[1].setClAndDelta(lastAction[2], lastAction[4])
-        elif lastAction[0] == 'MovingArcLabel':
-            lastAction[1].setOffset(lastAction[2])
-        elif lastAction[0] == 'Add':
-            self.deleteItem(lastAction[1], False)
-        elif lastAction[0] == 'Delete':
-            item = lastAction[1]
+    def undo(self):
+        if len(self._actionsToUndo) == 0:
+            return
+        action = self._actionsToUndo[-1]
+        self._actionsToRedo.append(action)
+        del self._actionsToUndo[-1]
+
+        if action[0] == 'MovingNode':
+            action[1].setXY(action[2], action[3])
+        elif action[0] == 'MovingArc':
+            action[1].setCl(action[2])
+        elif action[0] == 'MovingCycleArc':
+            action[1].setClAndDelta(action[2], action[4])
+        elif action[0] == 'MovingArcLabel':
+            action[1].setOffset(action[2])
+        elif action[0] == 'Add':
+            self.deleteItem(action[1], False)
+        elif action[0] == 'Delete':
+            item = action[1]
             self.addItem(item)
             try:
                 item.node1.outputArcs.append(item)
                 item.node2.inputArcs.append(item)
             except AttributeError:
                 pass
-        elif lastAction[0] == 'ActiveNode':
-            lastAction[1].setActive(not lastAction[2])
+        elif action[0] == 'ActiveNode':
+            action[1].setActive(not action[2])
 
-    def cancelLastCancelledAction(self):
-        if len(self.cancelledActions) == 0:
+    def redo(self):
+        if len(self._actionsToRedo) == 0:
             return
-        lastAction = self.cancelledActions[-1]
-        self._actions.append(lastAction)
-        del self.cancelledActions[-1]
+        action = self._actionsToRedo[-1]
+        self._actionsToUndo.append(action)
+        del self._actionsToRedo[-1]
 
-        if lastAction[0] == 'MovingNode':
-            lastAction[1].setXY(lastAction[4], lastAction[5])
-        elif lastAction[0] == 'MovingArc':
-            lastAction[1].setCl(lastAction[3])
-        elif lastAction[0] == 'MovingCycleArc':
-            lastAction[1].setClAndDelta(lastAction[3], lastAction[5])
-        elif lastAction[0] == 'MovingArcLabel':
-            lastAction[1].setOffset(lastAction[3])
-        elif lastAction[0] == 'Add':
-            item = lastAction[1]
+        if action[0] == 'MovingNode':
+            action[1].setXY(action[4], action[5])
+        elif action[0] == 'MovingArc':
+            action[1].setCl(action[3])
+        elif action[0] == 'MovingCycleArc':
+            action[1].setClAndDelta(action[3], action[5])
+        elif action[0] == 'MovingArcLabel':
+            action[1].setOffset(action[3])
+        elif action[0] == 'Add':
+            item = action[1]
             self.addItem(item)
             try:
                 item.node1.outputArcs.append(item)
                 item.node2.inputArcs.append(item)
             except AttributeError:
                 pass
-        elif lastAction[0] == 'Delete':
-            self.deleteItem(lastAction[1], False)
-        elif lastAction[0] == 'ActiveNode':
-            lastAction[1].setActive(lastAction[2])
+        elif action[0] == 'Delete':
+            self.deleteItem(action[1], False)
+        elif action[0] == 'ActiveNode':
+            action[1].setActive(action[2])
 
-    def addAction(self, action):
-        self._actions.append(action)
-        del self.cancelledActions[:]
+    def addActionToUndo(self, action):
+        self._actionsToUndo.append(action)
+        self.clearActionsToRedo()
+
+    def clearActionsToRedo(self):
+        del self._actionsToRedo[:]
 
 
 class NodeItem(QGraphicsEllipseItem):
@@ -390,10 +531,10 @@ class NodeItem(QGraphicsEllipseItem):
     NodeWidth = 20
 
     def __init__(self, x, y, num, parent=None, scene=None):
-        super(NodeItem, self).__init__(x, y, NodeItem.NodeWidth*2, NodeItem.NodeWidth*2, parent, scene)
+        super(NodeItem, self).__init__(x - NodeItem.NodeWidth, y - NodeItem.NodeWidth, NodeItem.NodeWidth*2, NodeItem.NodeWidth*2, parent, scene)
         self._num = num
-        self._x = x+NodeItem.NodeWidth
-        self._y = y+NodeItem.NodeWidth
+        self._x = x
+        self._y = y
         self.outputArcs = []
         self.inputArcs = []
 
@@ -401,22 +542,22 @@ class NodeItem(QGraphicsEllipseItem):
         self._moveFromX = None
         self._moveFromY = None
 
-        self.scene().addAction(['Add', self])
+        self.scene().addActionToUndo(['Add', self])
 
-        self._active = False
+        self._isActive = False
         self.setBrush(QBrush(QtCore.Qt.black))
 
     def mouseDoubleClickEvent(self, QGraphicsSceneMouseEvent):
         if self.scene().isNodeMode():
-            self.scene().addAction(['ActiveNode', self, not self._active])
-            self.setActive(not self._active)
+            self.scene().addActionToUndo(['ActiveNode', self, not self._isActive])
+            self.setActive(not self._isActive)
 
     def mousePressEvent(self, event):
         event.accept()
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addAction(['MovingNode', self, self._moveFromX, self._moveFromY, self._x, self._y])
+            self.scene().addActionToUndo(['MovingNode', self, self._moveFromX, self._moveFromY, self._x, self._y])
             self._moveFromX = None
             self._moveFromY = None
             self._isMoving = False
@@ -433,13 +574,16 @@ class NodeItem(QGraphicsEllipseItem):
         self.setBrush(br)
 
     def setActive(self, isActive):
-        self._active = isActive
+        self._isActive = isActive
         br = self.brush()
         if isActive:
             br.setColor(QtCore.Qt.red)
         else:
             br.setColor(QtCore.Qt.black)
         self.setBrush(br)
+
+    def isActive(self):
+        return self._isActive
 
     def mouseMoveEvent(self, event):
         if not self.scene().isNodeMode():
@@ -482,6 +626,7 @@ class NodeItem(QGraphicsEllipseItem):
         return False
 
     def remove(self):
+        self.scene().nodes.remove(self)
         for a in copy(self.inputArcs):
             self.scene().deleteItem(a)
         for a in copy(self.outputArcs):
@@ -523,7 +668,7 @@ class ArcItem(QGraphicsPathItem):
         self._isMoving = False
         self._moveFromCl = None
 
-        self.scene().addAction(['Add', self])
+        self.scene().addActionToUndo(['Add', self])
 
         self._label = 'False'
         self._formula = 'False'
@@ -564,10 +709,19 @@ class ArcItem(QGraphicsPathItem):
         self._formula = formula
 
     def getConsequences(self):
+        return self._consequences
+
+    def getConsequencesStr(self):
         return '\n'.join(self._consequences)
 
-    def setConsequences(self, consequencesStr):
-        self._consequences = consequencesStr.split('\n')
+    def setConsequences(self, consequences):
+        try:
+            self._consequences = consequences.split('\n')  # consequences is a string
+        except AttributeError:
+            self._consequences = consequences  # consequences is a list
+
+    def getLabelItem(self):
+        return self._labelItem
 
     def initPath(self):
         cls = []
@@ -590,7 +744,7 @@ class ArcItem(QGraphicsPathItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addAction(['MovingArc', self, self._moveFromCl, self._cl])
+            self.scene().addActionToUndo(['MovingArc', self, self._moveFromCl, self._cl])
             self._isMoving = False
         self.ungrabMouse()
 
@@ -611,6 +765,9 @@ class ArcItem(QGraphicsPathItem):
         n = (u.rotate(pi/2)).norm()
 
         self.setCl((2*v).dot(n))
+
+    def getCl(self):
+        return self._cl
 
     def setCl(self, cl):
         self._cl = cl
@@ -717,13 +874,16 @@ class CycleArcItem(ArcItem):
         self._delta = uniform(0, 2*pi)
         self._cl = 100
 
+    def getDelta(self):
+        return self._delta
+
     def setClAndDelta(self, cl, delta):
         self._delta = delta
         self.setCl(cl)
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addAction(['MovingCycleArc', self, self._moveFromCl, self._cl, self._moveFromDelta, self._delta])
+            self.scene().addActionToUndo(['MovingCycleArc', self, self._moveFromCl, self._cl, self._moveFromDelta, self._delta])
             self._isMoving = False
         self.ungrabMouse()
 
@@ -879,7 +1039,7 @@ class ArcLabelItem(QGraphicsSimpleTextItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addAction(['MovingArcLabel', self, self._moveFromOffset, self._offset])
+            self.scene().addActionToUndo(['MovingArcLabel', self, self._moveFromOffset, self._offset])
             self._isMoving = False
             self._linkToArc.setVisible(False)
         self.ungrabMouse()
