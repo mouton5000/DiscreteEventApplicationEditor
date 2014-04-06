@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
         undoAction.triggered.connect(self.undo)
 
         redoAction = QAction('&Redo', self)
-        redoAction.setShortcut('Ctrl+Y')
+        redoAction.setShortcut('Ctrl+Shift+Z')
         redoAction.triggered.connect(self.redo)
 
         editMenu = menubar.addMenu('&Edit')
@@ -198,11 +198,14 @@ class ArcParamEditorWidget(QWidget):
         hbox2.addWidget(self._indexQCB)
 
         self._labelTE = QTextEdit(self)
+        self._labelTE.setUndoRedoEnabled(True)
         vbox.addLayout(hbox2)
         vbox.addWidget(self._labelTE)
 
         self._formulaTE = QTextEdit(self)
+        self._formulaTE.setUndoRedoEnabled(True)
         self._consequencesTE = QTextEdit(self)
+        self._consequencesTE.setUndoRedoEnabled(True)
         hbox.addLayout(vbox)
         hbox.addWidget(self._formulaTE)
         hbox.addWidget(self._consequencesTE)
