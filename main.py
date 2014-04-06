@@ -6,11 +6,9 @@ import sys
 from PyQt4 import QtCore
 
 from PyQt4.QtCore import QRectF, QPointF
-from PyQt4.QtGui import QApplication as QApp, QVBoxLayout, QHBoxLayout, QTextEdit, QIcon, QGraphicsSimpleTextItem, QGraphicsLineItem, QPen, QRadialGradient, QColor, QAction, QFileDialog
-from PyQt4.QtGui import QMainWindow, QWidget, QDesktopWidget, QLabel, QComboBox
-from PyQt4.QtGui import QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsPathItem
-from PyQt4.QtGui import QBrush, QPainterPath
-
+from PyQt4.QtGui import QApplication as QApp, QVBoxLayout, QHBoxLayout, QTextEdit, QGraphicsSimpleTextItem, QAction, \
+    QFileDialog, QMainWindow, QWidget, QDesktopWidget, QLabel, QComboBox, QGraphicsView, QGraphicsScene, \
+    QGraphicsEllipseItem, QGraphicsPathItem, QBrush, QPainterPath, QUndoStack
 from visual import vector
 from math import pi, cos, degrees, atan
 from random import uniform
@@ -18,11 +16,14 @@ from copy import copy
 
 import json
 
+from undoRedoActions import *
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.init_ui()
+        self.stack = QUndoStack()
 
     def init_ui(self):
         widget = MainWidget(self)
@@ -101,6 +102,7 @@ class MainWindow(QMainWindow):
             return d
 
         from itertools import chain
+
         d = {
             "nodes": [nodeDict(node) for node in nodes],
             "arcs": [arcDict(arc) for arc in chain.from_iterable(node.outputArcs for node in nodes)]}
@@ -146,10 +148,10 @@ class MainWindow(QMainWindow):
             scene.clearActionsToUndo()
 
     def undo(self):
-        pass
+        self.stack.undo()
 
     def redo(self):
-        pass
+        self.stack.redo()
 
     def center(self):
         qr = self.frameGeometry()
@@ -325,7 +327,6 @@ class ViewWidget(QGraphicsView):
 
 
 class SceneWidget(QGraphicsScene):
-
     NodeMode = 0
     PathMode = 1
     StarMode = 2
@@ -340,8 +341,13 @@ class SceneWidget(QGraphicsScene):
         self._selected = None
         self._mode = None
         self.setNodeMode()
-        self._actionsToUndo = []
-        self._actionsToRedo = []
+
+    def addItem(self, item):
+        super(SceneWidget, self).addItem(item)
+        try:
+            item.add()
+        except AttributeError:
+            pass
 
     def clear(self):
         super(SceneWidget, self).clear()
@@ -351,7 +357,8 @@ class SceneWidget(QGraphicsScene):
         node = NodeItem(x, y, self._nodeId, scene=self)
         self._nodeId += 1
         self.setSelected(node)
-        self.nodes.append(node)
+        # Apparently, addItem is not called when an item is created
+        node.add()
         return node
 
     def addArc(self, n1, n2):
@@ -449,115 +456,47 @@ class SceneWidget(QGraphicsScene):
     def isStarMode(self):
         return self._mode == SceneWidget.StarMode
 
-    def deleteSelected(self, addAction=True):
-        self.deleteItem(self._selected, addAction)
+    def deleteSelected(self):
+        self.parent().window().stack.push(DeleteItemCommand(self, self._selected))
         self.setSelected(None)
 
-    def deleteItem(self, item, addAction=True):
+    def deleteItem(self, item):
         item.remove()
-        if addAction:
-            self._actionsToUndo.append(['Delete', item])
         self.removeItem(item)
-
-    def clearActionsToUndo(self):
-        del self._actionsToUndo[:]
-
-    def undo(self):
-        if len(self._actionsToUndo) == 0:
-            return
-        action = self._actionsToUndo[-1]
-        self._actionsToRedo.append(action)
-        del self._actionsToUndo[-1]
-
-        if action[0] == 'MovingNode':
-            action[1].setXY(action[2], action[3])
-        elif action[0] == 'MovingArc':
-            action[1].setCl(action[2])
-        elif action[0] == 'MovingCycleArc':
-            action[1].setClAndDelta(action[2], action[4])
-        elif action[0] == 'MovingArcLabel':
-            action[1].setOffset(action[2])
-        elif action[0] == 'Add':
-            self.deleteItem(action[1], False)
-        elif action[0] == 'Delete':
-            item = action[1]
-            self.addItem(item)
-            try:
-                item.node1.outputArcs.append(item)
-                item.node2.inputArcs.append(item)
-            except AttributeError:
-                pass
-        elif action[0] == 'ActiveNode':
-            action[1].setActive(not action[2])
-
-    def redo(self):
-        if len(self._actionsToRedo) == 0:
-            return
-        action = self._actionsToRedo[-1]
-        self._actionsToUndo.append(action)
-        del self._actionsToRedo[-1]
-
-        if action[0] == 'MovingNode':
-            action[1].setXY(action[4], action[5])
-        elif action[0] == 'MovingArc':
-            action[1].setCl(action[3])
-        elif action[0] == 'MovingCycleArc':
-            action[1].setClAndDelta(action[3], action[5])
-        elif action[0] == 'MovingArcLabel':
-            action[1].setOffset(action[3])
-        elif action[0] == 'Add':
-            item = action[1]
-            self.addItem(item)
-            try:
-                item.node1.outputArcs.append(item)
-                item.node2.inputArcs.append(item)
-            except AttributeError:
-                pass
-        elif action[0] == 'Delete':
-            self.deleteItem(action[1], False)
-        elif action[0] == 'ActiveNode':
-            action[1].setActive(action[2])
-
-    def addActionToUndo(self, action):
-        self._actionsToUndo.append(action)
-        self.clearActionsToRedo()
-
-    def clearActionsToRedo(self):
-        del self._actionsToRedo[:]
 
 
 class NodeItem(QGraphicsEllipseItem):
-
     NodeWidth = 20
 
     def __init__(self, x, y, num, parent=None, scene=None):
-        super(NodeItem, self).__init__(x - NodeItem.NodeWidth, y - NodeItem.NodeWidth, NodeItem.NodeWidth*2, NodeItem.NodeWidth*2, parent, scene)
+        super(NodeItem, self).__init__(x - NodeItem.NodeWidth, y - NodeItem.NodeWidth, NodeItem.NodeWidth * 2,
+                                       NodeItem.NodeWidth * 2, parent, scene)
         self._num = num
-        self._x = x
-        self._y = y
+        self._center = vector(x, y)
         self.outputArcs = []
         self.inputArcs = []
 
         self._isMoving = False
-        self._moveFromX = None
-        self._moveFromY = None
+        self._moveFrom = None
 
-        self.scene().addActionToUndo(['Add', self])
+        self.scene().parent().window().stack.push(AddItemCommand(self.scene(), self))
 
         self._isActive = False
         self.setBrush(QBrush(QtCore.Qt.black))
 
+    def add(self):
+        self.scene().nodes.append(self)
+
     def mouseDoubleClickEvent(self, QGraphicsSceneMouseEvent):
         if self.scene().isNodeMode():
-            self.scene().addActionToUndo(['ActiveNode', self, not self._isActive])
-            self.setActive(not self._isActive)
+            self.scene().parent().window().stack.push(SetActiveNodeCommand(self, not self._isActive))
 
     def mousePressEvent(self, event):
         event.accept()
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addActionToUndo(['MovingNode', self, self._moveFromX, self._moveFromY, self._x, self._y])
+            self.scene().parent().window().stack.push(MoveNodeCommand(self, self._moveFrom, self._center))
             self._moveFromX = None
             self._moveFromY = None
             self._isMoving = False
@@ -591,18 +530,16 @@ class NodeItem(QGraphicsEllipseItem):
 
         if not self._isMoving:
             self._isMoving = True
-            self._moveFromX = self._x
-            self._moveFromY = self._y
+            self._moveFrom = self._center
 
         x = event.scenePos().x()
         y = event.scenePos().y()
         self.setXY(x, y)
 
     def setXY(self, x, y):
-        dx, dy = x - self._x, y - self._y
+        dx, dy = x - self._center.x, y - self._center.y
         self.moveBy(dx, dy)
-        self._x = x
-        self._y = y
+        self._center = vector(x, y)
 
         for a in self.inputArcs:
             a.drawPath()
@@ -611,7 +548,7 @@ class NodeItem(QGraphicsEllipseItem):
             a.drawPath()
 
     def getXY(self):
-        return vector(self._x, self._y)
+        return self._center
 
     def isPredecessorOf(self, node):
         for a in self.outputArcs:
@@ -628,9 +565,9 @@ class NodeItem(QGraphicsEllipseItem):
     def remove(self):
         self.scene().nodes.remove(self)
         for a in copy(self.inputArcs):
-            self.scene().deleteItem(a)
+            self.scene().parent().window().stack.push(DeleteItemCommand(self.scene(), a))
         for a in copy(self.outputArcs):
-            self.scene().deleteItem(a)
+            self.scene().parent().window().stack.push(DeleteItemCommand(self.scene(), a))
 
     def __str__(self):
         return str(self._num)
@@ -648,8 +585,8 @@ class ArcItem(QGraphicsPathItem):
     arrowBeta : Demi angle de la pointe de l'arc
     """
 
-    endingsAlpha = pi/12
-    arrowBeta = pi/4
+    endingsAlpha = pi / 12
+    arrowBeta = pi / 4
 
     def __init__(self, node1, node2, parent=None, scene=None):
         super(ArcItem, self).__init__(parent, scene)
@@ -668,13 +605,14 @@ class ArcItem(QGraphicsPathItem):
         self._isMoving = False
         self._moveFromCl = None
 
-        self.scene().addActionToUndo(['Add', self])
+        self.scene().parent().window().stack.push(AddItemCommand(self.scene(), self))
 
         self._label = 'False'
         self._formula = 'False'
         self._consequences = []
 
-        self._labelItem = ArcLabelItem(str(len(node1.outputArcs)-1) + ' : '+self._label, parent=self, scene=self.scene())
+        self._labelItem = ArcLabelItem(str(len(node1.outputArcs) - 1) + ' : ' + self._label,
+                                       parent=self, scene=self.scene())
         self._labelItem.setBrush(QBrush(QtCore.Qt.black))
 
         self.drawPath()
@@ -727,10 +665,10 @@ class ArcItem(QGraphicsPathItem):
         cls = []
         for a in self.node1.outputArcs:
             if a.node2 == self.node2:
-                cls.append((int(a._cl)+30)/60)
+                cls.append((int(a._cl) + 30) / 60)
         cl = 0
         b = True
-        while cl/60 in cls:
+        while cl / 60 in cls:
             if b:
                 cl *= -1
                 cl += 60
@@ -744,7 +682,7 @@ class ArcItem(QGraphicsPathItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addActionToUndo(['MovingArc', self, self._moveFromCl, self._cl])
+            self.scene().parent().window().stack.push(MoveArcCommand(self, self._moveFromCl, self._cl))
             self._isMoving = False
         self.ungrabMouse()
 
@@ -762,9 +700,9 @@ class ArcItem(QGraphicsPathItem):
         v2 = self.node2.getXY()
         v = vector(x, y) - v1
         u = v2 - v1
-        n = (u.rotate(pi/2)).norm()
+        n = (u.rotate(pi / 2)).norm()
 
-        self.setCl((2*v).dot(n))
+        self.setCl((2 * v).dot(n))
 
     def getCl(self):
         return self._cl
@@ -784,10 +722,10 @@ class ArcItem(QGraphicsPathItem):
         self.node2.inputArcs.remove(self)
 
     def __str__(self):
-        return str(self.node1)+' '+str(self.node2)
+        return str(self.node1) + ' ' + str(self.node2)
 
     def __repr__(self):
-        return str(self.node1)+' '+str(self.node2)
+        return str(self.node1) + ' ' + str(self.node2)
 
     def drawPath(self):
         """
@@ -803,11 +741,11 @@ class ArcItem(QGraphicsPathItem):
         v2 = self.node2.getXY()
 
         u = v2 - v1  # Vecteur reliant v1 à v2
-        n = (u.rotate(pi/2)).norm()  # Vecteur unitaire perpendiculaire à u
+        n = (u.rotate(pi / 2)).norm()  # Vecteur unitaire perpendiculaire à u
 
         # Point sur la médiatrice de [v1,v2] situé à une distance cl
         # Il servira (presque) de point de contrôle pour les courbes de Beziers traçant les deux bords de l'arc.
-        c = v1 + u/2 + self._cl*n
+        c = v1 + u / 2 + self._cl * n
 
         v1m1norm = (c - v1).norm()  # Vecteur unitaire de la droite (v1,c), de v1 vers c
         v2m2norm = (c - v2).norm()  # Vecteur unitaire de la droite (v2,c), de v2 vers c
@@ -824,7 +762,7 @@ class ArcItem(QGraphicsPathItem):
         # c'est également la pointe de la flêche de l'arc
         v2m2 = NodeItem.NodeWidth * v2m2norm  # Vecteur v2m2
         m2 = v2 + v2m2  # Point m2
-        a2 = v2 + 2*v2m2  # a2 est le milieu du segment central de la pointe de la flêche de l'arc
+        a2 = v2 + 2 * v2m2  # a2 est le milieu du segment central de la pointe de la flêche de l'arc
         # a2m est l'extrêmité droite de la pointe de la flêche
         a2m = v2 + v2m2 + (NodeItem.NodeWidth / cos(ArcItem.arrowBeta)) * v2m2norm.rotate(-ArcItem.arrowBeta)
         # a2p est l'extrêmité gauche de la pointe de la flêche
@@ -840,9 +778,9 @@ class ArcItem(QGraphicsPathItem):
         # par m2p parallèle au vecteur v2m2, définit ici à l'aide d'un projeté orthogonal
         m2pp = a2 + v2m2p.proj(a2p - a2)
 
-        w = (m1p - m1m).mag/2 # eviron la demi largeur de l'arc
-        c1 = c - w*n  # point  de contrôle de la courbe de bézier du bord gauche de l'arc
-        c2 = c + w*n  # point  de contrôle de la courbe de bézier du bord droit de l'arc
+        w = (m1p - m1m).mag / 2 # eviron la demi largeur de l'arc
+        c1 = c - w * n  # point  de contrôle de la courbe de bézier du bord gauche de l'arc
+        c2 = c + w * n  # point  de contrôle de la courbe de bézier du bord droit de l'arc
 
         # Tracé de l'arc
         path = QPainterPath()
@@ -857,8 +795,8 @@ class ArcItem(QGraphicsPathItem):
         path.closeSubpath()
         self.setPath(path)
 
-        textCenter = v1 + u/2 + (0.5*self._cl)*n  # position normale
-        textPos = textCenter + 10*w*n + self._labelItem.getOffset()  # position du texte déplacé
+        textCenter = v1 + u / 2 + (0.5 * self._cl) * n  # position normale
+        textPos = textCenter + 10 * w * n + self._labelItem.getOffset()  # position du texte déplacé
         self._labelItem.setCenter(textCenter)
         self._labelItem.setPos(textPos.x, textPos.y)
 
@@ -871,7 +809,7 @@ class CycleArcItem(ArcItem):
         self.drawPath()
 
     def initPath(self):
-        self._delta = uniform(0, 2*pi)
+        self._delta = uniform(0, 2 * pi)
         self._cl = 100
 
     def getDelta(self):
@@ -883,7 +821,8 @@ class CycleArcItem(ArcItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addActionToUndo(['MovingCycleArc', self, self._moveFromCl, self._cl, self._moveFromDelta, self._delta])
+            self.scene().parent().window().stack.push(MoveArcCommand(self, self._moveFromCl, self._cl,
+                                                                     self._moveFromDelta, self._delta))
             self._isMoving = False
         self.ungrabMouse()
 
@@ -904,7 +843,7 @@ class CycleArcItem(ArcItem):
         if cl < 50:
             cl = 50
 
-        sindelta = vector(0, 1).dot(v)/cl
+        sindelta = vector(0, 1).dot(v) / cl
         delta = vector(1, 0).diff_angle(v)
         if sindelta < 0:
             delta *= -1
@@ -924,10 +863,10 @@ class CycleArcItem(ArcItem):
 
         # m1 et o sont des points définis plus loin, mais on peut calculer et on a besoin de calculer leur distance
         # dès maintenant
-        m1omag = float(self._cl**2 - NodeItem.NodeWidth**2)/(2*self._cl)
+        m1omag = float(self._cl ** 2 - NodeItem.NodeWidth ** 2) / (2 * self._cl)
 
         # demi angle entre les tangentes de l'arc à ses deux extrêmités (entre l'arrivée et le départ).
-        gamma = atan(m1omag/NodeItem.NodeWidth)
+        gamma = atan(m1omag / NodeItem.NodeWidth)
 
         # delta est l'angle qui existe entre l'horizontale est la droite coupant orthogonalement l'arc en son milieu
         u = vector(1, 0).rotate(self._delta) # vecteur normé orienté du centre du noeud vers le milieu de l'arc
@@ -944,7 +883,7 @@ class CycleArcItem(ArcItem):
 
         v2m2 = NodeItem.NodeWidth * v2m2norm
         m2 = v2 + v2m2  # Point m2
-        a2 = v2 + 2*v2m2  # a2 est le milieu du segment central de la pointe de la flêche de l'arc
+        a2 = v2 + 2 * v2m2  # a2 est le milieu du segment central de la pointe de la flêche de l'arc
         # a2m est l'extrêmité droite de la pointe de la flêche
         a2m = v2 + v2m2 + (NodeItem.NodeWidth / cos(ArcItem.arrowBeta)) * v2m2norm.rotate(-ArcItem.arrowBeta)
         # a2p est l'extrêmité gauche de la pointe de la flêche
@@ -962,53 +901,53 @@ class CycleArcItem(ArcItem):
 
         # o est le centre du cercle passant par les 3 points suivants : m1, m2 et c
         # où c est le point situé à une distance self.cl de v1, en suivant le vecteur u, cad le milieu de l'arc
-        o = v1 + v1m1 + m1omag * v1m1norm.rotate(pi/2)
+        o = v1 + v1m1 + m1omag * v1m1norm.rotate(pi / 2)
 
-        c1 = 0.5*(m2pp + m1m)  # c1 est le milieu de m2pp et m1m
+        c1 = 0.5 * (m2pp + m1m)  # c1 est le milieu de m2pp et m1m
         # o1 est le centre du cercle passant par m1m et m2pp le plus proche de o
-        o1 = c1 + (o-c1).proj((m1m - m2pp).rotate(pi/2))
-        r1 = (o1-m1m).mag  # le rayon du cercle en question
+        o1 = c1 + (o - c1).proj((m1m - m2pp).rotate(pi / 2))
+        r1 = (o1 - m1m).mag  # le rayon du cercle en question
 
-        sinstang1 = vector(0, 1).dot(m1m-o1)  # sinus de l'angle entre l'horizontale et (o1,m1m)
-        stang1 = -vector(1, 0).diff_angle(m1m-o1)  # opposé de la valeur absolue de cet angle
+        sinstang1 = vector(0, 1).dot(m1m - o1)  # sinus de l'angle entre l'horizontale et (o1,m1m)
+        stang1 = -vector(1, 0).diff_angle(m1m - o1)  # opposé de la valeur absolue de cet angle
         if sinstang1 < 0:
             stang1 *= -1
-        sinendang1 = vector(0, 1).dot(m2pp-o1)  # sinus de l'angle entre l'horizontale et (o1,m2pp)
-        endang1 = -vector(1, 0).diff_angle(m2pp-o1)  # opposé de la valeur absolue de cet angle
+        sinendang1 = vector(0, 1).dot(m2pp - o1)  # sinus de l'angle entre l'horizontale et (o1,m2pp)
+        endang1 = -vector(1, 0).diff_angle(m2pp - o1)  # opposé de la valeur absolue de cet angle
         if sinendang1 < 0:
             endang1 *= -1
         pathang1 = endang1 - stang1
         while pathang1 > 0:  # correctifs pour afficher un bel arc de cercle dans le bon sens
-            pathang1 -= 2*pi
-        while pathang1 < -2*pi:
-            pathang1 += 2*pi
+            pathang1 -= 2 * pi
+        while pathang1 < -2 * pi:
+            pathang1 += 2 * pi
 
-        c2 = 0.5*(m2mp + m1p)  # c2 est le milieu de m2mp et m1p
+        c2 = 0.5 * (m2mp + m1p)  # c2 est le milieu de m2mp et m1p
         # o2 est le centre du cercle passant par m1p et m2mp le plus proche de o
-        o2 = c2 + (o-c2).proj((m1p - m2mp).rotate(pi/2))
-        r2 = (o2-m1p).mag  # le rayon du cercle en question
-        sinstang2 = vector(0, 1).dot(m2mp-o2)  # sinus de l'angle entre l'horizontale et (o2,m2mp)
-        stang2 = -vector(1, 0).diff_angle(m2mp-o2)  # opposé de la valeur absolue de cet angle
+        o2 = c2 + (o - c2).proj((m1p - m2mp).rotate(pi / 2))
+        r2 = (o2 - m1p).mag  # le rayon du cercle en question
+        sinstang2 = vector(0, 1).dot(m2mp - o2)  # sinus de l'angle entre l'horizontale et (o2,m2mp)
+        stang2 = -vector(1, 0).diff_angle(m2mp - o2)  # opposé de la valeur absolue de cet angle
         if sinstang2 < 0:
             stang2 *= -1
-        sinendang2 = vector(0, 1).dot(m1p-o2)  # sinus de l'angle entre l'horizontale et (o2,m1p)
-        endang2 = -vector(1, 0).diff_angle(m1p-o2)  # opposé de la valeur absolue de cet angle
+        sinendang2 = vector(0, 1).dot(m1p - o2)  # sinus de l'angle entre l'horizontale et (o2,m1p)
+        endang2 = -vector(1, 0).diff_angle(m1p - o2)  # opposé de la valeur absolue de cet angle
         if sinendang2 < 0:
             endang2 *= -1
         pathang2 = endang2 - stang2
-        while pathang2 > 2*pi:  # correctifs pour afficher un bel arc de cercle dans le bon sens
-            pathang2 -= 2*pi
+        while pathang2 > 2 * pi:  # correctifs pour afficher un bel arc de cercle dans le bon sens
+            pathang2 -= 2 * pi
         while pathang2 < 0:
-            pathang2 += 2*pi
+            pathang2 += 2 * pi
 
 
         # Tracé du chemin
         path = QPainterPath()
         path.moveTo(m1m.x, m1m.y)
-        path.arcTo(o1.x-r1, o1.y-r1, 2*r1, 2*r1, degrees(stang1), degrees(pathang1))
+        path.arcTo(o1.x - r1, o1.y - r1, 2 * r1, 2 * r1, degrees(stang1), degrees(pathang1))
         path.lineTo(m2pp.x, m2pp.y)
         path.lineTo(m2mp.x, m2mp.y)
-        path.arcTo(o2.x-r2, o2.y-r2, 2*r2, 2*r2, degrees(stang2), degrees(pathang2))
+        path.arcTo(o2.x - r2, o2.y - r2, 2 * r2, 2 * r2, degrees(stang2), degrees(pathang2))
         path.lineTo(m1p.x, m1p.y)
         path.closeSubpath()
         path.moveTo(m2.x, m2.y)
@@ -1039,7 +978,7 @@ class ArcLabelItem(QGraphicsSimpleTextItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().addActionToUndo(['MovingArcLabel', self, self._moveFromOffset, self._offset])
+            self.scene().parent().window().stack.push(MoveArcLabelCommand(self, self._moveFromOffset, self._offset))
             self._isMoving = False
             self._linkToArc.setVisible(False)
         self.ungrabMouse()
@@ -1052,12 +991,12 @@ class ArcLabelItem(QGraphicsSimpleTextItem):
 
         epos = vector(event.scenePos().x(), event.scenePos().y())
         rect = self.boundingRect()
-        pos = vector(self.pos().x() + rect.width()/2, self.pos().y() + rect.height()/2)
+        pos = vector(self.pos().x() + rect.width() / 2, self.pos().y() + rect.height() / 2)
         center = pos - self._offset
         self.setOffset(epos - center)
 
         line = self._linkToArc.line()
-        line.setP2(QPointF(self.pos().x() + rect.width()/2, self.pos().y() + rect.height()))
+        line.setP2(QPointF(self.pos().x() + rect.width() / 2, self.pos().y() + rect.height()))
         self._linkToArc.setLine(line)
 
     def setCenter(self, center):
