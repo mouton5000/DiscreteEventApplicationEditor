@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.init_ui()
         self.stack = QUndoStack()
 
+        self._currentFile = None
         self._lastSaveOpenFileDirectory = '/home'
 
     def init_ui(self):
@@ -48,6 +49,10 @@ class MainWindow(QMainWindow):
         saveAction.setShortcut('Ctrl+S')
         saveAction.triggered.connect(self.save)
 
+        saveAsAction = QAction('&Save as...', self)
+        saveAsAction.setShortcut('Ctrl+Shift+S')
+        saveAsAction.triggered.connect(self.saveAs)
+
         loadAction = QAction('&Load', self)
         loadAction.setShortcut('Ctrl+O')
         loadAction.triggered.connect(self.load)
@@ -56,6 +61,7 @@ class MainWindow(QMainWindow):
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(newAction)
         fileMenu.addAction(saveAction)
+        fileMenu.addAction(saveAsAction)
         fileMenu.addAction(loadAction)
 
         undoAction = QAction('&Undo', self)
@@ -79,8 +85,14 @@ class MainWindow(QMainWindow):
         return scene
 
     def save(self):
+        self.saveAs(self._currentFile)
+
+    def saveAs(self, fname=None):
         try:
-            fname = QFileDialog.getOpenFileName(self, 'Choose save destination', self._lastSaveOpenFileDirectory)
+            if not fname:
+                fname = str(QFileDialog.getSaveFileName(self, 'Choose save destination',
+                                                        self._lastSaveOpenFileDirectory, 'JSON files (*.json)'))
+
             with open(fname, 'w') as f:
                 scene = self.scene()
                 nodes = scene.nodes
@@ -115,7 +127,8 @@ class MainWindow(QMainWindow):
                     "arcs": [arcDict(arc) for arc in chain.from_iterable(node.outputArcs for node in nodes)]}
                 json.dump(d, f)
 
-                self._lastSaveOpenFileDirectory = os.path.dirname(str(fname))
+                self._lastSaveOpenFileDirectory = os.path.dirname(fname)
+                self._currentFile = fname
         except IOError:
             pass
 
@@ -123,7 +136,8 @@ class MainWindow(QMainWindow):
         scene = self.new()
 
         try:
-            fname = QFileDialog.getOpenFileName(self, 'Choose file to open', self._lastSaveOpenFileDirectory)
+            fname = str(QFileDialog.getOpenFileName(self, 'Choose file to open',
+                                                    self._lastSaveOpenFileDirectory, 'JSON files (*.json)'))
 
             with open(fname) as f:
                 d = json.load(f)
@@ -154,7 +168,8 @@ class MainWindow(QMainWindow):
                 for arc in d['arcs']:
                     addArc(arc)
 
-                self._lastSaveOpenFileDirectory = os.path.dirname(str(fname))
+                self._lastSaveOpenFileDirectory = os.path.dirname(fname)
+                self._currentFile = fname
         except IOError:
             pass
 
