@@ -8,7 +8,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import QRectF, QPointF
 from PyQt4.QtGui import QApplication as QApp, QVBoxLayout, QHBoxLayout, QTextEdit, QGraphicsSimpleTextItem, QAction, \
     QFileDialog, QMainWindow, QWidget, QDesktopWidget, QLabel, QComboBox, QGraphicsView, QGraphicsScene, \
-    QGraphicsEllipseItem, QGraphicsPathItem, QBrush, QPainterPath, QUndoStack
+    QGraphicsEllipseItem, QGraphicsPathItem, QBrush, QPainterPath, QUndoStack, QMessageBox
 from visual import vector
 from math import pi, cos, degrees, atan
 from random import uniform
@@ -26,7 +26,9 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.init_ui()
         self.stack = QUndoStack()
+        self.stack.indexChanged.connect(self.setModified)
 
+        self._modified = False
         self._currentFile = None
         self._lastSaveOpenFileDirectory = '/home'
 
@@ -85,7 +87,10 @@ class MainWindow(QMainWindow):
         return scene
 
     def save(self):
-        self.saveAs(self._currentFile)
+        if self._currentFile:
+            self.saveAs(self._lastSaveOpenFileDirectory+'/'+self._currentFile)
+        else:
+            self.saveAs()
 
     def saveAs(self, fname=None):
         try:
@@ -128,19 +133,19 @@ class MainWindow(QMainWindow):
                 json.dump(d, f)
 
                 self._lastSaveOpenFileDirectory = os.path.dirname(fname)
-                self._currentFile = fname
+                self.setCurrentFile(os.path.basename(fname))
         except IOError:
             pass
 
     def load(self):
-        scene = self.new()
-
         try:
             fname = str(QFileDialog.getOpenFileName(self, 'Choose file to open',
                                                     self._lastSaveOpenFileDirectory, 'JSON files (*.json)'))
 
             with open(fname) as f:
                 d = json.load(f)
+
+                scene = self.new()
 
                 def addNode(node):
                     x = node['x']
@@ -169,9 +174,19 @@ class MainWindow(QMainWindow):
                     addArc(arc)
 
                 self._lastSaveOpenFileDirectory = os.path.dirname(fname)
-                self._currentFile = fname
+                self.setCurrentFile(os.path.basename(fname))
         except IOError:
             pass
+
+    def setCurrentFile(self, currentFile):
+        self._currentFile = currentFile
+        self.setWindowTitle('GraphEditor : ' + currentFile)
+        self._modified = False
+
+    def setModified(self):
+        if not self._modified:
+            self._modified = True
+            self.setWindowTitle(self.windowTitle() + ' *')
 
     def undo(self):
         self.stack.undo()
@@ -186,14 +201,21 @@ class MainWindow(QMainWindow):
         self.move(qr.topLeft())
 
     def closeEvent(self, event):
-        pass
+        if not self._modified:
+            return
 
-        # reply = QMB.question(self, 'Message', 'Quit?', QMB.Yes | QMB.No, QMB.No)
-        #
-        # if reply == QMB.Yes:
-        #     event.accept()
-        # else:
-        #     event.ignore()
+        reply = QMessageBox.question(self, 'Graph Editor',
+                                     'The current graph has been modified. Do you want to save the changes?',
+                                     QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                                     QMessageBox.Save)
+
+        if reply == QMessageBox.Save:
+            self.save()
+            event.accept()
+        elif reply == QMessageBox.Discard:
+            event.accept()
+        else:
+            event.ignore()
 
 
 class MainWidget(QWidget):
@@ -242,6 +264,11 @@ class ArcParamEditorWidget(QWidget):
         self._labelTE.textChanged.connect(self.labelChanged)
         self._formulaTE.textChanged.connect(self.formulaChanged)
         self._consequencesTE.textChanged.connect(self.consequencesChanged)
+
+        self._indexQCB.currentIndexChanged.connect(self.window().setModified)
+        self._labelTE.textChanged.connect(self.window().setModified)
+        self._formulaTE.textChanged.connect(self.window().setModified)
+        self._consequencesTE.textChanged.connect(self.window().setModified)
 
         self.setMaximumHeight(200)
 
