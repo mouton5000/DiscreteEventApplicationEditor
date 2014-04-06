@@ -712,10 +712,14 @@ class ArcItem(QGraphicsPathItem):
         self.drawPath()
 
     def select(self):
-        self.setBrush(QBrush(QtCore.Qt.green))
+        br = self.brush()
+        br.setStyle(QtCore.Qt.Dense3Pattern)
+        self.setBrush(br)
 
     def unselect(self):
-        self.setBrush(QBrush(QtCore.Qt.black))
+        br = self.brush()
+        br.setStyle(QtCore.Qt.SolidPattern)
+        self.setBrush(br)
 
     def remove(self):
         self.node1.outputArcs.remove(self)
