@@ -18,12 +18,16 @@ import json
 
 from undoRedoActions import *
 
+import os.path
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.init_ui()
         self.stack = QUndoStack()
+
+        self._lastSaveOpenFileDirectory = '/home'
 
     def init_ui(self):
         widget = MainWidget(self)
@@ -75,77 +79,84 @@ class MainWindow(QMainWindow):
         return scene
 
     def save(self):
-        scene = self.scene()
-        nodes = scene.nodes
+        try:
+            fname = QFileDialog.getOpenFileName(self, 'Choose save destination', self._lastSaveOpenFileDirectory)
+            with open(fname, 'w') as f:
+                scene = self.scene()
+                nodes = scene.nodes
 
-        def nodeDict(node):
-            d = dict()
-            xy = node.getXY()
-            d['x'], d['y'] = xy.x, xy.y
-            d['isActive'] = node.isActive()
-            return d
+                def nodeDict(node):
+                    d = dict()
+                    xy = node.getXY()
+                    d['x'], d['y'] = xy.x, xy.y
+                    d['isActive'] = node.isActive()
+                    return d
 
-        def arcDict(arc):
-            d = dict()
-            d['n1'] = nodes.index(arc.node1)
-            d['n2'] = nodes.index(arc.node2)
-            d['cl'] = arc.getCl()
-            try:
-                d['delta'] = arc.getDelta()
-            except AttributeError:
-                pass
-            d['label'] = arc.getLabel()
-            d['formula'] = arc.getFormula()
-            d['consequences'] = arc.getConsequences()
-            offset = arc.getLabelItem().getOffset()
-            d['labelItemOffset'] = [offset.x, offset.y]
-            return d
+                def arcDict(arc):
+                    d = dict()
+                    d['n1'] = nodes.index(arc.node1)
+                    d['n2'] = nodes.index(arc.node2)
+                    d['cl'] = arc.getCl()
+                    try:
+                        d['delta'] = arc.getDelta()
+                    except AttributeError:
+                        pass
+                    d['label'] = arc.getLabel()
+                    d['formula'] = arc.getFormula()
+                    d['consequences'] = arc.getConsequences()
+                    offset = arc.getLabelItem().getOffset()
+                    d['labelItemOffset'] = [offset.x, offset.y]
+                    return d
 
-        from itertools import chain
+                from itertools import chain
 
-        d = {
-            "nodes": [nodeDict(node) for node in nodes],
-            "arcs": [arcDict(arc) for arc in chain.from_iterable(node.outputArcs for node in nodes)]}
+                d = {
+                    "nodes": [nodeDict(node) for node in nodes],
+                    "arcs": [arcDict(arc) for arc in chain.from_iterable(node.outputArcs for node in nodes)]}
+                json.dump(d, f)
 
-        fname = QFileDialog.getOpenFileName(self, 'Choose save destination', '/home')
-
-        with open(fname, 'w') as f:
-            json.dump(d, f)
+                self._lastSaveOpenFileDirectory = os.path.dirname(str(fname))
+        except IOError:
+            pass
 
     def load(self):
         scene = self.new()
-        fname = QFileDialog.getOpenFileName(self, 'Choose file to open', '/home')
 
-        with open(fname) as f:
-            d = json.load(f)
+        try:
+            fname = QFileDialog.getOpenFileName(self, 'Choose file to open', self._lastSaveOpenFileDirectory)
 
-            def addNode(node):
-                x = node['x']
-                y = node['y']
-                n = scene.addNode(x, y)
-                n.setActive(node['isActive'])
-                return n
+            with open(fname) as f:
+                d = json.load(f)
 
-            nodes = [addNode(node) for node in d['nodes']]
+                def addNode(node):
+                    x = node['x']
+                    y = node['y']
+                    n = scene.addNode(x, y)
+                    n.setActive(node['isActive'])
+                    return n
 
-            def addArc(arc):
-                n1 = nodes[arc['n1']]
-                n2 = nodes[arc['n2']]
-                a = scene.addArc(n1, n2)
-                if n1 == n2:
-                    a.setClAndDelta(arc['cl'], arc['delta'])
-                else:
-                    a.setCl(arc['cl'])
-                a.setLabel(arc['label'])
-                a.setFormula(arc['formula'])
-                a.setConsequences(arc['consequences'])
-                lioff = arc['labelItemOffset']
-                a.getLabelItem().setOffset(vector(lioff[0], lioff[1]))
+                nodes = [addNode(node) for node in d['nodes']]
 
-            for arc in d['arcs']:
-                addArc(arc)
+                def addArc(arc):
+                    n1 = nodes[arc['n1']]
+                    n2 = nodes[arc['n2']]
+                    a = scene.addArc(n1, n2)
+                    if n1 == n2:
+                        a.setClAndDelta(arc['cl'], arc['delta'])
+                    else:
+                        a.setCl(arc['cl'])
+                    a.setLabel(arc['label'])
+                    a.setFormula(arc['formula'])
+                    a.setConsequences(arc['consequences'])
+                    lioff = arc['labelItemOffset']
+                    a.getLabelItem().setOffset(vector(lioff[0], lioff[1]))
 
-            scene.clearActionsToUndo()
+                for arc in d['arcs']:
+                    addArc(arc)
+
+                self._lastSaveOpenFileDirectory = os.path.dirname(str(fname))
+        except IOError:
+            pass
 
     def undo(self):
         self.stack.undo()
