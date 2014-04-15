@@ -43,6 +43,8 @@ class MainWindow(QMainWindow):
         self.show()
 
     def initMenu(self):
+        menubar = self.menuBar()
+
         newAction = QAction('&New', self)
         newAction.setShortcut('Ctrl+N')
         newAction.triggered.connect(self.new)
@@ -59,7 +61,6 @@ class MainWindow(QMainWindow):
         loadAction.setShortcut('Ctrl+O')
         loadAction.triggered.connect(self.load)
 
-        menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(newAction)
         fileMenu.addAction(saveAction)
@@ -77,6 +78,23 @@ class MainWindow(QMainWindow):
         editMenu = menubar.addMenu('&Edit')
         editMenu.addAction(undoAction)
         editMenu.addAction(redoAction)
+
+        compileAction = QAction('&Compile', self)
+        compileAction.setShortcut('Shift+F9')
+        compileAction.triggered.connect(self.compile)
+
+        runAction = QAction('&Run', self)
+        runAction.setShortcut('Shift+F10')
+        runAction.triggered.connect(self.run)
+
+        debugAction = QAction('&Debug', self)
+        debugAction.setShortcut('Shift+F11')
+        debugAction.triggered.connect(self.debug)
+
+        runMenu = menubar.addMenu('&Run')
+        runMenu.addAction(compileAction)
+        runMenu.addAction(runAction)
+        runMenu.addAction(debugAction)
 
     def scene(self):
         return self.centralWidget().drawing.scene()
@@ -193,6 +211,15 @@ class MainWindow(QMainWindow):
 
     def redo(self):
         self.stack.redo()
+
+    def compile(self):
+        pass
+
+    def run(self):
+        pass
+
+    def debug(self):
+        pass
 
     def center(self):
         qr = self.frameGeometry()
@@ -1083,6 +1110,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
