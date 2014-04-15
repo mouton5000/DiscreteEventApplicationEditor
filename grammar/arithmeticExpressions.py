@@ -9,6 +9,12 @@ class ALitteral(object):
         try:
             return evaluation[self._value]
         except KeyError:
+            pass
+
+        try:
+            if self._value[0].isupper():
+                return None
+        except TypeError:
             return self._value
 
 
@@ -20,15 +26,18 @@ class ABiOp(object):
     def __str__(self):
         return '(' + str(self._a1) + ' ' + self.symbol + ' ' + str(self._a2) + ')'
 
+    def value(self, evaluation):
+        v1 = self._a1.value(evaluation)
+        v2 = self._a2.value(evaluation)
+        return self.operation(v1, v2)
+
 
 class Addition(ABiOp):
     def __init__(self, a1, a2):
         super(Addition, self).__init__(a1, a2)
         self.symbol = '+'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def operation(self, v1, v2):
         return v1 + v2
 
 
@@ -37,9 +46,7 @@ class Subtraction(ABiOp):
         super(Subtraction, self).__init__(a1, a2)
         self.symbol = '-'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def operation(self, v1, v2):
         return v1 - v2
 
 
@@ -48,9 +55,7 @@ class Product(ABiOp):
         super(Product, self).__init__(a1, a2)
         self.symbol = '*'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def operation(self, v1, v2):
         return v1 * v2
 
 
@@ -59,9 +64,7 @@ class Division(ABiOp):
         super(Division, self).__init__(a1, a2)
         self.symbol = '/'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def operation(self, v1, v2):
         return float(v1) / float(v2)
 
 
@@ -70,9 +73,7 @@ class EuclideanDivision(ABiOp):
         super(EuclideanDivision, self).__init__(a1, a2)
         self.symbol = '//'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def operation(self, v1, v2):
         return v1 // v2
 
 
@@ -81,9 +82,7 @@ class Modulo(ABiOp):
         super(Modulo, self).__init__(a1, a2)
         self.symbol = '%'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def operation(self, v1, v2):
         return v1 % v2
 
 
@@ -92,7 +91,5 @@ class Power(ABiOp):
         super(Power, self).__init__(a1, a2)
         self.symbol = '**'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def operation(self, v1, v2):
         return v1 ** v2
