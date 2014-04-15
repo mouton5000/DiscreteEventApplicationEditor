@@ -97,7 +97,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
             return Rand(prob)
 
         def buildParameters():
-            return (cls.buildExpression(arg) for arg in tree[1::2])
+            return [cls.buildExpression(arg) for arg in tree[1::2]]
 
         def buildElock():
             priority = cls.buildExpression((tree[3]))
@@ -223,11 +223,12 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    exprToPars = 'pW(X,Y) and X != Y'
+    exprToPars = 'pP(1) and rand(P)'
     b = BExpression(BooleanExpressionParser.parse(exprToPars))
 
     Property.properties = [Property('W', 0, 0), Property('W', 0, 1), Property('W', 1, 0), Property('W', 1, 1)]+\
-                          [Property('S', 0, 0), Property('S', 0, 2), Property('S', 0, 0), Property('S', 2, 2)]
+                          [Property('S', 0, 0), Property('S', 0, 2), Property('S', 0, 0), Property('S', 2, 2)]+\
+                          [Property('P', 0.5)]
     print b
     for e in b.eval():
         print e

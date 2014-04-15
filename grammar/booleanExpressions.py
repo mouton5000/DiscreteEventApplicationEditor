@@ -122,10 +122,15 @@ class Rand(object):
 
     def eval(self, previousEvaluation):
         try:
-            if random() < self._prob:
-                yield previousEvaluation
+            if self._prob[0].isupper():
+                p = previousEvaluation[self._prob]
         except TypeError:
-            pass
+            p = self._prob
+        except KeyError:
+            yield
+        print p
+        if random() < p:
+            yield previousEvaluation
 
 
 class eLock(object):
@@ -231,7 +236,10 @@ class NamedExpression(object):
         self._args = args
 
     def __str__(self):
-        return str(self._name) + str(self._args)
+        return str(self._name) + '(' + ','.join([str(o) for o in self._args]) + ')'
+
+    def __repr__(self):
+        return str(self._name) + '(' + ','.join([str(o) for o in self._args]) + ')'
 
     def __len__(self):
         return len(self._args)
@@ -241,7 +249,7 @@ class NamedExpression(object):
         return self._name
 
     def __iter__(self):
-        return self._args
+        return iter(self._args)
 
     def __getitem__(self, index):
         return self._args[index]
@@ -254,9 +262,7 @@ class NamedExpression(object):
 
     def unify(self, namedExpr, evaluation):
         neval = evaluation.copy()
-        for i in range(len(self)):
-            p1 = self[i]
-            p2 = namedExpr[i]
+        for p1, p2 in zip(self, namedExpr):
             try:
                 v1 = neval[p1]
             except KeyError:
@@ -282,9 +288,28 @@ class NamedExpression(object):
             if not neval is None and dc.add(neval):
                 yield neval
 
+    def eval_update(self, evaluation):
+        def evalArg(arg):
+            try:
+                return evaluation[arg]
+            except KeyError:
+                return arg
+
+        newArgs = (evalArg(arg) for arg in self)
+        return Property(self.name, *newArgs)
+
+    def __hash__(self):
+        return hash(self._name) + hash(self._args)
+
+    def __eq__(self, obj):
+        try:
+            return self.name == obj.name and self._args == obj._args
+        except AttributeError:
+            return False
+
 
 class Property(NamedExpression):
-    properties = []
+    properties = set([])
 
     def __init__(self, name, *args):
         super(Property, self).__init__(name, *args)
@@ -295,7 +320,7 @@ class Property(NamedExpression):
 
 
 class Event(NamedExpression):
-    events = []
+    events = set([])
 
     def __init__(self, name, *args):
         super(Event, self).__init__(name, *args)
