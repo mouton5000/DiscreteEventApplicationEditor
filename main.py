@@ -307,7 +307,7 @@ class ArcParamEditorWidget(QWidget):
 
     def setIndexes(self, maxIndex, index):
         self._indexQCB.clear()
-        for i in range(maxIndex):
+        for i in xrange(maxIndex):
             self._indexQCB.addItem(str(i))
         self._indexQCB.setCurrentIndex(index)
 
@@ -710,8 +710,8 @@ class ArcItem(QGraphicsPathItem):
         arcs = self.node1.outputArcs
         arcs.remove(self)
         arcs.insert(i, self)
-        for j in range(len(arcs)):
-            arcs[j]._setLabelItemText(j, arcs[j]._label)
+        for j, arc in enumerate(arcs):
+            arc._setLabelItemText(j, arc._label)
 
     def getLabel(self):
         return self._label
