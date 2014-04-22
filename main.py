@@ -12,12 +12,10 @@ from visual import vector
 from math import pi, cos, degrees, atan
 from random import uniform
 from copy import copy
-
 import json
-
 from undoRedoActions import *
-
 import os.path
+from itertools import chain
 
 
 class MainWindow(QMainWindow):
@@ -151,8 +149,6 @@ class MainWindow(QMainWindow):
                     offset = arc.getLabelItem().getOffset()
                     d['labelItemOffset'] = [offset.x, offset.y]
                     return d
-
-                from itertools import chain
 
                 d = {
                     "nodes": [nodeDict(node) for node in nodes],
@@ -700,8 +696,8 @@ class ArcItem(QGraphicsPathItem):
 
         self.scene().parent().window().stack.push(AddItemCommand(self.scene(), self))
 
-        self._label = 'False'
-        self._formula = 'False'
+        self._label = 'false'
+        self._formula = 'false'
         self._consequences = []
 
         self._labelItem = ArcLabelItem(str(len(node1.outputArcs) - 1) + ' : ' + self._label,
@@ -747,7 +743,10 @@ class ArcItem(QGraphicsPathItem):
 
     def setConsequences(self, consequences):
         try:
-            self._consequences = consequences.split('\n')  # consequences is a string
+            if consequences == '':
+                self._consequences = []
+            else:
+                self._consequences = consequences.split('\n')  # consequences is a string
         except AttributeError:
             self._consequences = consequences  # consequences is a list
 
