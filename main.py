@@ -15,7 +15,10 @@ from copy import copy
 import json
 from undoRedoActions import *
 import os.path
+import game.gameWindow as gameWindow
+from stateMachine import StateMachine, Node, Transition
 from itertools import chain
+from grammar.booleanExpressions import Property, Event
 
 
 class MainWindow(QMainWindow):
@@ -24,6 +27,8 @@ class MainWindow(QMainWindow):
         self.init_ui()
         self.stack = QUndoStack()
         self.stack.indexChanged.connect(self.setModified)
+
+        self._stateMachine = StateMachine()
 
         self._modified = False
         self._currentFile = None
@@ -88,10 +93,14 @@ class MainWindow(QMainWindow):
         debugAction.setShortcut('Shift+F11')
         debugAction.triggered.connect(self.debug)
 
+        stopAction = QAction('&Stop', self)
+        stopAction.triggered.connect(self.stop)
+
         runMenu = menubar.addMenu('&Run')
         runMenu.addAction(compileAction)
         runMenu.addAction(runAction)
         runMenu.addAction(debugAction)
+        runMenu.addAction(stopAction)
 
     def scene(self):
         return self.centralWidget().drawing.scene()
@@ -219,13 +228,44 @@ class MainWindow(QMainWindow):
         self.stack.redo()
 
     def compile(self):
-        pass
+        self._stateMachine.clearActiveStates()
+        scene = self.scene()
+
+        def compileNode(node):
+            n = Node(node.num)
+            if node.isActive():
+                self._stateMachine.addActiveState(n)
+            return n
+
+        nodeDict = {node: compileNode(node) for node in scene.nodes}
+
+        def compileArc(a):
+            n1 = nodeDict[a.node1]
+            n2 = nodeDict[a.node2]
+            Transition(n1, n2, a.getFormula(), a.getConsequences())
+
+        for arc in chain.from_iterable(node.outputArcs for node in scene.nodes):
+            compileArc(arc)
 
     def run(self):
-        pass
+        if not self._stateMachine:
+            return
+        Property.properties.clear()
+        Event.events.clear()
+        gameWindow.init()
+        for i in xrange(600):
+            self._stateMachine.tick()
+            if not gameWindow.tick():
+                self.stop()
+                return
 
     def debug(self):
-        pass
+        if not self._stateMachine:
+            return
+        gameWindow.init()
+
+    def stop(self):
+        gameWindow.hide()
 
     def center(self):
         qr = self.frameGeometry()
@@ -572,6 +612,10 @@ class NodeItem(QGraphicsEllipseItem):
 
         self._isActive = False
         self.setBrush(QBrush(QtCore.Qt.black))
+
+    @property
+    def num(self):
+        return self._num
 
     def add(self):
         self.scene().nodes.append(self)
