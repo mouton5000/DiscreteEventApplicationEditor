@@ -8,6 +8,7 @@ class BExpression(object):
         self._expr = expr
         self._timer = []
         self._locks = []
+        self.listTimersAndLocks()
 
     def listTimersAndLocks(self):
         check = [self._expr]
@@ -28,6 +29,10 @@ class BExpression(object):
 
     def eval(self):
         return self._expr.eval(dict())
+
+    def init(self):
+        for timer in self._timer:
+            timer.init()
 
 
 class BLitteral(object):
@@ -97,18 +102,11 @@ class Timer(object):
     def __str__(self):
         return '( timer ' + str(self._nbFrames) + ')'
 
-    def clear(self):
-        self._nbFramesBeforeTrue = None
-
     def init(self):
         self._nbFramesBeforeTrue = self._nbFrames
 
     def eval(self, previousEvaluation):
-        try:
-            self._nbFramesBeforeTrue -= 1
-        except TypeError:
-            self.init()
-            self._nbFramesBeforeTrue -= 1
+        self._nbFramesBeforeTrue -= 1
         if self._nbFramesBeforeTrue < 0:
             yield previousEvaluation
 
