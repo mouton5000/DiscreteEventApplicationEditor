@@ -4,7 +4,6 @@
 import sys
 
 from PyQt4 import QtCore
-
 from PyQt4.QtCore import QRectF, QPointF
 from PyQt4.QtGui import QApplication as QApp, QVBoxLayout, QHBoxLayout, QTextEdit, QGraphicsSimpleTextItem, QAction, \
     QFileDialog, QMainWindow, QWidget, QDesktopWidget, QLabel, QComboBox, QGraphicsView, QGraphicsScene, \
@@ -99,14 +98,21 @@ class MainWindow(QMainWindow):
     def scene(self):
         return self.centralWidget().drawing.scene()
 
+    def reinit(self):
+        self.stack.clear()
+        self._stateMachine = StateMachine()
+        self._modified = False
+        self._currentFile = None
+
     def new(self):
         scene = self.scene()
         scene.clear()
+        self.reinit()
         return scene
 
     def save(self):
         if self._currentFile:
-            self.saveAs(self._lastSaveOpenFileDirectory+'/'+self._currentFile)
+            self.saveAs(self._lastSaveOpenFileDirectory + '/' + self._currentFile)
         else:
             self.saveAs()
 
@@ -115,6 +121,9 @@ class MainWindow(QMainWindow):
             if not fname:
                 fname = str(QFileDialog.getSaveFileName(self, 'Choose save destination',
                                                         self._lastSaveOpenFileDirectory, 'JSON files (*.json)'))
+
+            if fname[-5:] != '.json':
+                fname += '.json'
 
             with open(fname, 'w') as f:
                 scene = self.scene()
@@ -193,6 +202,7 @@ class MainWindow(QMainWindow):
 
                 self._lastSaveOpenFileDirectory = os.path.dirname(fname)
                 self.setCurrentFile(os.path.basename(fname))
+                self.reinit()
         except IOError:
             pass
 
