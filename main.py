@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
         self.stack = QUndoStack()
         self.stack.indexChanged.connect(self.setModified)
 
+        self._nodeDict = None
         self._stateMachine = StateMachine()
 
         self._modified = False
@@ -206,8 +207,8 @@ class MainWindow(QMainWindow):
                     addArc(arc)
 
                 self._lastSaveOpenFileDirectory = os.path.dirname(fname)
-                self.setCurrentFile(os.path.basename(fname))
                 self.reinit()
+                self.setCurrentFile(os.path.basename(fname))
         except IOError:
             pass
 
@@ -228,31 +229,37 @@ class MainWindow(QMainWindow):
         self.stack.redo()
 
     def compile(self):
-        self._stateMachine.clearActiveStates()
         scene = self.scene()
 
         def compileNode(node):
             n = Node(node.num)
-            if node.isActive():
-                self._stateMachine.addActiveState(n)
+
             return n
 
-        nodeDict = {node: compileNode(node) for node in scene.nodes}
+        self._nodeDict = {node: Node(node.num) for node in scene.nodes}
 
         def compileArc(a):
-            n1 = nodeDict[a.node1]
-            n2 = nodeDict[a.node2]
+            n1 = self._nodeDict[a.node1]
+            n2 = self._nodeDict[a.node2]
             Transition(n1, n2, a.getFormula(), a.getConsequences())
 
         for arc in chain.from_iterable(node.outputArcs for node in scene.nodes):
             compileArc(arc)
 
     def run(self):
-        if not self._stateMachine:
+        if not self._stateMachine or not self._nodeDict:
             return
+
+        self._stateMachine.clearActiveStates()
+        for node, compNode in self._nodeDict.iteritems():
+            if node.isActive():
+                self._stateMachine.addActiveState(compNode)
+
         Property.properties.clear()
         Event.events.clear()
         gameWindow.init()
+
+        self._stateMachine.init()
         for i in xrange(600):
             self._stateMachine.tick()
             if not gameWindow.tick():

@@ -7,6 +7,7 @@ from grammar.consequencesGrammar import ConsequencesParser, ADD_CONSEQUENCE, REM
 
 import game.gameWindow as gameWindow
 
+
 class StateMachine:
     def __init__(self):
         self._activeStates = set([])
@@ -16,6 +17,10 @@ class StateMachine:
 
     def clearActiveStates(self):
         self._activeStates.clear()
+
+    def init(self):
+        for n in self._activeStates:
+            n.init()
 
     def tick(self):
         def transitionOf(n):
@@ -88,6 +93,7 @@ class Transition:
             return evaluation
 
     def consequences(self, evaluation):
+        # TODO : utiliser itertools pour faire tout ca plus rapidement
         consParsed = (ConsequencesParser.parse(cons) for cons in self._consequences)
         consEvaluated = [(consType, cons.eval_update(evaluation)) for consType, cons in consParsed]
         pToAdd = (cons for consType, cons in consEvaluated if consType == ADD_CONSEQUENCE

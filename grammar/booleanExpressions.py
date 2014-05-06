@@ -6,7 +6,7 @@ from dictSet import DictContainer
 class BExpression(object):
     def __init__(self, expr):
         self._expr = expr
-        self._timer = []
+        self._timers = []
         self._locks = []
         self.listTimersAndLocks()
 
@@ -15,12 +15,12 @@ class BExpression(object):
         while len(check) != 0:
             e = check.pop()
             if isinstance(e, Timer):
-                self._timer.append(e)
+                self._timers.append(e)
             elif isinstance(e, eLock):
                 self._locks.append(e)
             try:
-                check.append(e.a1)
-                check.append(e.a2)
+                check.append(e._a1)
+                check.append(e._a2)
             except AttributeError:
                 pass
 
@@ -31,7 +31,7 @@ class BExpression(object):
         return self._expr.eval(dict())
 
     def init(self):
-        for timer in self._timer:
+        for timer in self._timers:
             timer.init()
 
 
@@ -126,7 +126,6 @@ class Rand(object):
             p = self._prob
         except KeyError:
             yield
-        print p
         if random() < p:
             yield previousEvaluation
 

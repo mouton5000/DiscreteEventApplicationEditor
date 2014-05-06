@@ -9,10 +9,11 @@ REMOVE_SPRITE_CONSEQUENCE = 3
 MOVE_SPRITE_CONSEQUENCE = 4
 EDIT_SPRITE_CONSEQUENCE = 5
 
+
 class ConsequencesParser(lrparsing.Grammar):
     class T(lrparsing.TokenRegistry):
-        integer = Token(re='[0-9]+')
-        float = Token(re='[0-9]+\.[0-9]+')
+        integer = Token(re='-?[0-9]+')
+        float = Token(re='-?[0-9]+\.[0-9]+')
         string = Token(re='\'[A-Za-z_0-9]*\'')
         variable = Token(re='[A-Z][A-Z_0-9]*')
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')

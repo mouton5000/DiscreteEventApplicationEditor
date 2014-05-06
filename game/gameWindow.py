@@ -94,6 +94,7 @@ def editSprite(name, num):
     sp.rect.x = x
     sp.rect.y = y
 
+
 def hide():
     global _scene
     pygame.display.quit()
