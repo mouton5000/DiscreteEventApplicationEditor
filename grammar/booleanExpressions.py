@@ -123,13 +123,14 @@ class Rand(object):
         try:
             if self._prob[0].isupper():
                 p = previousEvaluation[self._prob]
+                if random() < p:
+                    yield previousEvaluation
         except TypeError:
             p = self._prob
-        except KeyError:
-            pass
-        else:
             if random() < p:
                 yield previousEvaluation
+        except KeyError:
+            pass
 
 
 class eLock(object):
