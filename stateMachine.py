@@ -26,10 +26,12 @@ class StateMachine:
         def transitionOf(n):
             for transition in n.outputArcs:
                 evaluation = transition.eval()
+                print transition, evaluation
                 if evaluation is None:
                     continue
                 return transition, transition.consequences(evaluation)
 
+        # todo sera ameliore plus tard
         transitionGen = (transitionOf(n) for n in self._activeStates)
         transitionGen2 = [trcs for trcs in transitionGen if not trcs is None]
 
@@ -42,21 +44,23 @@ class StateMachine:
 
         self._activeStates.update(newActiveState(trcs[0]) for trcs in transitionGen2)
 
-        Property.properties.update(chain(*(trcs[1][0] for trcs in transitionGen2)))
-        Property.properties.difference_update(chain(*(trcs[1][1] for trcs in transitionGen2)))
-
         Event.events.clear()
-        Event.events.update(chain(*(trcs[1][2] for trcs in transitionGen2)))
-
-        for trcs in transitionGen2:
-            for addSprite in trcs[1][3]:
-                gameWindow.addSprite(addSprite.name, addSprite.num, addSprite.x, addSprite.y)
-            for removeSprite in trcs[1][4]:
-                gameWindow.removeSprite(removeSprite.name)
-            for moveSprite in trcs[1][5]:
-                gameWindow.moveSprite(moveSprite.name, moveSprite.dx, moveSprite.dy)
-            for editSprite in trcs[1][6]:
-                gameWindow.editSprite(editSprite.name, editSprite.num)
+        for trans, consequences in transitionGen2:
+            for consType, cons in consequences:
+                if consType == ADD_CONSEQUENCE and isinstance(cons, Property):
+                    Property.properties.add(cons)
+                elif consType == REMOVE_CONSEQUENCE and isinstance(cons, Property):
+                    Property.properties.remove(cons)
+                elif consType == ADD_CONSEQUENCE and isinstance(cons, Event):
+                    Event.events.add(cons)
+                elif consType == ADD_SPRITE_CONSEQUENCE:
+                    gameWindow.addSprite(cons.name, cons.num, cons.x, cons.y)
+                elif consType == REMOVE_SPRITE_CONSEQUENCE:
+                    gameWindow.removeSprite(cons.name)
+                elif consType == MOVE_SPRITE_CONSEQUENCE:
+                    gameWindow.moveSprite(cons.name, cons.dx, cons.dy)
+                elif consType == EDIT_SPRITE_CONSEQUENCE:
+                    gameWindow.editSprite(cons.name, cons.num)
 
         print self._activeStates, Property.properties, Event.events
 
@@ -93,19 +97,8 @@ class Transition:
             return evaluation
 
     def consequences(self, evaluation):
-        # TODO : utiliser itertools pour faire tout ca plus rapidement
         consParsed = (ConsequencesParser.parse(cons) for cons in self._consequences)
-        consEvaluated = [(consType, cons.eval_update(evaluation)) for consType, cons in consParsed]
-        pToAdd = (cons for consType, cons in consEvaluated if consType == ADD_CONSEQUENCE
-                  and isinstance(cons, Property))
-        pToRemove = (cons for consType, cons in consEvaluated if consType == REMOVE_CONSEQUENCE
-                     and isinstance(cons, Property))
-        eToAdd = (cons for consType, cons in consEvaluated if consType == ADD_CONSEQUENCE and isinstance(cons, Event))
-        spToAdd = (cons for consType, cons in consEvaluated if consType == ADD_SPRITE_CONSEQUENCE)
-        spToRemove = (cons for consType, cons in consEvaluated if consType == REMOVE_SPRITE_CONSEQUENCE)
-        spToMove = (cons for consType, cons in consEvaluated if consType == MOVE_SPRITE_CONSEQUENCE)
-        spToEdit = (cons for consType, cons in consEvaluated if consType == EDIT_SPRITE_CONSEQUENCE)
-        return pToAdd, pToRemove, eToAdd, spToAdd, spToRemove, spToMove, spToEdit
+        return ((consType, cons.eval_update(evaluation)) for consType, cons in consParsed)
 
     def __str__(self):
         return str(self.n1) + ' ' + str(self.n2)
