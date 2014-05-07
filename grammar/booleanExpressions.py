@@ -62,7 +62,8 @@ class And(BBiOp):
         self.symbol = 'and'
 
     def eval(self, previousEvaluation):
-        return chain(*(self._a2.eval(eval1) for eval1 in self._a1.eval(previousEvaluation) if not eval1 is None))
+        return chain(*(self._a2.eval(eval1) for eval1 in self._a1.eval(previousEvaluation)
+                       if not eval1 is None))
 
 
 class Or(BBiOp):
@@ -125,9 +126,10 @@ class Rand(object):
         except TypeError:
             p = self._prob
         except KeyError:
-            yield
-        if random() < p:
-            yield previousEvaluation
+            pass
+        else:
+            if random() < p:
+                yield previousEvaluation
 
 
 class eLock(object):
@@ -137,6 +139,29 @@ class eLock(object):
 
     def __str__(self):
         return '( elock' + str(self._keys) + ' : ' + str(self._priority) + ')'
+
+    def eval(self, previousEvaluation):
+        evaluation = previousEvaluation.copy()
+        try:
+            keys = self.eval_keys(previousEvaluation)
+            if not keys in evaluation or evaluation[keys] <= self._priority:
+                evaluation[keys] = self._priority
+            yield evaluation
+        except KeyError:
+            pass
+
+    def eval_keys(self, evaluation):
+        def evalArg(arg):
+            try:
+                if arg[0].isupper():
+                    return evaluation[arg]
+                else:
+                    return arg
+            except TypeError:
+                return arg
+
+        keys = tuple([evalArg(key) for key in self._keys])
+        return keys
 
 
 class Is(BBiOp):
@@ -285,16 +310,6 @@ class NamedExpression(object):
             if not neval is None and dc.add(neval):
                 yield neval
 
-    def eval_update(self, evaluation):
-        def evalArg(arg):
-            try:
-                return evaluation[arg]
-            except KeyError:
-                return arg
-
-        newArgs = (evalArg(arg) for arg in self)
-        return Property(self.name, *newArgs)
-
     def __hash__(self):
         return hash(self._name) + hash(self._args)
 
@@ -315,6 +330,16 @@ class Property(NamedExpression):
     def container(self):
         return Property.properties
 
+    def eval_update(self, evaluation):
+        def evalArg(arg):
+            try:
+                return evaluation[arg]
+            except KeyError:
+                return arg
+
+        newArgs = (evalArg(arg) for arg in self)
+        return Property(self.name, *newArgs)
+
 
 class Event(NamedExpression):
     events = set([])
@@ -326,6 +351,15 @@ class Event(NamedExpression):
     def container(self):
         return Event.events
 
+    def eval_update(self, evaluation):
+        def evalArg(arg):
+            try:
+                return evaluation[arg]
+            except KeyError:
+                return arg
+
+        newArgs = (evalArg(arg) for arg in self)
+        return Event(self.name, *newArgs)
 
 if __name__ == '__main__':
     pass
