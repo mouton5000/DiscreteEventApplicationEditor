@@ -420,6 +420,13 @@ class ViewWidget(QGraphicsView):
         self.px = None
         self.py = None
         self.arcParamEditor = None
+        self.scl = 1
+
+    def wheelEvent(self, event):
+        step = event.delta() / 120
+        scale = 1.1 ** step
+        self.scale(scale, scale)
+        self.scl *= scale
 
     def mouseMoveEvent(self, event):
         item = self.scene().mouseGrabberItem()
@@ -428,7 +435,8 @@ class ViewWidget(QGraphicsView):
         else:
             x, y = event.x(), event.y()
             if self.px:
-                self.translate(x - self.px, y - self.py)
+                self.translate((x - self.px) / self.scl, (y - self.py) / self.scl)
+
             self.px = x
             self.py = y
 
@@ -442,13 +450,13 @@ class ViewWidget(QGraphicsView):
     def keyPressEvent(self, event):
         dx, dy = 0, 0
         if event.key() == QtCore.Qt.Key_Right:
-            dx, dy = 30, 0
-        elif event.key() == QtCore.Qt.Key_Left:
             dx, dy = -30, 0
+        elif event.key() == QtCore.Qt.Key_Left:
+            dx, dy = 30, 0
         elif event.key() == QtCore.Qt.Key_Up:
-            dx, dy = 0, -30
-        elif event.key() == QtCore.Qt.Key_Down:
             dx, dy = 0, 30
+        elif event.key() == QtCore.Qt.Key_Down:
+            dx, dy = 0, -30
         else:
             super(ViewWidget, self).keyPressEvent(event)
         if dx != 0 or dy != 0:
