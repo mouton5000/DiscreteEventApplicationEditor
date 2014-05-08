@@ -223,7 +223,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    exprToPars = 'pW(X,Y) and (eLock(6,X,Y) or eLock(4,X,Y))'
+    exprToPars = 'pW(X,Y) and T is X + 3 and (eLock(1,X,3) or eLock(2,2,T))'
     b = BExpression(BooleanExpressionParser.parse(exprToPars))
 
     Property.properties = [Property('W', 0, 0), Property('W', 0, 1), Property('W', 1, 0), Property('W', 1, 1)]+\

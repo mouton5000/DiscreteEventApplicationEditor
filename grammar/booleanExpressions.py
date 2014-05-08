@@ -28,11 +28,59 @@ class BExpression(object):
         return str(self._expr)
 
     def eval(self):
-        return self._expr.eval(dict())
+        return self._expr.eval(Evaluation())
 
     def init(self):
         for timer in self._timers:
             timer.init()
+
+
+class Evaluation(object):
+    def __init__(self):
+        self.variables = dict()
+        self.locks = dict()
+
+    def __getitem__(self, item):
+        if isinstance(item, basestring):
+            return self.variables[item]
+        else:
+            return self.locks[item]
+
+    def __setitem__(self, item, value):
+        if isinstance(item, basestring):
+            self.variables[item] = value
+        else:
+            self.locks[item] = value
+
+    def __str__(self):
+        return str(self.variables) + ' ' + str(self.locks)
+
+    def copy(self):
+        e = Evaluation()
+        e.variables = self.variables.copy()
+        e.locks = self.locks.copy()
+        return e
+
+    def __contains__(self, item):
+        if isinstance(item, basestring):
+            return item in self.variables
+        else:
+            return item in self.locks
+
+    def __delitem__(self, item):
+        if isinstance(item, basestring):
+            del self.variables[item]
+        else:
+            del self.locks[item]
+
+    def __len__(self):
+        return len(self.variables) + len(self.locks)
+
+    def popitem(self):
+        try:
+            return self.variables.popitem()
+        except KeyError:
+            return self.locks.popitem()
 
 
 class BLitteral(object):
@@ -171,17 +219,15 @@ class Is(BBiOp):
         self.symbol = 'is'
 
     def eval(self, previousEvaluation):
-        if self._a1 in previousEvaluation:
-            yield  # The variable must not have already been unified
-        try:
-            value = self._a2.value(previousEvaluation)
-        except (ArithmeticError, TypeError):
-            yield  # The arithmetical function can not be evaluated
-        else:
-            if not value is None:
-                neval = previousEvaluation.copy()
-                neval[self._a1] = value
-                yield neval
+        if not self._a1 in previousEvaluation:
+            try:
+                value = self._a2.value(previousEvaluation)
+                if not value is None:
+                    neval = previousEvaluation.copy()
+                    neval[self._a1] = value
+                    yield neval
+            except (ArithmeticError, TypeError):
+                pass
 
 
 class Compare(BBiOp):
@@ -192,11 +238,10 @@ class Compare(BBiOp):
         try:
             v1 = self._a1.value(previousEvaluation)
             v2 = self._a2.value(previousEvaluation)
-        except (ArithmeticError, TypeError):
-            yield  # One of the arithmetical function can not be evaluated
-        else:
             if not v1 is None and not v2 is None and self.comp(v1, v2):
                 yield previousEvaluation
+        except (ArithmeticError, TypeError):
+            pass
 
 
 class Equals(Compare):
