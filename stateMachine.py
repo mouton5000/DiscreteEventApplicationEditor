@@ -23,46 +23,86 @@ class StateMachine:
             n.init()
 
     def tick(self):
-        def transitionOf(n):
-            for transition in n.outputArcs:
-                evaluation = transition.eval()
-                print transition, evaluation
-                if evaluation is None:
-                    continue
-                return transition, transition.consequences(evaluation)
 
-        # todo sera ameliore plus tard
-        transitionGen = (transitionOf(n) for n in self._activeStates)
-        transitionGen2 = [trcs for trcs in transitionGen if not trcs is None]
+        print self._activeStates, Property.properties, Event.events
 
-        self._activeStates.difference_update(trcs[0].n1 for trcs in transitionGen2)
+        from collections import deque
+        nodes = deque(node for node in self._activeStates)
+
+        def nodesGenerator():
+            # Il y a peut-etre mieux.
+            try:
+                while True:
+                    yield nodes.pop()
+            except IndexError:
+                pass
+
+        from itertools import chain
+        nodeEvaluations = {node: chain.from_iterable(((evaluation, tr) for evaluation in tr.eval())
+                                                     for tr in node.outputArcs) for node in nodes}
+
+        locks = {}
+
+        transitionGen = {}
+        for node in nodesGenerator():
+            evaluations = nodeEvaluations[node]
+            for evaluation, tr in evaluations:
+                if len(evaluation.locks) > 0:
+                    if any(keys in locks and locks[keys][0] <= prio for keys, prio in evaluation.locks.iteritems()):
+                        continue
+                    toAdd = set([])
+                    for keys, prio in evaluation.locks.iteritems():
+                        if keys in locks:
+                            toAdd.add(locks[keys][1])
+                        locks[keys] = (prio, node)
+                    nodes.extend(toAdd)
+                    for n in toAdd:
+                        del transitionGen[n]
+                    print locks
+                transitionGen[node] = (tr, tr.consequences(evaluation.variables))
+                break
+
+        # TODO sera ameliore plus tard
+
+        self._activeStates.difference_update(node for node in transitionGen)
 
         def newActiveState(transition):
             node = transition.n2
             node.init()
             return node
 
-        self._activeStates.update(newActiveState(trcs[0]) for trcs in transitionGen2)
+        self._activeStates.update(newActiveState(transitionGen[node][0]) for node in transitionGen)
 
         Event.events.clear()
-        for trans, consequences in transitionGen2:
+        for node in transitionGen:
+            trans, consequences = transitionGen[node]
             for consType, cons in consequences:
                 if consType == ADD_CONSEQUENCE and isinstance(cons, Property):
                     Property.properties.add(cons)
                 elif consType == REMOVE_CONSEQUENCE and isinstance(cons, Property):
-                    Property.properties.remove(cons)
+                    try:
+                        Property.properties.remove(cons)
+                    except KeyError:
+                        pass
                 elif consType == ADD_CONSEQUENCE and isinstance(cons, Event):
                     Event.events.add(cons)
                 elif consType == ADD_SPRITE_CONSEQUENCE:
                     gameWindow.addSprite(cons.name, cons.num, cons.x, cons.y)
                 elif consType == REMOVE_SPRITE_CONSEQUENCE:
-                    gameWindow.removeSprite(cons.name)
+                    try:
+                        gameWindow.removeSprite(cons.name)
+                    except KeyError:
+                        pass
                 elif consType == MOVE_SPRITE_CONSEQUENCE:
-                    gameWindow.moveSprite(cons.name, cons.dx, cons.dy)
+                    try:
+                        gameWindow.moveSprite(cons.name, cons.dx, cons.dy)
+                    except KeyError:
+                        pass
                 elif consType == EDIT_SPRITE_CONSEQUENCE:
-                    gameWindow.editSprite(cons.name, cons.num)
-
-        print self._activeStates, Property.properties, Event.events
+                    try:
+                        gameWindow.editSprite(cons.name, cons.num)
+                    except KeyError:
+                        pass
 
 
 class Node:
@@ -93,8 +133,7 @@ class Transition:
         self._trigger.init()
 
     def eval(self):
-        for evaluation in self._trigger.eval():
-            return evaluation
+        return self._trigger.eval()
 
     def consequences(self, evaluation):
         consParsed = (ConsequencesParser.parse(cons) for cons in self._consequences)
