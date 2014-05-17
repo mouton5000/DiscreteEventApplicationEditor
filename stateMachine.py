@@ -1,5 +1,3 @@
-from itertools import chain
-
 from grammar.grammar import BooleanExpressionParser
 from grammar.booleanExpressions import BExpression, Property, Event
 from grammar.consequencesGrammar import ConsequencesParser, ADD_CONSEQUENCE, REMOVE_CONSEQUENCE, \
