@@ -40,17 +40,17 @@ class Evaluation(object):
         self.variables = dict()
         self.locks = dict()
 
-    def __getitem__(self, item):
-        if isinstance(item, basestring):
-            return self.variables[item]
+    def __getitem__(self, key):
+        if isinstance(key, basestring):
+            return self.variables[key]
         else:
-            return self.locks[item]
+            return self.locks[key]
 
-    def __setitem__(self, item, value):
-        if isinstance(item, basestring):
-            self.variables[item] = value
+    def __setitem__(self, key, value):
+        if isinstance(key, basestring):
+            self.variables[key] = value
         else:
-            self.locks[item] = value
+            self.locks[key] = value
 
     def __str__(self):
         return str(self.variables) + ' ' + str(self.locks)
@@ -61,17 +61,17 @@ class Evaluation(object):
         e.locks = self.locks.copy()
         return e
 
-    def __contains__(self, item):
-        if isinstance(item, basestring):
-            return item in self.variables
+    def __contains__(self, key):
+        if isinstance(key, basestring):
+            return key in self.variables
         else:
-            return item in self.locks
+            return key in self.locks
 
-    def __delitem__(self, item):
-        if isinstance(item, basestring):
-            del self.variables[item]
+    def __delitem__(self, key):
+        if isinstance(key, basestring):
+            del self.variables[key]
         else:
-            del self.locks[item]
+            del self.locks[key]
 
     def __len__(self):
         return len(self.variables) + len(self.locks)
