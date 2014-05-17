@@ -156,7 +156,7 @@ class Timer(object):
 
     def eval(self, previousEvaluation):
         self._nbFramesBeforeTrue -= 1
-        if self._nbFramesBeforeTrue < 0:
+        if self._nbFramesBeforeTrue <= 0:
             yield previousEvaluation
 
 
