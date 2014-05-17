@@ -110,8 +110,8 @@ class And(BBiOp):
         self.symbol = 'and'
 
     def eval(self, previousEvaluation):
-        return chain(*(self._a2.eval(eval1) for eval1 in self._a1.eval(previousEvaluation)
-                       if not eval1 is None))
+        return chain.from_iterable(self._a2.eval(eval1) for eval1 in self._a1.eval(previousEvaluation)
+                                   if not eval1 is None)
 
 
 class Or(BBiOp):
