@@ -1,3 +1,5 @@
+from collections import deque
+
 __author__ = 'mouton'
 
 from PyQt4.QtGui import QVBoxLayout, QAction, \
@@ -10,7 +12,7 @@ from stateMachine import StateMachine, Node, Transition
 from itertools import chain
 from grammar.booleanExpressions import Property, Event
 from EditorItem import ViewWidget
-from PropertiesItems import ArcParamEditorWidget
+from PropertiesItems import PropertyWidget
 
 
 class MainWindow(QMainWindow):
@@ -18,6 +20,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.init_ui()
         self.stack = QUndoStack()
+
         self.stack.indexChanged.connect(self.setModified)
 
         self._nodeDict = None
@@ -133,7 +136,12 @@ class MainWindow(QMainWindow):
                     d = dict()
                     xy = node.getXY()
                     d['x'], d['y'] = xy.x, xy.y
-                    d['isActive'] = node.isActive()
+                    # d['isActive'] = node.isActive()
+                    d['num'] = node.num
+                    d['label'] = node.getLabel()
+                    d['tokens'] = node.getTokens()
+                    offset = node.getLabelItem().getOffset()
+                    d['labelItemOffset'] = [offset.x, offset.y]
                     return d
 
                 def arcDict(arc):
@@ -153,6 +161,8 @@ class MainWindow(QMainWindow):
                     return d
 
                 d = {
+                    "nodeId": scene.getNodeId(),
+                    "nextIds": list(scene.getNextIds()),
                     "nodes": [nodeDict(node) for node in nodes],
                     "arcs": [arcDict(arc) for arc in chain.from_iterable(node.outputArcs for node in nodes)]}
                 json.dump(d, f)
@@ -171,12 +181,18 @@ class MainWindow(QMainWindow):
                 d = json.load(f)
 
                 scene = self.new()
+                nodeNums = []
 
                 def addNode(node):
                     x = node['x']
                     y = node['y']
                     n = scene.addNode(x, y)
-                    n.setActive(node['isActive'])
+                    # n.setActive(node['isActive'])
+                    n.num = node['num']
+                    n.setLabel(node['label'])
+                    n.setTokens(node['tokens'])
+                    lioff = node['labelItemOffset']
+                    n.getLabelItem().setOffset(vector(lioff[0], lioff[1]))
                     return n
 
                 nodes = [addNode(node) for node in d['nodes']]
@@ -197,6 +213,9 @@ class MainWindow(QMainWindow):
 
                 for arc in d['arcs']:
                     addArc(arc)
+
+                scene.setNodeId(d['nodeId'])
+                scene.setNextIds(deque(d['nextIds']))
 
                 self._lastSaveOpenFileDirectory = os.path.dirname(fname)
                 self.reinit()
@@ -243,9 +262,9 @@ class MainWindow(QMainWindow):
             return
 
         self._stateMachine.clearActiveStates()
-        for node, compNode in self._nodeDict.iteritems():
-            if node.isActive():
-                self._stateMachine.addActiveState(compNode)
+        # for node, compNode in self._nodeDict.iteritems():
+        #     if node.isActive():
+        #         self._stateMachine.addActiveState(compNode)
 
         Property.properties.clear()
         Event.events.clear()
@@ -296,8 +315,8 @@ class MainWidget(QWidget):
 
         vbox = QVBoxLayout()
         self.drawing = ViewWidget(self)
-        self.params = ArcParamEditorWidget(self)
-        self.drawing.setArcParamEditor(self.params)
+        self.propertiesEditor = PropertyWidget(self)
+        self.drawing.setPropertiesEditor(self.propertiesEditor)
         vbox.addWidget(self.drawing)
-        vbox.addWidget(self.params)
+        vbox.addWidget(self.propertiesEditor)
         self.setLayout(vbox)

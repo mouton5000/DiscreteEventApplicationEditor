@@ -1,6 +1,46 @@
+from PyQt4.QtCore import Qt
+
 __author__ = 'mouton'
 
-from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QTextEdit, QWidget, QLabel, QComboBox
+from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QWidget, QLabel, QComboBox, QPushButton, QScrollArea
+
+
+class PropertyWidget(QWidget):
+    def __init__(self, parent=None):
+        super(PropertyWidget, self).__init__(parent)
+        self.layout = QVBoxLayout()
+
+        self.noItem = QLabel('Proprietes de l\'element selectionne')
+        self.noItem.setMinimumHeight(200)
+        self.noItem.setMaximumHeight(200)
+
+        self.arcParamEditor = ArcParamEditorWidget(self)
+        self.nodeParamEditor = NodeParamEditorWidget(self)
+
+        self.layout.addWidget(self.noItem)
+        self.layout.addWidget(self.arcParamEditor)
+        self.arcParamEditor.hide()
+        self.layout.addWidget(self.nodeParamEditor)
+        self.nodeParamEditor.hide()
+
+        self.propertyItem = self.noItem
+
+        self.setLayout(self.layout)
+
+    def setItem(self, item):
+        self.propertyItem.hide()
+        self.propertyItem = item
+        self.propertyItem.show()
+        return item
+
+    def setNoItem(self):
+        return self.setItem(self.noItem)
+
+    def setArcItem(self):
+        return self.setItem(self.arcParamEditor)
+
+    def setNodeItem(self):
+        return self.setItem(self.nodeParamEditor)
 
 
 class ArcParamEditorWidget(QWidget):
@@ -99,3 +139,72 @@ class ArcParamEditorWidget(QWidget):
         except AttributeError:
             self.init()
 
+
+class NodeParamEditorWidget(QWidget):
+    def __init__(self, parent=None):
+        super(NodeParamEditorWidget, self).__init__(parent)
+
+        vbox = QVBoxLayout()
+
+        hboxTitle = QHBoxLayout()
+        self._lb1 = QLabel('Indice du noeud : ', self)
+        self._lb2 = QLabel('', self)
+        self._lb2.setMinimumWidth(50)
+        self._lb2.setMaximumWidth(50)
+        hboxTitle.addWidget(self._lb1)
+        hboxTitle.addWidget(self._lb2)
+
+        self._labelTE = QLineEdit(self)
+        hboxTitle.addWidget(self._labelTE)
+
+        self._tokensTE = QTextEdit(self)
+        self._tokensTE.setUndoRedoEnabled(True)
+        vbox.addLayout(hboxTitle)
+        vbox.addWidget(self._tokensTE)
+
+        self.init()
+
+        self._selectedNode = None
+        self._labelTE.textChanged.connect(self.labelChanged)
+        self._labelTE.textChanged.connect(self.window().setModified)
+
+        self._tokensTE.textChanged.connect(self.tokenChanged)
+        self._tokensTE.textChanged.connect(self.window().setModified)
+
+        self.setMinimumHeight(200)
+        self.setMaximumHeight(200)
+        self.setLayout(vbox)
+
+    def init(self):
+        self.setLabel('Etiquette du noeud.')
+        self.setTokens('Tokens du noeud')
+
+    def setIndex(self, num):
+        self._lb2.setText(str(num))
+
+    def setLabel(self, label):
+        self._labelTE.setText(label)
+
+    def setTokens(self, tokens):
+        self._tokensTE.setText(tokens)
+
+    def labelChanged(self):
+        try:
+            self._selectedNode.setLabel(str(self._labelTE.text()))
+        except AttributeError:
+            pass
+
+    def tokenChanged(self):
+        try:
+            self._selectedNode.setTokens(str(self._tokensTE.toPlainText()))
+        except AttributeError:
+            pass
+
+    def setSelectedNode(self, n):
+        self._selectedNode = n
+        try:
+            self.setIndex(n.num)
+            self.setLabel(n.getLabel())
+            self.setTokens(n.getTokensStr())
+        except AttributeError:
+            self.init()

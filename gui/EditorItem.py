@@ -7,6 +7,7 @@ from PyQt4.QtGui import QGraphicsView, QGraphicsScene
 from undoRedoActions import *
 from NodeItems import NodeItem
 from ArcItems import ArcItem, CycleArcItem
+from collections import deque
 
 
 class ViewWidget(QGraphicsView):
@@ -20,7 +21,7 @@ class ViewWidget(QGraphicsView):
         self.setSceneRect(self.rect)
         self.px = None
         self.py = None
-        self.arcParamEditor = None
+        self.propertiesEditor = None
         self.scl = 1
 
     def wheelEvent(self, event):
@@ -67,8 +68,8 @@ class ViewWidget(QGraphicsView):
         self.rect.translate(-dx, -dy)
         self.setSceneRect(self.rect)
 
-    def setArcParamEditor(self, ape):
-        self.arcParamEditor = ape
+    def setPropertiesEditor(self, pe):
+        self.propertiesEditor = pe
 
 
 class SceneWidget(QGraphicsScene):
@@ -83,9 +84,22 @@ class SceneWidget(QGraphicsScene):
     def init(self):
         self.nodes = []
         self._nodeId = 0
+        self._nextIds = deque([0])
         self._selected = None
         self._mode = None
         self.setNodeMode()
+
+    def getNodeId(self):
+        return self._nodeId
+
+    def getNextIds(self):
+        return self._nextIds
+
+    def setNodeId(self, nodeId):
+        self._nodeId = nodeId
+
+    def setNextIds(self, nextIds):
+        self._nextIds = nextIds
 
     def addItem(self, item):
         super(SceneWidget, self).addItem(item)
@@ -98,9 +112,19 @@ class SceneWidget(QGraphicsScene):
         super(SceneWidget, self).clear()
         self.init()
 
+    def getNextNodeId(self):
+        num = self._nextIds.popleft()
+        if len(self._nextIds) == 0:
+            self._nodeId += 1
+            self._nextIds.append(self._nodeId)
+        return num
+
+    def removeNodeIndex(self, index):
+        self._nextIds.appendleft(index)
+
     def addNode(self, x, y):
-        node = NodeItem(x, y, self._nodeId, scene=self)
-        self._nodeId += 1
+        num = self.getNextNodeId()
+        node = NodeItem(x, y, num, scene=self)
         self.setSelected(node)
         # Apparently, addItem is not called when an item is created
         node.add()
@@ -151,9 +175,14 @@ class SceneWidget(QGraphicsScene):
         if item:
             try:
                 item.select()
+                if isinstance(item, ArcItem):
+                    self.parent().propertiesEditor.setArcItem().setSelectedArc(item)
+                elif isinstance(item, NodeItem):
+                    self.parent().propertiesEditor.setNodeItem().setSelectedNode(item)
             except AttributeError:
-                pass
-        self.parent().arcParamEditor.setSelectedArc(item)
+                self.parent().propertiesEditor.setNoItem()
+        else:
+            self.parent().propertiesEditor.setNoItem()
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_N:

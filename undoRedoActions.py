@@ -18,9 +18,20 @@ class AddItemCommand(QUndoCommand):
             return
 
         self._scene.addItem(self._item)
+
+        try:
+            self._item.num = self._scene.getNextNodeId()
+        except AttributeError:
+            pass
+
         try:
             self._item.node1.outputArcs.append(self._item)
             self._item.node2.inputArcs.append(self._item)
+        except AttributeError:
+            pass
+
+        try:
+            self._scene.addItem(self._item._labelItem)
         except AttributeError:
             pass
 
@@ -74,18 +85,18 @@ class MoveArcCommand(QUndoCommand):
             self._arc.setCl(self._newCl)
 
 
-class MoveArcLabelCommand(QUndoCommand):
-    def __init__(self, arcLabel, prevOffset, newOffset, parent=None):
-        super(MoveArcLabelCommand, self).__init__(parent)
-        self._arcLabel = arcLabel
+class MoveLabelItemCommand(QUndoCommand):
+    def __init__(self, labelItem, prevOffset, newOffset, parent=None):
+        super(MoveLabelItemCommand, self).__init__(parent)
+        self._labelItem = labelItem
         self._prevOffset = prevOffset
         self._newOffset = newOffset
 
     def undo(self):
-        self._arcLabel.setOffset(self._prevOffset)
+        self._labelItem.setOffset(self._prevOffset)
 
     def redo(self):
-        self._arcLabel.setOffset(self._newOffset)
+        self._labelItem.setOffset(self._newOffset)
 
 
 class SetActiveNodeCommand(QUndoCommand):

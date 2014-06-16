@@ -2,13 +2,13 @@ __author__ = 'mouton'
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtCore
-from PyQt4.QtCore import QPointF
-from PyQt4.QtGui import QGraphicsSimpleTextItem, QGraphicsPathItem, QBrush, QPainterPath
+from PyQt4.QtGui import QGraphicsPathItem, QBrush, QPainterPath
 from visual import vector
 from math import pi, cos, degrees, atan
 from random import uniform
 from undoRedoActions import *
 from NodeItems import NodeItem
+from gui.LabelItems import LabelItem
 
 
 class ArcItem(QGraphicsPathItem):
@@ -45,11 +45,10 @@ class ArcItem(QGraphicsPathItem):
         self._formula = 'false'
         self._consequences = []
 
-        self._labelItem = ArcLabelItem(str(len(node1.outputArcs) - 1) + ' : ' + self._label,
-                                       parent=self, scene=self.scene())
+        self._labelItem = LabelItem(str(len(node1.outputArcs) - 1) + ' : ' + self._label,
+                                       scene=self.scene())
         self._labelItem.setBrush(QBrush(QtCore.Qt.black))
-
-        self.drawPath()
+        self.drawPath(True)
 
     def getIndex(self):
         return self.node1.outputArcs.index(self)
@@ -161,6 +160,7 @@ class ArcItem(QGraphicsPathItem):
     def remove(self):
         self.node1.outputArcs.remove(self)
         self.node2.inputArcs.remove(self)
+        self.scene().removeItem(self._labelItem)
 
     def __str__(self):
         return str(self.node1) + ' ' + str(self.node2)
@@ -168,7 +168,7 @@ class ArcItem(QGraphicsPathItem):
     def __repr__(self):
         return str(self.node1) + ' ' + str(self.node2)
 
-    def drawPath(self):
+    def drawPath(self, initLabel=False):
         """
         Tracé d'un arc reliant les noeuds node1 et node2 dans le plan.
         Attention, puisque dans le plan de l'interface, l'axe des ordonnées est inveré,
@@ -237,9 +237,9 @@ class ArcItem(QGraphicsPathItem):
         self.setPath(path)
 
         textCenter = v1 + u / 2 + (0.5 * self._cl) * n  # position normale
-        textPos = textCenter + 10 * w * n + self._labelItem.getOffset()  # position du texte déplacé
         self._labelItem.setCenter(textCenter)
-        self._labelItem.setPos(textPos.x, textPos.y)
+        if initLabel:
+            self._labelItem.setOffset(10 * w * n)  # position du texte déplacé
 
 
 class CycleArcItem(ArcItem):
@@ -247,7 +247,7 @@ class CycleArcItem(ArcItem):
         self._delta = 0
         self._moveFromDelta = None
         super(CycleArcItem, self).__init__(node1, node1, parent, scene)
-        self.drawPath()
+        #self.drawPath(True)
 
     def initPath(self):
         self._delta = uniform(0, 2 * pi)
@@ -290,7 +290,7 @@ class CycleArcItem(ArcItem):
             delta *= -1
         self.setClAndDelta(cl, delta)
 
-    def drawPath(self):
+    def drawPath(self, initLabel=False):
         """
         Tracé d'un arc reliant le noeud node1 à lui même dans le plan.
         Attention, puisque dans le plan de l'interface, l'axe des ordonnées est inveré,
@@ -398,58 +398,6 @@ class CycleArcItem(ArcItem):
         self.setPath(path)
 
         textCenter = v1 + self._cl * u
-        textPos = o + self._labelItem.getOffset()  # position du texte
         self._labelItem.setCenter(textCenter)
-        self._labelItem.setPos(textPos.x, textPos.y)
-
-
-class ArcLabelItem(QGraphicsSimpleTextItem):
-    def __init__(self, text, parent=None, scene=None):
-        super(ArcLabelItem, self).__init__(text, parent, scene)
-        self._offset = vector(0, 0)
-        self._center = vector(0, 0)
-        self._isMoving = False
-        self._moveFromOffset = False
-
-        self._linkToArc = self.scene().addLine(0, 0, 0, 0)
-        self._linkToArc.setVisible(False)
-
-    def mousePressEvent(self, event):
-        event.accept()
-
-    def mouseReleaseEvent(self, event):
-        if self._isMoving:
-            self.scene().parent().window().stack.push(MoveArcLabelCommand(self, self._moveFromOffset, self._offset))
-            self._isMoving = False
-            self._linkToArc.setVisible(False)
-        self.ungrabMouse()
-
-    def mouseMoveEvent(self, event):
-        if not self._isMoving:
-            self._isMoving = True
-            self._moveFromOffset = self._offset
-            self._linkToArc.setVisible(True)
-
-        epos = vector(event.scenePos().x(), event.scenePos().y())
-        rect = self.boundingRect()
-        pos = vector(self.pos().x() + rect.width() / 2, self.pos().y() + rect.height() / 2)
-        center = pos - self._offset
-        self.setOffset(epos - center)
-
-        line = self._linkToArc.line()
-        line.setP2(QPointF(self.pos().x() + rect.width() / 2, self.pos().y() + rect.height()))
-        self._linkToArc.setLine(line)
-
-    def setCenter(self, center):
-        self._center = center
-        line = self._linkToArc.line()
-        line.setP1(QPointF(center.x, center.y))
-        self._linkToArc.setLine(line)
-
-    def setOffset(self, offset):
-        dpos = offset - self._offset
-        self.moveBy(dpos.x, dpos.y)
-        self._offset = offset
-
-    def getOffset(self):
-        return self._offset
+        if initLabel:
+            self._labelItem.setOffset(o)
