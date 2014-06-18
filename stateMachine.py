@@ -1,79 +1,111 @@
 from grammar.grammar import BooleanExpressionParser
 from grammar.booleanExpressions import BExpression, Property, Event
 from grammar.consequencesGrammar import ConsequencesParser, ADD_CONSEQUENCE, REMOVE_CONSEQUENCE, \
-    ADD_SPRITE_CONSEQUENCE, REMOVE_SPRITE_CONSEQUENCE, MOVE_SPRITE_CONSEQUENCE, EDIT_SPRITE_CONSEQUENCE
-
+    ADD_SPRITE_CONSEQUENCE, REMOVE_SPRITE_CONSEQUENCE, MOVE_SPRITE_CONSEQUENCE, EDIT_SPRITE_CONSEQUENCE, \
+    ADD_TOKEN_CONSEQUENCE, EDIT_TOKEN_CONSEQUENCE, REMOVE_TOKEN_CONSEQUENCE
+from grammar.tokenGrammar import TokenParametersParser
 import game.gameWindow as gameWindow
 
 
 class StateMachine:
     def __init__(self):
-        self._activeStates = set([])
+        self._tokens = set([])
+        self._nodes = {}
+        self.i = 0
 
-    def addActiveState(self, n):
-        self._activeStates.add(n)
+    def addToken(self, node, tokenStr):
+        token = Token(node, *TokenParametersParser.parse(tokenStr))
+        self._tokens.add(token)
 
-    def clearActiveStates(self):
-        self._activeStates.clear()
+    def removeToken(self, token):
+        self._tokens.remove(token)
 
-    def init(self):
-        for n in self._activeStates:
-            n.init()
+    def clearTokens(self):
+        self._tokens.clear()
+        self.i = 0
+
+    def addNode(self, num, label):
+        node = Node(num, label)
+        self._nodes[num] = node
+        return node
+
+    def getNodeByNum(self, num):
+        return self._nodes[num]
+
+    def clearNodes(self):
+        self._nodes.clear()
 
     def tick(self):
-
-        print self._activeStates, Property.properties, Event.events
-
+        print self.i, self._tokens, Property.properties, Event.events
+        self.i += 1
         from collections import deque
-        nodes = deque(node for node in self._activeStates)
 
-        def nodesGenerator():
-            # Il y a peut-etre mieux.
+        tokens = deque(token for token in self._tokens)
+
+        def tokensGenerator():
             try:
                 while True:
-                    yield nodes.pop()
+                    yield tokens.pop()
             except IndexError:
                 pass
 
         from itertools import chain
-        nodeEvaluations = {node: chain.from_iterable(((evaluation, tr) for evaluation in tr.eval())
-                                                     for tr in node.outputArcs) for node in nodes}
 
-        locks = {}
+
+        # bug? la variable token est iteree a partir de la liste tokens
+        # cependant la variable token dans les valeurs chain.from ... token.node.outputArcs)
+        # est toujours egale au premier token alors que la cles est iteree correctement
+        # On se retrouve donc avec le dictionnaire suivant :
+        # {token1 : chain...(token1), token2 : chain...(token1), token3 : chain...(token1), ...}
+        # tokenEvaluations = {token: chain.from_iterable(((evaluation, tr) for evaluation in tr.eval(token))
+        #                                               for tr in token.node.outputArcs) for token in tokens}
+
+        # la version suivant fonctionne correctement
+        tokenEvaluations = {}
+        for token in tokens:
+            tokenEvaluations[token] = chain.from_iterable(((evaluation, tr) for evaluation in tr.eval(token))
+                                                          for tr in token.node.outputArcs)
+
+
+        #print tokenEvaluations
+
+        # locks = {}
 
         transitionGen = {}
-        for node in nodesGenerator():
-            evaluations = nodeEvaluations[node]
+
+        retick = False
+        for token in tokensGenerator():
+            # evaluations = tokenEvaluations[token]
+            # for evaluation, tr in evaluations:
+            #     if len(evaluation.locks) > 0:
+            #         if any(keys in locks and locks[keys][0] <= prio for keys, prio in evaluation.locks.iteritems()):
+            #             continue
+            #         toAdd = set([])
+            #         for keys, prio in evaluation.locks.iteritems():
+            #             if keys in locks:
+            #                 toAdd.add(locks[keys][1])
+            #             locks[keys] = (prio, token)
+            #         tokens.extend(toAdd)
+            #         for n in toAdd:
+            #             del transitionGen[n]
+            #         print locks
+            #     transitionGen[token] = (tr, tr.consequences(evaluation.variables))
+            #     break
+            evaluations = tokenEvaluations[token]
             for evaluation, tr in evaluations:
-                if len(evaluation.locks) > 0:
-                    if any(keys in locks and locks[keys][0] <= prio for keys, prio in evaluation.locks.iteritems()):
-                        continue
-                    toAdd = set([])
-                    for keys, prio in evaluation.locks.iteritems():
-                        if keys in locks:
-                            toAdd.add(locks[keys][1])
-                        locks[keys] = (prio, node)
-                    nodes.extend(toAdd)
-                    for n in toAdd:
-                        del transitionGen[n]
-                    print locks
-                transitionGen[node] = (tr, tr.consequences(evaluation.variables))
+                transitionGen[token] = tr.consequences(evaluation.variables)
+                token.moveTo(tr.n2)
+                retick = True
                 break
-
-        # TODO sera ameliore plus tard
-
-        self._activeStates.difference_update(node for node in transitionGen)
-
-        def newActiveState(transition):
-            node = transition.n2
-            node.init()
-            return node
-
-        self._activeStates.update(newActiveState(transitionGen[node][0]) for node in transitionGen)
+            token.oneMoreFrame()
 
         Event.events.clear()
-        for node in transitionGen:
-            trans, consequences = transitionGen[node]
+
+        if not retick:
+            return False
+
+        for token in transitionGen:
+            consequences = transitionGen[token]
             for consType, cons in consequences:
                 if consType == ADD_CONSEQUENCE and isinstance(cons, Property):
                     Property.properties.add(cons)
@@ -101,22 +133,77 @@ class StateMachine:
                         gameWindow.editSprite(cons.name, cons.num)
                     except KeyError:
                         pass
+                elif consType == ADD_TOKEN_CONSEQUENCE:
+                    node = self.getNodeByNum(cons.nodeNum)
+                    newToken = Token(node, *cons.parameters)
+                    self._tokens.add(newToken)
+                elif consType == EDIT_TOKEN_CONSEQUENCE:
+                    token.setArgs(*cons.parameters)
+                elif consType == REMOVE_TOKEN_CONSEQUENCE:
+                    self.removeToken(token)
+
+        return True
+
+
+class Token:
+    def __init__(self, node, *args):
+        self._node = node
+        self._args = args
+        self._nbFrameSinceLastMove = 0
+
+    @property
+    def node(self):
+        return self._node
+
+    def setArgs(self, *args):
+        self._args = args
+
+    def moveTo(self, node):
+        self._node = node
+        self._nbFrameSinceLastMove = 0
+
+    def oneMoreFrame(self):
+        self._nbFrameSinceLastMove += 1
+
+    @property
+    def nbFrameSinceLastMove(self):
+        return self._nbFrameSinceLastMove
+
+    def __iter__(self):
+        return iter(self._args)
+
+    def __getitem__(self, index):
+        return self._args[index]
+
+    def __str__(self):
+        return 'Token(' + str(self.node) + ',' + str(self._nbFrameSinceLastMove) + ',' + ','.join([str(o)
+                                                                                                   for o in
+                                                                                                   self._args]) + ')'
+
+    def __repr__(self):
+        return 'Token(' + str(self.node) + ',' + str(self._nbFrameSinceLastMove) + ',' + ','.join([str(o)
+                                                                                                   for o in
+                                                                                                   self._args]) + ')'
+
+    def __len__(self):
+        return len(self._args)
 
 
 class Node:
-    def __init__(self, name):
+    def __init__(self, num, name):
         self.outputArcs = []
+        self._num = num
         self._name = name
+
+    @property
+    def num(self):
+        return self._num
 
     def __str__(self):
         return str(self._name)
 
     def __repr__(self):
         return str(self._name)
-
-    def init(self):
-        for transition in self.outputArcs:
-            transition.init()
 
 
 class Transition:
@@ -127,11 +214,8 @@ class Transition:
         self._trigger = BExpression(BooleanExpressionParser.parse(trigger))
         self._consequences = consequences
 
-    def init(self):
-        self._trigger.init()
-
-    def eval(self):
-        return self._trigger.eval()
+    def eval(self, token):
+        return self._trigger.eval(token)
 
     def consequences(self, evaluation):
         consParsed = (ConsequencesParser.parse(cons) for cons in self._consequences)

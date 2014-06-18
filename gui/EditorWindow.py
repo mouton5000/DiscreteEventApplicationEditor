@@ -241,13 +241,13 @@ class MainWindow(QMainWindow):
 
     def compile(self):
         scene = self.scene()
+        self._stateMachine.clearNodes()
+        self._stateMachine.clearTokens()
 
         def compileNode(node):
-            n = Node(node.num)
+            return self._stateMachine.addNode(node.num, str(node.num) + ':' + str(node.getLabel()))
 
-            return n
-
-        self._nodeDict = {node: Node(node.num) for node in scene.nodes}
+        self._nodeDict = {node: compileNode(node) for node in scene.nodes}
 
         def compileArc(a):
             n1 = self._nodeDict[a.node1]
@@ -261,18 +261,19 @@ class MainWindow(QMainWindow):
         if not self._stateMachine or not self._nodeDict:
             return
 
-        self._stateMachine.clearActiveStates()
-        # for node, compNode in self._nodeDict.iteritems():
-        #     if node.isActive():
-        #         self._stateMachine.addActiveState(compNode)
+        self._stateMachine.clearTokens()
+        for node, compNode in self._nodeDict.iteritems():
+            for token in node.getTokens():
+                self._stateMachine.addToken(compNode, token)
 
         Property.properties.clear()
         Event.events.clear()
         gameWindow.init()
 
-        self._stateMachine.init()
         for i in xrange(600):
-            self._stateMachine.tick()
+            retick = True
+            while retick:
+                retick = self._stateMachine.tick()
             if not gameWindow.tick():
                 self.stop()
                 return

@@ -17,10 +17,12 @@ class BooleanExpressionParser(lrparsing.Grammar):
         false = Token('false')
         timer = Token('timer')
         rand = Token('rand')
+        randInt = Token('randInt')
         iskw = Token('is')
         andkw = Token('and')
         orkw = Token('or')
         notkw = Token('not')
+        token = Token('token')
         elock = Keyword('eLock')
 
     arithmExpr = Ref('arithmExpr')
@@ -31,6 +33,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
     timerExpr = T.timer + '(' + (T.integer | T.variable) + ')'
     randExpr = T.rand + '(' + (T.float | T.variable) + ')'
+    randIntExpr = T.randInt + '(' + T.variable + ',' + T.integer + ')'
 
     eLockParameters = List(T.string | T.variable | T.integer | T.float, Token(','))
     eLockExpr = T.elock + '(' + (T.integer | T.variable) + ',' + eLockParameters + ')'
@@ -38,6 +41,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
     parameters = List(T.string | T.variable | T.uvariable | T.integer | T.float, Token(','))
     propExpr = T.prop + '(' + parameters + ')'
     eventExpr = T.event + '(' + parameters + ')'
+    tokenExpr = T.token + '(' + parameters + ')'
 
     compareArithmExpr = arithmExpr << (Token('==') | Token('>') | Token('<') | Token('<=') | Token('>=') | Token('!=')) << arithmExpr
 
@@ -46,8 +50,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
     notExpr = T.notkw + boolExpr
     isExpr = T.variable + T.iskw + arithmExpr
 
-    boolExpr = Prio(litExpr, timerExpr, randExpr, eLockExpr, propExpr,
-                    eventExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr)
+    boolExpr = Prio(litExpr, timerExpr, randExpr, randIntExpr, eLockExpr, propExpr,
+                    eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr)
 
     addExpr = arithmExpr << (Token('+') | Token('-')) << arithmExpr
     multExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
@@ -96,6 +100,11 @@ class BooleanExpressionParser(lrparsing.Grammar):
             prob = cls.buildExpression((tree[3]))
             return Rand(prob)
 
+        def buildRandInt():
+            var = cls.buildExpression((tree[3]))
+            max = cls.buildExpression((tree[5]))
+            return RandInt(var, max)
+
         def buildParameters():
             return [cls.buildExpression(arg) for arg in tree[1::2]]
 
@@ -113,6 +122,10 @@ class BooleanExpressionParser(lrparsing.Grammar):
             name = cls.buildExpression(tree[1])[1:]
             args = cls.buildExpression(tree[3])
             return Event(name, *args)
+
+        def buildToken():
+            args = cls.buildExpression(tree[3])
+            return TokenExpression(*args)
 
         def buildCompare():
             a1 = cls.buildArithmeticExpression(tree[1])
@@ -163,11 +176,13 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.litExpr: buildLitteral,
             BooleanExpressionParser.timerExpr: buildTimer,
             BooleanExpressionParser.randExpr: buildRand,
+            BooleanExpressionParser.randIntExpr: buildRandInt,
             BooleanExpressionParser.parameters: buildParameters,
             BooleanExpressionParser.eLockParameters: buildParameters,
             BooleanExpressionParser.eLockExpr: buildElock,
             BooleanExpressionParser.propExpr: buildProperty,
             BooleanExpressionParser.eventExpr: buildEvent,
+            BooleanExpressionParser.tokenExpr: buildToken,
             BooleanExpressionParser.compareArithmExpr: buildCompare,
             BooleanExpressionParser.andExpr: buildAnd,
             BooleanExpressionParser.orExpr: buildOr,
@@ -223,11 +238,4 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    exprToPars = 'pW(X,Y) and T is X + 3 and (eLock(1,X,3) or eLock(2,2,T))'
-    b = BExpression(BooleanExpressionParser.parse(exprToPars))
-
-    Property.properties = [Property('W', 0, 0), Property('W', 0, 1), Property('W', 1, 0), Property('W', 1, 1)]+\
-                          [Property('S', 0, 0), Property('S', 0, 2), Property('S', 0, 0), Property('S', 2, 2)]
-    print b
-    for e in b.eval():
-        print e
+    pass

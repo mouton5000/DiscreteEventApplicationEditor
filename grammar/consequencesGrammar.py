@@ -1,5 +1,5 @@
 import lrparsing
-from lrparsing import Keyword, List, Prio, Ref, Token
+from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from booleanExpressions import Property, Event
 
 ADD_CONSEQUENCE = 0
@@ -8,6 +8,9 @@ ADD_SPRITE_CONSEQUENCE = 2
 REMOVE_SPRITE_CONSEQUENCE = 3
 MOVE_SPRITE_CONSEQUENCE = 4
 EDIT_SPRITE_CONSEQUENCE = 5
+ADD_TOKEN_CONSEQUENCE = 6
+EDIT_TOKEN_CONSEQUENCE = 7
+REMOVE_TOKEN_CONSEQUENCE = 8
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -19,6 +22,7 @@ class ConsequencesParser(lrparsing.Grammar):
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
         sprite = Token('s')
+        token = Token('token')
         add = Keyword('A')
         remove = Keyword('R')
         move = Keyword('M')
@@ -33,6 +37,10 @@ class ConsequencesParser(lrparsing.Grammar):
     addExpr = T.add + (propExpr | eventExpr)
     removeExpr = T.remove + propExpr
 
+    addTokenExpr = T.add + T.token + '(' + T.integer + Opt(',' + parameters) + ')'
+    editTokenExpr = T.edit + T.token + '(' + Opt(parameters) + ')'
+    removeTokenExpr = T.remove + T.token
+
     addSpriteExpr = T.add + T.sprite + '(' + (T.string | T.variable) + ',' + (T.integer | T.variable) + ',' + \
                     (T.integer | T.variable) + ',' + (T.integer | T.variable) + ')'
     editSpriteExpr = T.edit + T.sprite + '(' + (T.string | T.variable) + ',' + (T.integer | T.variable) + ')'
@@ -40,7 +48,8 @@ class ConsequencesParser(lrparsing.Grammar):
     moveSpriteExpr = T.move + T.sprite + '(' + (T.string | T.variable) + ',' + (T.integer | T.variable) + ',' + \
                      (T.integer | T.variable) + ')'
 
-    consExpr = Prio(addExpr, removeExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr, editSpriteExpr)
+    consExpr = Prio(addExpr, removeExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr, editSpriteExpr, addTokenExpr,
+                    editTokenExpr, removeTokenExpr)
 
     START = consExpr
 
@@ -51,7 +60,6 @@ class ConsequencesParser(lrparsing.Grammar):
 
     @classmethod
     def buildExpression(cls, tree):
-
         rootName = tree[0]
 
         def buildNext():
@@ -95,6 +103,24 @@ class ConsequencesParser(lrparsing.Grammar):
             args = cls.buildExpression(tree[3])
             return Event(name, *args)
 
+        def buildAddToken():
+            nodeNum = cls.buildExpression(tree[4])
+            if len(tree) == 6:
+                return ADD_TOKEN_CONSEQUENCE, AddTokenConsequence(nodeNum)
+            else:
+                args = cls.buildExpression(tree[6])
+                return ADD_TOKEN_CONSEQUENCE, AddTokenConsequence(nodeNum, *args)
+
+        def buildEditToken():
+            if len(tree) == 5:
+                return EDIT_TOKEN_CONSEQUENCE, EditTokenConsequence()
+            else:
+                args = cls.buildExpression(tree[4])
+                return EDIT_TOKEN_CONSEQUENCE, EditTokenConsequence(*args)
+
+        def buildRemoveToken():
+            return REMOVE_TOKEN_CONSEQUENCE, RemoveTokenConsequence()
+
         def value():
             return tree[1]
 
@@ -127,7 +153,10 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addSpriteExpr: buildAddSprite,
             ConsequencesParser.removeSpriteExpr: buildRemoveSprite,
             ConsequencesParser.editSpriteExpr: buildEditSprite,
-            ConsequencesParser.moveSpriteExpr: buildMoveSprite
+            ConsequencesParser.moveSpriteExpr: buildMoveSprite,
+            ConsequencesParser.addTokenExpr: buildAddToken,
+            ConsequencesParser.editTokenExpr: buildEditToken,
+            ConsequencesParser.removeTokenExpr: buildRemoveToken
         }
 
         return exprSymbols[rootName]()
@@ -143,10 +172,10 @@ class SpriteConsequence(object):
 
 
 def _evalArg(arg, evaluation):
-            try:
-                return evaluation[arg]
-            except KeyError:
-                return arg
+    try:
+        return evaluation[arg]
+    except KeyError:
+        return arg
 
 
 class AddSpriteConsequence(SpriteConsequence):
@@ -221,3 +250,48 @@ class EditSpriteConsequence(SpriteConsequence):
     @property
     def num(self):
         return self._num
+
+
+class AddTokenConsequence(object):
+    def __init__(self, nodeNum, *args):
+        self._nodeNum = nodeNum
+        self._parameters = args
+
+    @property
+    def nodeNum(self):
+        return self._nodeNum
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def eval_update(self, evaluation):
+        nodeNum = _evalArg(self._nodeNum, evaluation)
+        newParameters = (_evalArg(arg, evaluation) for arg in self._parameters)
+
+        return AddTokenConsequence(nodeNum, *newParameters)
+
+
+class EditTokenConsequence(object):
+    def __init__(self, *args):
+        self._parameters = args
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def eval_update(self, evaluation):
+        newParameters = (_evalArg(arg, evaluation) for arg in self._parameters)
+        return EditTokenConsequence(*newParameters)
+
+
+class RemoveTokenConsequence(object):
+    def __init__(self):
+        pass
+
+    def eval_update(self, _):
+        return self
+
+if __name__ == '__main__':
+    expr = 'A token(1)'
+    print ConsequencesParser.parse(expr)
