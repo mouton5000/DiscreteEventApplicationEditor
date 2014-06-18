@@ -76,6 +76,7 @@ class SceneWidget(QGraphicsScene):
     NodeMode = 0
     PathMode = 1
     StarMode = 2
+    SelectMode = 3
 
     def __init__(self, parent=None):
         super(SceneWidget, self).__init__(parent)
@@ -162,6 +163,10 @@ class SceneWidget(QGraphicsScene):
                 else:
                     self.setSelected(item)
                 item.mouseReleaseEvent(event)
+        elif self.isSelectMode():
+            if item:
+                self.setSelected(item)
+                item.mouseReleaseEvent(event)
 
     def setSelected(self, item):
         if self._selected == item:
@@ -187,10 +192,13 @@ class SceneWidget(QGraphicsScene):
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_N:
             self.setNodeMode()
-        elif event.key() == QtCore.Qt.Key_P:
-            self.setPathMode()
+        elif event.key() == QtCore.Qt.Key_A:
+            if not self.isPathMode():
+                self.setPathMode()
+            else:
+                self.setStarMode()
         elif event.key() == QtCore.Qt.Key_S:
-            self.setStarMode()
+            self.setSelectMode()
         elif event.key() == QtCore.Qt.Key_Delete:
             if self._selected:
                 self.deleteSelected()
@@ -215,6 +223,10 @@ class SceneWidget(QGraphicsScene):
         self.setMode(SceneWidget.StarMode)
         self.parent().parent().parent().statusBar().showMessage('Star mode')
 
+    def setSelectMode(self):
+        self.setMode(SceneWidget.SelectMode)
+        self.parent().parent().parent().statusBar().showMessage('Select mode')
+
     def setMode(self, mode):
         self._mode = mode
 
@@ -229,6 +241,9 @@ class SceneWidget(QGraphicsScene):
 
     def isStarMode(self):
         return self._mode == SceneWidget.StarMode
+
+    def isSelectMode(self):
+        return self._mode == SceneWidget.SelectMode
 
     def deleteSelected(self):
         self.parent().window().stack.push(DeleteItemCommand(self, self._selected))
