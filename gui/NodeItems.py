@@ -30,7 +30,7 @@ class NodeItem(QGraphicsEllipseItem):
 
         self.setBrush(QBrush(QtCore.Qt.black))
 
-        self._labelItem = LabelItem(str(self.num) + ' : ' + self._label,
+        self._labelItem = LabelItem(str(self.num),
                                        scene=self.scene())
         self._labelItem.setBrush(QBrush(QtCore.Qt.black))
         self._labelItem.setCenter(self._center)
@@ -87,7 +87,10 @@ class NodeItem(QGraphicsEllipseItem):
 
     def setLabel(self, label):
         self._label = label
-        self._labelItem.setText(str(self.num) + ' : ' + label)
+        if label:
+            self._labelItem.setText(str(self.num) + ' : ' + label)
+        else:
+            self._labelItem.setText(str(self.num))
 
     def getLabelItem(self):
         return self._labelItem

@@ -71,7 +71,10 @@ class ArcItem(QGraphicsPathItem):
         self._setLabelItemText(self.getIndex(), label)
 
     def _setLabelItemText(self, index, label):
-        self._labelItem.setText(str(index) + ' : ' + label)
+        if label:
+            self._labelItem.setText(str(index) + ' : ' + label)
+        else:
+            self._labelItem.setText(str(index))
 
     def getFormula(self):
         return self._formula
