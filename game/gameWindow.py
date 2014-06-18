@@ -10,16 +10,7 @@ _scene = None
 
 class SpriteReg(Sprite):
 
-    registery = ['redFront.png',
-                 'redBack.png',
-                 'redLeft.png',
-                 'redRight.png',
-                 'grass.png',
-                 'tree.png',
-                 'blueFront.png',
-                 'blueBack.png',
-                 'blueLeft.png',
-                 'blueRight.png']
+    registery = ['badCude.png', 'raquette.png', 'ok.png', 'explode.png']
 
     instances = {}
 
@@ -39,6 +30,7 @@ def init():
     global _scene, _all_list
     pygame.display.init()
     _scene = pygame.display.set_mode([800, 640])
+    _scene.fill((255, 255, 255))
     _all_list = pygame.sprite.OrderedUpdates()
     _all_list.draw(_scene)
     pygame.display.flip()
@@ -49,6 +41,7 @@ _clock = pygame.time.Clock()
 
 def tick():
     global _all_list, _clock
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return False
@@ -61,7 +54,7 @@ def tick():
                 Event.events.add(Event('Key', 'down'))
             if event.key == pygame.K_UP:
                 Event.events.add(Event('Key', 'up'))
-    _scene.fill((0, 0, 0))
+    _scene.fill((255, 255, 255))
     _all_list.draw(_scene)
     pygame.display.flip()
     _clock.tick(60)
