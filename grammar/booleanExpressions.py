@@ -238,7 +238,7 @@ class Is(BBiOp):
                     neval = previousEvaluation.copy()
                     neval[self._a1] = value
                     yield neval
-            except (ArithmeticError, TypeError):
+            except (ArithmeticError, TypeError, ValueError):
                 pass
 
 

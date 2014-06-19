@@ -38,7 +38,10 @@ class Addition(ABiOp):
         self.symbol = '+'
 
     def operation(self, v1, v2):
-        return v1 + v2
+        try:
+            return v1 + v2
+        except TypeError:
+            return str(v1) + str(v2)
 
 
 class Subtraction(ABiOp):

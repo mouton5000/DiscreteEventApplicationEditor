@@ -58,7 +58,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
     powerExpr = arithmExpr << Token('**') << arithmExpr
     parArithmExpr = '(' + arithmExpr + ')'
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, parArithmExpr, powerExpr, multExpr, addExpr)
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, parArithmExpr, powerExpr, multExpr, addExpr)
 
     START = boolExpr
 
@@ -230,6 +230,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.T.integer: buildLitteral,
             BooleanExpressionParser.T.float: buildLitteral,
             BooleanExpressionParser.T.variable: buildLitteral,
+            BooleanExpressionParser.T.string: buildLitteral,
             BooleanExpressionParser.addExpr: buildBinaryExpression,
             BooleanExpressionParser.multExpr: buildBinaryExpression,
             BooleanExpressionParser.powerExpr: buildBinaryExpression
@@ -238,4 +239,5 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    pass
+    toParse = 'timer(1) and X is \'ABC\'+1+\'ABC\'-2'
+    print BooleanExpressionParser.parse(toParse)
