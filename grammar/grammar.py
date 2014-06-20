@@ -43,7 +43,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
     eventExpr = T.event + '(' + parameters + ')'
     tokenExpr = T.token + '(' + parameters + ')'
 
-    compareArithmExpr = arithmExpr << (Token('==') | Token('>') | Token('<') | Token('<=') | Token('>=') | Token('!=')) << arithmExpr
+    compareArithmExpr = arithmExpr << (Token('==') | Token('>') | Token('<') | Token('<=') |
+                                       Token('>=') | Token('!=')) << arithmExpr
 
     andExpr = boolExpr << T.andkw << boolExpr
     orExpr = boolExpr << T.orkw << boolExpr
@@ -88,6 +89,9 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
         def floatvalue():
             return float(tree[1])
+
+        def variableValue():
+            return Variable(tree[1])
 
         def buildLitteral():
             return BLitteral(tree[1][1] == 'true')
@@ -168,8 +172,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.parExpr: buildDoubleNext,
             BooleanExpressionParser.T.event: value,
             BooleanExpressionParser.T.prop: value,
-            BooleanExpressionParser.T.variable: value,
-            BooleanExpressionParser.T.uvariable: value,
+            BooleanExpressionParser.T.variable: variableValue,
+            BooleanExpressionParser.T.uvariable: variableValue,
             BooleanExpressionParser.T.string: stringWithoutQuotes,
             BooleanExpressionParser.T.integer: intvalue,
             BooleanExpressionParser.T.float: floatvalue,
@@ -239,5 +243,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    toParse = 'timer(1) and X is \'ABC\'+1+\'ABC\'-2'
-    print BooleanExpressionParser.parse(toParse)
+    Property.container = [Property('TEST', 3, 'ABC'), Property('Abc', 3)]
+    toParse = 'X is 3 + 4 and Y is 3+7 and Y/2 >= (X+4)//2'
+    b = BooleanExpressionParser.parse(toParse)
+    for evaluation in b.eval(1, Evaluation()):
+        print evaluation

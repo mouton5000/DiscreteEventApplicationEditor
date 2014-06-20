@@ -37,13 +37,13 @@ class Evaluation(object):
         self.locks = dict()
 
     def __getitem__(self, key):
-        if isinstance(key, basestring):
+        if isinstance(key, Variable):
             return self.variables[key]
         else:
             return self.locks[key]
 
     def __setitem__(self, key, value):
-        if isinstance(key, basestring):
+        if isinstance(key, Variable):
             self.variables[key] = value
         else:
             self.locks[key] = value
@@ -58,13 +58,13 @@ class Evaluation(object):
         return e
 
     def __contains__(self, key):
-        if isinstance(key, basestring):
+        if isinstance(key, Variable):
             return key in self.variables
         else:
             return key in self.locks
 
     def __delitem__(self, key):
-        if isinstance(key, basestring):
+        if isinstance(key, Variable):
             del self.variables[key]
         else:
             del self.locks[key]
@@ -147,9 +147,15 @@ class Timer(object):
         return '( timer ' + str(self._nbFrames) + ')'
 
     def eval(self, token, previousEvaluation):
-        #print token, previousEvaluation, self, self._nbFrames <= token.nbFrameSinceLastMove
-        if self._nbFrames <= token.nbFrameSinceLastMove:
-            yield previousEvaluation
+        try:
+            nbFrames = previousEvaluation[self._nbFrames]  # evaluated variable
+        except KeyError:
+            nbFrames = self._nbFrames  # unevaluated variable or integer
+        try:
+            if nbFrames <= token.nbFrameSinceLastMove:
+                yield previousEvaluation  # evaluated variable or integer
+        except TypeError:
+            pass  # unevaluated variable
 
 
 class Rand(object):
@@ -161,28 +167,26 @@ class Rand(object):
 
     def eval(self, _, previousEvaluation):
         try:
-            if self._prob[0].isupper():
-                p = previousEvaluation[self._prob]
-                if random() < p:
-                    yield previousEvaluation
-        except TypeError:
-            p = self._prob
-            if random() < p:
-                yield previousEvaluation
+            prob = previousEvaluation[self._prob]  # evaluated variable
         except KeyError:
-            pass
+            prob = self._prob  # unevaluated variable or float
+        try:
+            if random() < prob:
+                yield previousEvaluation  # evaluated variable or float
+        except TypeError:
+            pass  #  unevaluated variable
 
 
 class RandInt(object):
-    def __init__(self, var, max):
+    def __init__(self, var, maxInt):
         self._var = var
-        self._max = max
+        self._maxInt = maxInt
 
     def __str__(self):
-        return '( randInt ' + str(self._var) + ', ' + str(self._max) + ')'
+        return '( randInt ' + str(self._var) + ', ' + str(self._maxInt) + ')'
 
     def eval(self, _, previousEvaluation):
-        j = randint(0, self._max - 1)
+        j = randint(0, self._maxInt - 1)
         try:
             i = previousEvaluation[self._var]
             if i == j:
@@ -204,7 +208,7 @@ class eLock(object):
     def eval(self, _, previousEvaluation):
         evaluation = previousEvaluation.copy()
         try:
-            keys = self.eval_keys(previousEvaluation)
+            keys = self.eval_keys(previousEvaluation)  # can raise KeyError
             if not keys in evaluation or evaluation[keys] <= self._priority:
                 evaluation[keys] = self._priority
             yield evaluation
@@ -213,12 +217,9 @@ class eLock(object):
 
     def eval_keys(self, evaluation):
         def evalArg(arg):
-            try:
-                if arg[0].isupper():
-                    return evaluation[arg]
-                else:
-                    return arg
-            except TypeError:
+            if isinstance(arg, Variable):
+                return evaluation[arg]
+            else:
                 return arg
 
         keys = tuple([evalArg(key) for key in self._keys])
@@ -246,14 +247,15 @@ class Compare(BBiOp):
     def __init__(self, a1, a2):
         super(Compare, self).__init__(a1, a2)
 
-    def eval(self, token, previousEvaluation):
+    def eval(self, _, previousEvaluation):
         try:
             v1 = self._a1.value(previousEvaluation)
             v2 = self._a2.value(previousEvaluation)
+
             #print token, previousEvaluation, v1, v2
             if not v1 is None and not v2 is None and self.comp(v1, v2):
                 yield previousEvaluation
-        except (ArithmeticError, TypeError):
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
 
@@ -345,19 +347,25 @@ class NamedExpression(object):
         neval = evaluation.copy()
         for p1, p2 in zip(self, namedExpr):
             try:
+                # p1 is supposed to be an identified or unnamed variable
+                if p1.isUnnamed():
+                    continue
                 v1 = neval[p1]
-            except KeyError:
-                v1 = None
-
-            if p1 == '_' or p1 == p2 or v1 == p2:
-                continue
-
-            try:
-                if not p1[0].isupper() or not v1 is None:  # p1 is not a variable or p1 is identified
+                if v1 == p2:
+                    continue
+                else:
                     return
+
+            except AttributeError:  # p1 is not a variable
+                v1 = None
+                if p1 == p2:
+                    continue
+                else:
+                    return
+
+            except KeyError:  # p1 is an unidentified variable
                 neval[p1] = p2  # p1 is identified with p2
-            except TypeError:
-                return
+
         return neval
 
     def eval(self, _, previousEvaluation):
@@ -394,10 +402,15 @@ class Property(NamedExpression):
             try:
                 return evaluation[arg]
             except KeyError:
-                return arg
-
-        newArgs = (evalArg(arg) for arg in self)
-        return Property(self.name, *newArgs)
+                if not isinstance(arg, Variable):
+                    return arg
+                else:
+                    raise TypeError
+        try:
+            newArgs = [evalArg(arg) for arg in self]
+            return Property(self.name, *newArgs)
+        except TypeError:
+            pass
 
 
 class Event(NamedExpression):
@@ -415,10 +428,16 @@ class Event(NamedExpression):
             try:
                 return evaluation[arg]
             except KeyError:
-                return arg
+                if not isinstance(arg, Variable):
+                    return arg
+                else:
+                    raise TypeError
 
-        newArgs = (evalArg(arg) for arg in self)
-        return Event(self.name, *newArgs)
+        try:
+            newArgs = [evalArg(arg) for arg in self]
+            return Event(self.name, *newArgs)
+        except TypeError:
+            pass
 
 
 class TokenExpression:
@@ -450,19 +469,25 @@ class TokenExpression:
         neval = evaluation.copy()
         for p1, p2 in zip(self, token):
             try:
+                # p1 is supposed to be an identified or unnamed variable
+                if p1.isUnnamed():
+                    continue
                 v1 = neval[p1]
-            except KeyError:
-                v1 = None
-
-            if p1 == '_' or p1 == p2 or v1 == p2:
-                continue
-
-            try:
-                if not p1[0].isupper() or not v1 is None:  # p1 is not a variable or p1 is identified
+                if v1 == p2:
+                    continue
+                else:
                     return
+
+            except AttributeError:  # p1 is not a variable
+                v1 = None
+                if p1 == p2:
+                    continue
+                else:
+                    return
+
+            except KeyError:  # p1 is an unidentified variable
                 neval[p1] = p2  # p1 is identified with p2
-            except TypeError:
-                return
+
         return neval
 
     def eval(self, token, previousEvaluation):
@@ -471,6 +496,35 @@ class TokenExpression:
             if not neval is None:
                 yield neval
 
+
+class Variable(object):
+    def __init__(self, name):
+        if name != '_':
+            self._name = name
+        else:
+            self._name = None
+
+    @property
+    def name(self):
+        return self._name
+
+    def isUnnamed(self):
+        return self._name is None
+
+    def __eq__(self, other):
+        try:
+            return self.name == other.name or (self.isUnnamed() and other.isUnnamed())
+        except AttributeError:
+            return False
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __str__(self):
+        return str(self.name)
+
+    def __repr__(self):
+        return str(self.name)
 
 if __name__ == '__main__':
     pass

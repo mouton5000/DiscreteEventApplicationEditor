@@ -107,6 +107,8 @@ class StateMachine:
         for token in transitionGen:
             consequences = transitionGen[token]
             for consType, cons in consequences:
+                if not cons:
+                    continue
                 if consType == ADD_CONSEQUENCE and isinstance(cons, Property):
                     Property.properties.add(cons)
                 elif consType == REMOVE_CONSEQUENCE and isinstance(cons, Property):

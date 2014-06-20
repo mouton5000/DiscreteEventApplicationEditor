@@ -1,3 +1,6 @@
+from booleanExpressions import Variable
+
+
 class ALitteral(object):
     def __init__(self, value):
         self._value = value
@@ -11,10 +14,9 @@ class ALitteral(object):
         except KeyError:
             pass
 
-        try:
-            if self._value[0].isupper():
-                return None
-        except TypeError:
+        if isinstance(self._value, Variable):
+            return None
+        else:
             return self._value
 
 
