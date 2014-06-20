@@ -185,8 +185,8 @@ class MainWindow(QMainWindow):
                 def addNode(node):
                     x = node['x']
                     y = node['y']
-                    n = scene.addNode(x, y)
                     # n.setActive(node['isActive'])
+                    n = scene.addNode(x, y)
                     n.num = node['num']
                     n.setLabel(node['label'])
                     n.setTokens(node['tokens'])
@@ -219,6 +219,8 @@ class MainWindow(QMainWindow):
                 self._lastSaveOpenFileDirectory = os.path.dirname(fname)
                 self.reinit()
                 self.setCurrentFile(os.path.basename(fname))
+
+                scene.setSelected(None)
         except IOError:
             pass
 

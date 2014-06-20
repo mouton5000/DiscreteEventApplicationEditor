@@ -97,17 +97,17 @@ class NodeItem(QGraphicsEllipseItem):
     def getTokens(self):
         return self._tokens
 
-    def getTokensStr(self):
-        return '\n'.join(self._tokens)
-
     def setTokens(self, tokens):
-        try:
-            if tokens == '':
-                self._tokens = []
-            else:
-                self._tokens = tokens.split('\n')  # consequences is a string
-        except AttributeError:
-            self._tokens = tokens  # consequences is a list
+        self._tokens = tokens
+
+    def setToken(self, index, text):
+        self._tokens[index] = str(text)
+
+    def addToken(self):
+        self._tokens.append('')
+
+    def removeToken(self, index):
+        self._tokens.pop(index)
 
     def mouseMoveEvent(self, event):
         if not self.scene().isNodeMode():

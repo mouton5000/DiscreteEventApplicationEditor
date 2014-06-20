@@ -1,6 +1,6 @@
 __author__ = 'mouton'
 
-from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QWidget, QLabel, QComboBox
+from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QWidget, QLabel, QComboBox, QPushButton
 
 
 class PropertyWidget(QWidget):
@@ -9,8 +9,6 @@ class PropertyWidget(QWidget):
         self.layout = QVBoxLayout()
 
         self.noItem = QLabel('Proprietes de l\'element selectionne')
-        self.noItem.setMinimumHeight(200)
-        self.noItem.setMaximumHeight(200)
 
         self.arcParamEditor = ArcParamEditorWidget(self)
         self.nodeParamEditor = NodeParamEditorWidget(self)
@@ -25,8 +23,8 @@ class PropertyWidget(QWidget):
 
         self.setLayout(self.layout)
 
-        self.setMinimumHeight(200)
-        self.setMaximumHeight(200)
+        self.setMinimumHeight(250)
+        self.setMaximumHeight(250)
 
     def setItem(self, item):
         self.propertyItem.hide()
@@ -143,6 +141,9 @@ class NodeParamEditorWidget(QWidget):
     def __init__(self, parent=None):
         super(NodeParamEditorWidget, self).__init__(parent)
 
+        self._tokenWidgets = []
+        self._showTokenWidgetIndex = 0
+
         vbox = QVBoxLayout()
 
         hboxTitle = QHBoxLayout()
@@ -156,10 +157,32 @@ class NodeParamEditorWidget(QWidget):
         self._labelTE = QLineEdit(self)
         hboxTitle.addWidget(self._labelTE)
 
-        self._tokensTE = QTextEdit(self)
-        self._tokensTE.setUndoRedoEnabled(True)
         vbox.addLayout(hboxTitle)
-        vbox.addWidget(self._tokensTE)
+
+        self._vboxToken = QVBoxLayout()
+
+        self._upToken = QPushButton('Up')
+        self._upToken.setMaximumHeight(20)
+        # self._upToken.setMaximumWidth(150)
+        self._upToken.setEnabled(False)
+
+        self._plusToken = QPushButton('+')
+        # self._plusToken.setMaximumWidth(150)
+
+        self._downToken = QPushButton('Down')
+        self._downToken.setMaximumHeight(20)
+        # self._downToken.setMaximumWidth(150)
+        self._downToken.setEnabled(False)
+
+        self._vboxToken.addWidget(self._upToken)
+        self._vboxToken.addWidget(self._plusToken)
+        self._vboxToken.addWidget(self._downToken)
+
+        vbox.addLayout(self._vboxToken)
+
+        self._upToken.clicked.connect(self.upToken)
+        self._downToken.clicked.connect(self.downToken)
+        self._plusToken.clicked.connect(self.addToken)
 
         self.init()
 
@@ -167,14 +190,72 @@ class NodeParamEditorWidget(QWidget):
         self._labelTE.textChanged.connect(self.labelChanged)
         self._labelTE.textChanged.connect(self.window().setModified)
 
-        self._tokensTE.textChanged.connect(self.tokenChanged)
-        self._tokensTE.textChanged.connect(self.window().setModified)
-
         self.setLayout(vbox)
+
+    def addToken(self):
+        self._selectedNode.addToken()
+        token = TokenWidget(len(self._tokenWidgets), parent=self)
+        self._tokenWidgets.append(token)
+        self._vboxToken.insertWidget(self._vboxToken.count() - 2, token)
+
+        if len(self._tokenWidgets) >= 3:
+            self._tokenWidgets[-3].hide()
+            self._upToken.setEnabled(True)
+            self._showTokenWidgetIndex += 1
+
+    def removeToken(self, tokenWidget):
+        tokenWidget.hide()
+        self._tokenWidgets.remove(tokenWidget)
+        self._selectedNode.removeToken(tokenWidget.index)
+        for tW in self._tokenWidgets[tokenWidget.index:]:
+            tW.index -= 1
+        self._vboxToken.removeWidget(tokenWidget)
+
+        if len(self._tokenWidgets) <= 2:
+            self._upToken.setEnabled(False)
+            self._downToken.setEnabled(False)
+        else:
+            self.updateTokenWidgetIndex()
+
+    def updateTokenWidgetIndex(self):
+        maxIndex = len(self._tokenWidgets) - 1
+        if self._showTokenWidgetIndex >= maxIndex - 1:
+            self._showTokenWidgetIndex -= 1
+            self._tokenWidgets[self._showTokenWidgetIndex].show()
+        elif self._showTokenWidgetIndex == maxIndex - 2:
+            self._plusToken.show()
+        else:
+            self._tokenWidgets[self._showTokenWidgetIndex + 2].show()
+
+    def upToken(self):
+        self._downToken.setEnabled(True)
+
+        maxIndex = len(self._tokenWidgets) - 1
+        if self._showTokenWidgetIndex == maxIndex - 1:
+            self._plusToken.hide()
+        else:
+            self._tokenWidgets[self._showTokenWidgetIndex + 2].hide()
+
+        self._showTokenWidgetIndex -= 1
+        self._tokenWidgets[self._showTokenWidgetIndex].show()
+        if self._showTokenWidgetIndex == 0:
+            self._upToken.setEnabled(False)
+
+    def downToken(self):
+        self._upToken.setEnabled(True)
+        maxIndex = len(self._tokenWidgets) - 1
+        if self._showTokenWidgetIndex == maxIndex - 2:
+            self._plusToken.show()
+        else:
+            self._tokenWidgets[self._showTokenWidgetIndex + 3].show()
+
+        self._tokenWidgets[self._showTokenWidgetIndex].hide()
+        self._showTokenWidgetIndex += 1
+        if self._showTokenWidgetIndex == maxIndex - 1:
+            self._downToken.setEnabled(False)
 
     def init(self):
         self.setLabel('Etiquette du noeud.')
-        self.setTokens('Tokens du noeud')
 
     def setIndex(self, num):
         self._lb2.setText(str(num))
@@ -183,7 +264,27 @@ class NodeParamEditorWidget(QWidget):
         self._labelTE.setText(label)
 
     def setTokens(self, tokens):
-        self._tokensTE.setText(tokens)
+        for tokenWidget in self._tokenWidgets:
+            tokenWidget.hide()
+        self._upToken.setEnabled(False)
+        self._downToken.setEnabled(False)
+        del self._tokenWidgets[:]
+
+        for token in tokens:
+            tokenWidget = TokenWidget(len(self._tokenWidgets), parent=self)
+            tokenWidget.setText(token)
+            self._tokenWidgets.append(tokenWidget)
+            self._vboxToken.insertWidget(self._vboxToken.count() - 2, tokenWidget)
+            tokenWidget.hide()
+
+        self._plusToken.show()
+        if len(self._tokenWidgets) >= 3:
+            self._upToken.setEnabled(True)
+            self._tokenWidgets[-2].show()
+            self._tokenWidgets[-1].show()
+        else:
+            for tokenWidget in self._tokenWidgets:
+                tokenWidget.show()
 
     def labelChanged(self):
         try:
@@ -191,17 +292,69 @@ class NodeParamEditorWidget(QWidget):
         except AttributeError:
             pass
 
-    def tokenChanged(self):
-        try:
-            self._selectedNode.setTokens(str(self._tokensTE.toPlainText()))
-        except AttributeError:
-            pass
+    def tokenChanged(self, token):
+        index = token.index
+        text = token.text
+        self._selectedNode.setToken(index, text)
 
     def setSelectedNode(self, n):
         self._selectedNode = n
         try:
             self.setIndex(n.num)
             self.setLabel(n.getLabel())
-            self.setTokens(n.getTokensStr())
+            self.setTokens(n.getTokens())
         except AttributeError:
             self.init()
+
+
+class TokenWidget(QWidget):
+    def __init__(self, index, parent=None):
+        super(TokenWidget, self).__init__(parent)
+
+        self._index = index
+        hboxToken = QHBoxLayout()
+        hboxToken.addWidget(QLabel('Token'))
+        self._indexLabel = QLabel(str(index))
+        hboxToken.addWidget(self._indexLabel)
+        hboxToken.addWidget(QLabel('('))
+        self._qte = QLineEdit()
+        self._qte.setMinimumHeight(30)
+        self._qte.setMaximumHeight(30)
+        hboxToken.addWidget(self._qte)
+        hboxToken.addWidget(QLabel(')'))
+        removeButton = QPushButton('-')
+        hboxToken.addWidget(removeButton)
+
+        self.setLayout(hboxToken)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
+        removeButton.clicked.connect(self.remove)
+        removeButton.clicked.connect(self.window().setModified)
+
+        self._qte.textChanged.connect(self.update)
+        self._qte.textChanged.connect(self.window().setModified)
+
+    @property
+    def index(self):
+        return self._index
+
+    @index.setter
+    def index(self, index):
+        self._index = index
+        self._indexLabel.setText(str(index))
+
+    @property
+    def text(self):
+        return self._qte.text()
+
+    def setText(self, text):
+        return self._qte.setText(text)
+
+    def remove(self):
+        self.parent().removeToken(self)
+
+    def update(self):
+        self.parent().tokenChanged(self)
+
+
