@@ -36,7 +36,6 @@ class NodeItem(QGraphicsEllipseItem):
         self._labelItem.setCenter(self._center)
         self._labelItem.setOffset(vector(0, NodeItem.NodeWidth * 2))
 
-
     @property
     def num(self):
         return self._num

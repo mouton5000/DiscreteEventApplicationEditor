@@ -1,4 +1,4 @@
-from booleanExpressions import Variable
+from database import Variable
 
 
 class ALitteral(object):

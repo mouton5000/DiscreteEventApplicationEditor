@@ -1,8 +1,6 @@
-from PyQt4.QtCore import Qt
-
 __author__ = 'mouton'
 
-from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QWidget, QLabel, QComboBox, QPushButton, QScrollArea
+from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QWidget, QLabel, QComboBox
 
 
 class PropertyWidget(QWidget):

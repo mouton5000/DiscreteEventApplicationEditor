@@ -2,7 +2,7 @@ __author__ = 'mouton'
 
 import pygame
 from pygame.sprite import Sprite
-from grammar.booleanExpressions import Event
+from database import Event
 
 
 _scene = None

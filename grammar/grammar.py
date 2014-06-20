@@ -1,7 +1,10 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token
-from booleanExpressions import *
-from arithmeticExpressions import *
+from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power
+from booleanExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
+    EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
+    NotEquals, And, Or, Not, Is
+from database import Variable
 
 
 class BooleanExpressionParser(lrparsing.Grammar):
@@ -120,12 +123,12 @@ class BooleanExpressionParser(lrparsing.Grammar):
         def buildProperty():
             name = cls.buildExpression(tree[1])[1:]
             args = cls.buildExpression(tree[3])
-            return Property(name, *args)
+            return PropertyBooleanExpression(name, *args)
 
         def buildEvent():
             name = cls.buildExpression(tree[1])[1:]
             args = cls.buildExpression(tree[3])
-            return Event(name, *args)
+            return EventBooleanExpression(name, *args)
 
         def buildToken():
             args = cls.buildExpression(tree[3])
@@ -247,8 +250,4 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    Property.container = [Property('TEST', 3, 'ABC'), Property('Abc', 3)]
-    toParse = 'X is 3 + 4 and Y is 3+7 and Y/2 >= (X+4)//2'
-    b = BooleanExpressionParser.parse(toParse)
-    for evaluation in b.eval(1, Evaluation()):
-        print evaluation
+    pass

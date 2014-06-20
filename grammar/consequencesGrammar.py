@@ -1,7 +1,7 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
-from booleanExpressions import Property, Event, Variable
-from arithmeticExpressions import *
+from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power
+from database import Variable
 
 ADD_CONSEQUENCE = 0
 REMOVE_CONSEQUENCE = 1
@@ -105,12 +105,12 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildProperty():
             name = cls.buildExpression(tree[1])[1:]
             args = cls.buildExpression(tree[3])
-            return Property(name, *args)
+            return PropertyConsequence(name, *args)
 
         def buildEvent():
             name = cls.buildExpression(tree[1])[1:]
             args = cls.buildExpression(tree[3])
-            return Event(name, *args)
+            return EventConsequence(name, *args)
 
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
@@ -221,6 +221,39 @@ class ConsequencesParser(lrparsing.Grammar):
         }
 
         return arithmeticSymbols[rootName]()
+
+
+class PropertyConsequence():
+
+    def __init__(self, name, *args):
+        self._name = name
+        self._args = args
+
+    def eval_update(self, evaluation):
+        from stateMachine import Property
+        try:
+            name = self._name
+            newArgs = [_evalArg(arg, evaluation) for arg in self._args]
+            return Property(name, *newArgs)
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class EventConsequence():
+    events = set([])
+
+    def __init__(self, name, *args):
+        self._name = name
+        self._args = args
+
+    def eval_update(self, evaluation):
+        from stateMachine import Event
+        try:
+            name = self._name
+            newArgs = [_evalArg(arg, evaluation) for arg in self._args]
+            return Event(name, *newArgs)
+        except (ArithmeticError, TypeError, ValueError):
+            pass
 
 
 class SpriteConsequence(object):

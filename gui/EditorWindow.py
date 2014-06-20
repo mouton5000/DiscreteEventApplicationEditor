@@ -8,9 +8,8 @@ from visual import vector
 import json
 import os.path
 import game.gameWindow as gameWindow
-from stateMachine import StateMachine, Node, Transition
+from stateMachine import StateMachine, Transition
 from itertools import chain
-from grammar.booleanExpressions import Property, Event
 from EditorItem import ViewWidget
 from PropertiesItems import PropertyWidget
 
@@ -261,13 +260,11 @@ class MainWindow(QMainWindow):
         if not self._stateMachine or not self._nodeDict:
             return
 
-        self._stateMachine.clearTokens()
+        self._stateMachine.init()
         for node, compNode in self._nodeDict.iteritems():
             for token in node.getTokens():
                 self._stateMachine.addToken(compNode, token)
 
-        Property.properties.clear()
-        Event.events.clear()
         gameWindow.init()
 
         for i in xrange(20):

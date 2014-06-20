@@ -1,6 +1,7 @@
 from random import random, randint
 from itertools import chain
 from dictSet import DictContainer
+from database import Variable
 
 
 class BExpression(object):
@@ -182,7 +183,7 @@ class RandInt(object):
 
     def eval(self, _, previousEvaluation):
         j = randint(0, self._maxInt - 1)
-        if isinstance(self._var,Variable):
+        if isinstance(self._var, Variable):
             try:
                 i = previousEvaluation[self._var]
                 if i == j:
@@ -254,7 +255,6 @@ class Compare(BBiOp):
             v1 = self._a1.value(previousEvaluation)
             v2 = self._a2.value(previousEvaluation)
 
-            #print token, previousEvaluation, v1, v2
             if not v1 is None and not v2 is None and self.comp(v1, v2):
                 yield previousEvaluation
         except (ArithmeticError, TypeError, ValueError):
@@ -392,17 +392,20 @@ class NamedExpression(object):
             return False
 
 
-class Property(NamedExpression):
+class PropertyBooleanExpression(NamedExpression):
     properties = set([])
 
     def __init__(self, name, *args):
-        super(Property, self).__init__(name, *args)
+        super(PropertyBooleanExpression, self).__init__(name, *args)
 
     @property
     def container(self):
+        from stateMachine import Property
         return Property.properties
 
     def eval_update(self, evaluation):
+        from stateMachine import Property
+
         def evalArg(arg):
             return arg.value(evaluation)
 
@@ -413,17 +416,20 @@ class Property(NamedExpression):
             pass
 
 
-class Event(NamedExpression):
+class EventBooleanExpression(NamedExpression):
     events = set([])
 
     def __init__(self, name, *args):
-        super(Event, self).__init__(name, *args)
+        super(EventBooleanExpression, self).__init__(name, *args)
 
     @property
     def container(self):
+        from stateMachine import Event
         return Event.events
 
     def eval_update(self, evaluation):
+        from stateMachine import Event
+
         def evalArg(arg):
             return arg.value(evaluation)
 
@@ -493,35 +499,6 @@ class TokenExpression:
             if not neval is None:
                 yield neval
 
-
-class Variable(object):
-    def __init__(self, name):
-        if name != '_':
-            self._name = name
-        else:
-            self._name = None
-
-    @property
-    def name(self):
-        return self._name
-
-    def isUnnamed(self):
-        return self._name is None
-
-    def __eq__(self, other):
-        try:
-            return self.name == other.name or (self.isUnnamed() and other.isUnnamed())
-        except AttributeError:
-            return False
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __str__(self):
-        return str(self.name)
-
-    def __repr__(self):
-        return str(self.name)
 
 if __name__ == '__main__':
     pass

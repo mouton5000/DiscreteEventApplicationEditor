@@ -1,9 +1,10 @@
 from grammar.grammar import BooleanExpressionParser
-from grammar.booleanExpressions import BExpression, Property, Event
+from grammar.booleanExpressions import BExpression
 from grammar.consequencesGrammar import ConsequencesParser, ADD_CONSEQUENCE, REMOVE_CONSEQUENCE, \
     ADD_SPRITE_CONSEQUENCE, REMOVE_SPRITE_CONSEQUENCE, MOVE_SPRITE_CONSEQUENCE, EDIT_SPRITE_CONSEQUENCE, \
     ADD_TOKEN_CONSEQUENCE, EDIT_TOKEN_CONSEQUENCE, REMOVE_TOKEN_CONSEQUENCE
 from grammar.tokenGrammar import TokenParametersParser
+from database import Property, Event
 import game.gameWindow as gameWindow
 
 
@@ -22,7 +23,6 @@ class StateMachine:
 
     def clearTokens(self):
         self._tokens.clear()
-        self.i = 0
 
     def updateTokensNbFrames(self):
         for token in self._tokens:
@@ -38,6 +38,11 @@ class StateMachine:
 
     def clearNodes(self):
         self._nodes.clear()
+
+    def init(self):
+        self.clearTokens()
+        Property.properties.clear()
+        Event.events.clear()
 
     def tick(self):
         print self._tokens, Property.properties, Event.events
