@@ -38,17 +38,6 @@ class StateMachine:
     def tick(self):
         print self.i, self._tokens, Property.properties, Event.events
         self.i += 1
-        from collections import deque
-
-        tokens = deque(token for token in self._tokens)
-
-        def tokensGenerator():
-            try:
-                while True:
-                    yield tokens.pop()
-            except IndexError:
-                pass
-
         from itertools import chain
 
 
@@ -62,50 +51,54 @@ class StateMachine:
 
         # la version suivant fonctionne correctement
         tokenEvaluations = {}
-        for token in tokens:
+        for token in self._tokens:
             tokenEvaluations[token] = chain.from_iterable(((evaluation, tr) for evaluation in tr.eval(token))
                                                           for tr in token.node.outputArcs)
 
-
-        #print tokenEvaluations
-
-        # locks = {}
-
+        locks = {}
         transitionGen = {}
 
-        retick = False
-        for token in tokensGenerator():
-            # evaluations = tokenEvaluations[token]
-            # for evaluation, tr in evaluations:
-            #     if len(evaluation.locks) > 0:
-            #         if any(keys in locks and locks[keys][0] <= prio for keys, prio in evaluation.locks.iteritems()):
-            #             continue
-            #         toAdd = set([])
-            #         for keys, prio in evaluation.locks.iteritems():
-            #             if keys in locks:
-            #                 toAdd.add(locks[keys][1])
-            #             locks[keys] = (prio, token)
-            #         tokens.extend(toAdd)
-            #         for n in toAdd:
-            #             del transitionGen[n]
-            #         print locks
-            #     transitionGen[token] = (tr, tr.consequences(evaluation.variables))
-            #     break
-            evaluations = tokenEvaluations[token]
-            for evaluation, tr in evaluations:
-                transitionGen[token] = tr.consequences(evaluation.variables)
-                token.moveTo(tr.n2)
-                retick = True
-                break
+        toCheck = self._tokens
+        while len(toCheck) > 0:
+            toRecheck = set([])
+            for token in toCheck:
+                evaluations = tokenEvaluations[token]
+                try:
+                    evaluation, tr = evaluations.next()
+                    locked = False
+                    if len(evaluation.locks) > 0:
+                        for keys, prio in evaluation.locks.iteritems():
+                            try:
+                                if locks[keys][0] > prio:
+                                    toRecheck |= locks[keys][1]
+                                    for token2 in locks[keys][1]:
+                                        del transitionGen[token2]
+                                    locks[keys] = (prio, set([token]))
+                                elif locks[keys][0] == prio:
+                                    locks[keys][1].add(token)
+                                else:
+                                    locked = True
+                            except KeyError:
+                                locks[keys] = (prio, set([token]))
+                    if locked:
+                        toRecheck.add(token)
+                    else:
+                        transitionGen[token] = (tr, tr.consequences(evaluation.variables))
+                except StopIteration:
+                    pass
+            toCheck = toRecheck
+
+        for token in self._tokens:
             token.oneMoreFrame()
 
         Event.events.clear()
 
-        if not retick:
+        if len(transitionGen) == 0:
             return False
 
         for token in transitionGen:
-            consequences = transitionGen[token]
+            tr, consequences = transitionGen[token]
+            token.moveTo(tr.n2)
             for consType, cons in consequences:
                 if not cons:
                     continue

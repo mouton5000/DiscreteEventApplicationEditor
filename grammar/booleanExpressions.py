@@ -148,13 +148,14 @@ class Timer(object):
 
     def eval(self, token, previousEvaluation):
         try:
-            nbFrames = previousEvaluation[self._nbFrames]  # evaluated variable
-        except KeyError:
-            nbFrames = self._nbFrames  # unevaluated variable or integer
-        try:
+            if isinstance(self._nbFrames, Variable):
+                nbFrames = previousEvaluation[self._nbFrames]  # evaluated variable
+            else:
+                nbFrames = self._nbFrames  # integer
+
             if nbFrames <= token.nbFrameSinceLastMove:
-                yield previousEvaluation  # evaluated variable or integer
-        except TypeError:
+                yield previousEvaluation
+        except KeyError:
             pass  # unevaluated variable
 
 
@@ -167,14 +168,16 @@ class Rand(object):
 
     def eval(self, _, previousEvaluation):
         try:
-            prob = previousEvaluation[self._prob]  # evaluated variable
-        except KeyError:
-            prob = self._prob  # unevaluated variable or float
-        try:
+            if isinstance(self._prob, Variable):
+                prob = previousEvaluation[self._prob]  # evaluated variable
+            else:
+                prob = self._prob  # float
+
             if random() < prob:
-                yield previousEvaluation  # evaluated variable or float
-        except TypeError:
-            pass  #  unevaluated variable
+                yield previousEvaluation
+
+        except KeyError:
+            pass  # unevaluated variable
 
 
 class RandInt(object):
@@ -206,11 +209,16 @@ class eLock(object):
         return '( elock' + str(self._keys) + ' : ' + str(self._priority) + ')'
 
     def eval(self, _, previousEvaluation):
-        evaluation = previousEvaluation.copy()
         try:
+            if isinstance(self._priority, Variable):
+                priority = previousEvaluation[self._priority]  # evaluated variable
+            else:
+                priority = self._priority
+
+            evaluation = previousEvaluation.copy()
             keys = self.eval_keys(previousEvaluation)  # can raise KeyError
-            if not keys in evaluation or evaluation[keys] <= self._priority:
-                evaluation[keys] = self._priority
+            if not keys in evaluation or evaluation[keys] <= priority:
+                evaluation[keys] = priority
             yield evaluation
         except KeyError:
             pass
