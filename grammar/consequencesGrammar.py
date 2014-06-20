@@ -1,6 +1,7 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from booleanExpressions import Property, Event, Variable
+from arithmeticExpressions import *
 
 ADD_CONSEQUENCE = 0
 REMOVE_CONSEQUENCE = 1
@@ -29,27 +30,35 @@ class ConsequencesParser(lrparsing.Grammar):
         edit = Keyword('E')
 
     consExpr = Ref('consExpr')
+    arithmExpr = Ref('arithmExpr')
 
-    parameters = List(T.string | T.variable | T.integer | T.float, Token(','))
+    parameters = List(arithmExpr, Token(','))
     propExpr = T.prop + '(' + parameters + ')'
     eventExpr = T.event + '(' + parameters + ')'
 
     addExpr = T.add + (propExpr | eventExpr)
     removeExpr = T.remove + propExpr
 
-    addTokenExpr = T.add + T.token + '(' + T.integer + Opt(',' + parameters) + ')'
+    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
     editTokenExpr = T.edit + T.token + '(' + Opt(parameters) + ')'
     removeTokenExpr = T.remove + T.token
 
-    addSpriteExpr = T.add + T.sprite + '(' + (T.string | T.variable) + ',' + (T.integer | T.variable) + ',' + \
-                    (T.integer | T.variable) + ',' + (T.integer | T.variable) + ')'
-    editSpriteExpr = T.edit + T.sprite + '(' + (T.string | T.variable) + ',' + (T.integer | T.variable) + ')'
-    removeSpriteExpr = T.remove + T.sprite + '(' + (T.string | T.variable) + ')'
-    moveSpriteExpr = T.move + T.sprite + '(' + (T.string | T.variable) + ',' + (T.integer | T.variable) + ',' + \
-                     (T.integer | T.variable) + ')'
+    addSpriteExpr = T.add + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
+                    arithmExpr + ',' + arithmExpr + ')'
+    editSpriteExpr = T.edit + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ')'
+    removeSpriteExpr = T.remove + T.sprite + '(' + arithmExpr + ')'
+    moveSpriteExpr = T.move + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
+                     arithmExpr + ')'
 
     consExpr = Prio(addExpr, removeExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr, editSpriteExpr, addTokenExpr,
                     editTokenExpr, removeTokenExpr)
+
+    addArithExpr = arithmExpr << (Token('+') | Token('-')) << arithmExpr
+    multArithExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
+    powerArithExpr = arithmExpr << Token('**') << arithmExpr
+    parArithmExpr = '(' + arithmExpr + ')'
+
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, parArithmExpr, powerArithExpr, multArithExpr, addArithExpr)
 
     START = consExpr
 
@@ -139,6 +148,9 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildParameters():
             return (cls.buildExpression(arg) for arg in tree[1::2])
 
+        def buildArithmetic():
+            return cls.buildArithmeticExpression(tree)
+
         exprSymbols = {
             ConsequencesParser.START: buildNext,
             ConsequencesParser.consExpr: buildNext,
@@ -159,10 +171,56 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.moveSpriteExpr: buildMoveSprite,
             ConsequencesParser.addTokenExpr: buildAddToken,
             ConsequencesParser.editTokenExpr: buildEditToken,
-            ConsequencesParser.removeTokenExpr: buildRemoveToken
+            ConsequencesParser.removeTokenExpr: buildRemoveToken,
+            ConsequencesParser.arithmExpr: buildArithmetic
         }
 
         return exprSymbols[rootName]()
+
+    @classmethod
+    def buildArithmeticExpression(cls, tree):
+        rootName = tree[0]
+
+        def buildNext():
+            return cls.buildArithmeticExpression(tree[1])
+
+        def buildDoubleNext():
+            return cls.buildArithmeticExpression(tree[2])
+
+        def buildLitteral():
+            return ALitteral(cls.buildExpression(tree))
+
+        def buildBinaryExpression():
+            a1 = cls.buildArithmeticExpression(tree[1])
+            a3 = cls.buildArithmeticExpression(tree[3])
+            if tree[2][1] == '+':
+                return Addition(a1, a3)
+            elif tree[2][1] == '-':
+                return Subtraction(a1, a3)
+            elif tree[2][1] == '*':
+                return Product(a1, a3)
+            elif tree[2][1] == '/':
+                return Division(a1, a3)
+            elif tree[2][1] == '//':
+                return EuclideanDivision(a1, a3)
+            elif tree[2][1] == '%':
+                return Modulo(a1, a3)
+            elif tree[2][1] == '**':
+                return Power(a1, a3)
+
+        arithmeticSymbols = {
+            ConsequencesParser.arithmExpr: buildNext,
+            ConsequencesParser.parArithmExpr: buildDoubleNext,
+            ConsequencesParser.T.integer: buildLitteral,
+            ConsequencesParser.T.float: buildLitteral,
+            ConsequencesParser.T.variable: buildLitteral,
+            ConsequencesParser.T.string: buildLitteral,
+            ConsequencesParser.addArithExpr: buildBinaryExpression,
+            ConsequencesParser.multArithExpr: buildBinaryExpression,
+            ConsequencesParser.powerArithExpr: buildBinaryExpression
+        }
+
+        return arithmeticSymbols[rootName]()
 
 
 class SpriteConsequence(object):
@@ -175,13 +233,7 @@ class SpriteConsequence(object):
 
 
 def _evalArg(arg, evaluation):
-    try:
-        return evaluation[arg]
-    except KeyError:
-        if not isinstance(arg, Variable):
-            return arg
-        else:
-            raise TypeError
+    return arg.value(evaluation)
 
 
 class AddSpriteConsequence(SpriteConsequence):
@@ -193,12 +245,12 @@ class AddSpriteConsequence(SpriteConsequence):
 
     def eval_update(self, evaluation):
         try:
-            name = _evalArg(self._name, evaluation)
-            num = _evalArg(self._num, evaluation)
-            x = _evalArg(self._x, evaluation)
-            y = _evalArg(self._y, evaluation)
+            name = str(_evalArg(self._name, evaluation))
+            num = int(_evalArg(self._num, evaluation))
+            x = int(_evalArg(self._x, evaluation))
+            y = int(_evalArg(self._y, evaluation))
             return AddSpriteConsequence(name, num, x, y)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
     @property
@@ -220,9 +272,9 @@ class RemoveSpriteConsequence(SpriteConsequence):
 
     def eval_update(self, evaluation):
         try:
-            name = _evalArg(self._name, evaluation)
+            name = str(_evalArg(self._name, evaluation))
             return RemoveSpriteConsequence(name)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
 
@@ -234,11 +286,11 @@ class MoveSpriteConsequence(SpriteConsequence):
 
     def eval_update(self, evaluation):
         try:
-            name = _evalArg(self._name, evaluation)
-            dx = _evalArg(self._dx, evaluation)
-            dy = _evalArg(self._dy, evaluation)
+            name = str(_evalArg(self._name, evaluation))
+            dx = int(_evalArg(self._dx, evaluation))
+            dy = int(_evalArg(self._dy, evaluation))
             return MoveSpriteConsequence(name, dx, dy)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
     @property
@@ -257,10 +309,10 @@ class EditSpriteConsequence(SpriteConsequence):
 
     def eval_update(self, evaluation):
         try:
-            name = _evalArg(self._name, evaluation)
-            num = _evalArg(self._num, evaluation)
+            name = str(_evalArg(self._name, evaluation))
+            num = int(_evalArg(self._num, evaluation))
             return EditSpriteConsequence(name, num)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
     @property
@@ -283,10 +335,10 @@ class AddTokenConsequence(object):
 
     def eval_update(self, evaluation):
         try:
-            nodeNum = _evalArg(self._nodeNum, evaluation)
+            nodeNum = int(_evalArg(self._nodeNum, evaluation))
             newParameters = (_evalArg(arg, evaluation) for arg in self._parameters)
             return AddTokenConsequence(nodeNum, *newParameters)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
 
@@ -302,7 +354,7 @@ class EditTokenConsequence(object):
         try:
             newParameters = (_evalArg(arg, evaluation) for arg in self._parameters)
             return EditTokenConsequence(*newParameters)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
 

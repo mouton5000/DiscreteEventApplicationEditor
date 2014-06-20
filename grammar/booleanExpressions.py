@@ -148,15 +148,12 @@ class Timer(object):
 
     def eval(self, token, previousEvaluation):
         try:
-            if isinstance(self._nbFrames, Variable):
-                nbFrames = previousEvaluation[self._nbFrames]  # evaluated variable
-            else:
-                nbFrames = self._nbFrames  # integer
+            nbFrames = self._nbFrames.value(previousEvaluation)
 
-            if nbFrames <= token.nbFrameSinceLastMove:
+            if nbFrames and nbFrames <= token.nbFrameSinceLastMove:
                 yield previousEvaluation
-        except KeyError:
-            pass  # unevaluated variable
+        except (ArithmeticError, TypeError, ValueError):
+            pass
 
 
 class Rand(object):
@@ -168,16 +165,11 @@ class Rand(object):
 
     def eval(self, _, previousEvaluation):
         try:
-            if isinstance(self._prob, Variable):
-                prob = previousEvaluation[self._prob]  # evaluated variable
-            else:
-                prob = self._prob  # float
-
+            prob = self._prob.value(previousEvaluation)
             if random() < prob:
                 yield previousEvaluation
-
-        except KeyError:
-            pass  # unevaluated variable
+        except (ArithmeticError, TypeError, ValueError):
+            pass
 
 
 class RandInt(object):
@@ -190,14 +182,22 @@ class RandInt(object):
 
     def eval(self, _, previousEvaluation):
         j = randint(0, self._maxInt - 1)
-        try:
-            i = previousEvaluation[self._var]
-            if i == j:
-                yield previousEvaluation
-        except KeyError:
-            neval = previousEvaluation.copy()
-            neval[self._var] = j
-            yield neval
+        if isinstance(self._var,Variable):
+            try:
+                i = previousEvaluation[self._var]
+                if i == j:
+                    yield previousEvaluation
+            except KeyError:
+                neval = previousEvaluation.copy()
+                neval[self._var] = j
+                yield neval
+        else:
+            try:
+                i = self._var.value(previousEvaluation)
+                if int(i) == j:
+                    yield previousEvaluation
+            except (ArithmeticError, TypeError, ValueError):
+                pass
 
 
 class eLock(object):
@@ -210,25 +210,19 @@ class eLock(object):
 
     def eval(self, _, previousEvaluation):
         try:
-            if isinstance(self._priority, Variable):
-                priority = previousEvaluation[self._priority]  # evaluated variable
-            else:
-                priority = self._priority
+            priority = self._priority.value(previousEvaluation)
 
             evaluation = previousEvaluation.copy()
-            keys = self.eval_keys(previousEvaluation)  # can raise KeyError
+            keys = self.eval_keys(previousEvaluation)
             if not keys in evaluation or evaluation[keys] <= priority:
                 evaluation[keys] = priority
             yield evaluation
-        except KeyError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
     def eval_keys(self, evaluation):
         def evalArg(arg):
-            if isinstance(arg, Variable):
-                return evaluation[arg]
-            else:
-                return arg
+            return arg.value(evaluation)
 
         keys = tuple([evalArg(key) for key in self._keys])
         return keys
@@ -365,10 +359,13 @@ class NamedExpression(object):
                     return
 
             except AttributeError:  # p1 is not a variable
-                v1 = None
-                if p1 == p2:
-                    continue
-                else:
+                try:
+                    v1 = p1.value(evaluation)
+                    if v1 == p2:
+                        continue
+                    else:
+                        return
+                except (ArithmeticError, TypeError, ValueError):
                     return
 
             except KeyError:  # p1 is an unidentified variable
@@ -407,17 +404,12 @@ class Property(NamedExpression):
 
     def eval_update(self, evaluation):
         def evalArg(arg):
-            try:
-                return evaluation[arg]
-            except KeyError:
-                if not isinstance(arg, Variable):
-                    return arg
-                else:
-                    raise TypeError
+            return arg.value(evaluation)
+
         try:
             newArgs = [evalArg(arg) for arg in self]
             return Property(self.name, *newArgs)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
 
@@ -433,18 +425,12 @@ class Event(NamedExpression):
 
     def eval_update(self, evaluation):
         def evalArg(arg):
-            try:
-                return evaluation[arg]
-            except KeyError:
-                if not isinstance(arg, Variable):
-                    return arg
-                else:
-                    raise TypeError
+            return arg.value(evaluation)
 
         try:
             newArgs = [evalArg(arg) for arg in self]
             return Event(self.name, *newArgs)
-        except TypeError:
+        except (ArithmeticError, TypeError, ValueError):
             pass
 
 
@@ -487,10 +473,13 @@ class TokenExpression:
                     return
 
             except AttributeError:  # p1 is not a variable
-                v1 = None
-                if p1 == p2:
-                    continue
-                else:
+                try:
+                    v1 = p1.value(evaluation)
+                    if v1 == p2:
+                        continue
+                    else:
+                        return
+                except (ArithmeticError, TypeError, ValueError):
                     return
 
             except KeyError:  # p1 is an unidentified variable

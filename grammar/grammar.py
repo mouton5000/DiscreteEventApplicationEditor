@@ -31,14 +31,14 @@ class BooleanExpressionParser(lrparsing.Grammar):
     litExpr = T.true | T.false
     parExpr = '(' + boolExpr + ')'
 
-    timerExpr = T.timer + '(' + (T.integer | T.variable) + ')'
-    randExpr = T.rand + '(' + (T.float | T.variable) + ')'
-    randIntExpr = T.randInt + '(' + T.variable + ',' + T.integer + ')'
+    timerExpr = T.timer + '(' + arithmExpr + ')'
+    randExpr = T.rand + '(' + arithmExpr + ')'
+    randIntExpr = T.randInt + '(' + Prio(T.variable, arithmExpr) + ',' + T.integer + ')'
 
-    eLockParameters = List(T.string | T.variable | T.integer | T.float, Token(','))
-    eLockExpr = T.elock + '(' + (T.integer | T.variable) + ',' + eLockParameters + ')'
+    eLockParameters = List(arithmExpr, Token(','))
+    eLockExpr = T.elock + '(' + arithmExpr + ',' + eLockParameters + ')'
 
-    parameters = List(T.string | T.variable | T.uvariable | T.integer | T.float, Token(','))
+    parameters = List(Prio(T.variable, arithmExpr) | T.uvariable, Token(','))
     propExpr = T.prop + '(' + parameters + ')'
     eventExpr = T.event + '(' + parameters + ')'
     tokenExpr = T.token + '(' + parameters + ')'
@@ -113,7 +113,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
             return [cls.buildExpression(arg) for arg in tree[1::2]]
 
         def buildElock():
-            priority = cls.buildExpression((tree[3]))
+            priority = cls.buildExpression(tree[3])
             args = cls.buildExpression(tree[5])
             return eLock(priority, *args)
 
@@ -132,8 +132,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
             return TokenExpression(*args)
 
         def buildCompare():
-            a1 = cls.buildArithmeticExpression(tree[1])
-            a2 = cls.buildArithmeticExpression(tree[3])
+            a1 = cls.buildExpression(tree[1])
+            a2 = cls.buildExpression(tree[3])
             if tree[2][1] == '==':
                 return Equals(a1, a2)
             elif tree[2][1] == '>':
@@ -163,8 +163,11 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
         def buildIs():
             variable = cls.buildExpression(tree[1])
-            function = cls.buildArithmeticExpression(tree[3])
+            function = cls.buildExpression(tree[3])
             return Is(variable, function)
+
+        def buildArithmetic():
+            return cls.buildArithmeticExpression(tree)
 
         booleanSymbols = {
             BooleanExpressionParser.START: buildNext,
@@ -191,7 +194,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.andExpr: buildAnd,
             BooleanExpressionParser.orExpr: buildOr,
             BooleanExpressionParser.notExpr: buildNot,
-            BooleanExpressionParser.isExpr: buildIs
+            BooleanExpressionParser.isExpr: buildIs,
+            BooleanExpressionParser.arithmExpr: buildArithmetic
 
         }
 

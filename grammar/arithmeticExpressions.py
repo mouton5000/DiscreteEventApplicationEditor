@@ -15,7 +15,7 @@ class ALitteral(object):
             pass
 
         if isinstance(self._value, Variable):
-            return None
+            raise ValueError
         else:
             return self._value
 
