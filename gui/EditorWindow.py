@@ -270,10 +270,12 @@ class MainWindow(QMainWindow):
         Event.events.clear()
         gameWindow.init()
 
-        for i in xrange(600):
+        for i in xrange(20):
+            print i
             retick = True
             while retick:
                 retick = self._stateMachine.tick()
+            self._stateMachine.updateTokensNbFrames()
             if not gameWindow.tick():
                 self.stop()
                 return

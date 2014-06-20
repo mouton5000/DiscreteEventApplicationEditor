@@ -24,6 +24,10 @@ class StateMachine:
         self._tokens.clear()
         self.i = 0
 
+    def updateTokensNbFrames(self):
+        for token in self._tokens:
+            token.oneMoreFrame()
+
     def addNode(self, num, label):
         node = Node(num, label)
         self._nodes[num] = node
@@ -87,10 +91,6 @@ class StateMachine:
                 except StopIteration:
                     pass
             toCheck = toRecheck
-
-        for token in self._tokens:
-            token.oneMoreFrame()
-
         Event.events.clear()
 
         if len(transitionGen) == 0:
