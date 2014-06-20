@@ -277,9 +277,9 @@ class MainWindow(QMainWindow):
                 retick = self._stateMachine.tick()
             self._stateMachine.updateTokensNbFrames()
             if not gameWindow.tick():
-                self.stop()
-                return
-
+                break
+        self.stop()
+        
     def debug(self):
         if not self._stateMachine:
             return
