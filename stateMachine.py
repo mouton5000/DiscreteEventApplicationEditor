@@ -40,8 +40,7 @@ class StateMachine:
         self._nodes.clear()
 
     def tick(self):
-        print self.i, self._tokens, Property.properties, Event.events
-        self.i += 1
+        print self._tokens, Property.properties, Event.events
         from itertools import chain
 
 
