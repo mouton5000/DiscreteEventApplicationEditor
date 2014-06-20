@@ -279,11 +279,12 @@ class MainWindow(QMainWindow):
             if not gameWindow.tick():
                 break
         self.stop()
-        
+
     def debug(self):
-        if not self._stateMachine:
-            return
-        gameWindow.init()
+        pass
+        # if not self._stateMachine:
+        #     return
+        # gameWindow.init()
 
     def stop(self):
         gameWindow.hide()
