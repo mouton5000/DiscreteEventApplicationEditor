@@ -25,6 +25,9 @@ class PropertyWidget(QWidget):
 
         self.setLayout(self.layout)
 
+        self.setMinimumHeight(200)
+        self.setMaximumHeight(200)
+
     def setItem(self, item):
         self.propertyItem.hide()
         self.propertyItem = item
@@ -79,8 +82,6 @@ class ArcParamEditorWidget(QWidget):
         self._labelTE.textChanged.connect(self.window().setModified)
         self._formulaTE.textChanged.connect(self.window().setModified)
         self._consequencesTE.textChanged.connect(self.window().setModified)
-
-        self.setMaximumHeight(200)
 
     def init(self):
         self._indexQCB.clear()
@@ -169,8 +170,6 @@ class NodeParamEditorWidget(QWidget):
         self._tokensTE.textChanged.connect(self.tokenChanged)
         self._tokensTE.textChanged.connect(self.window().setModified)
 
-        self.setMinimumHeight(200)
-        self.setMaximumHeight(200)
         self.setLayout(vbox)
 
     def init(self):
