@@ -16,7 +16,7 @@ REMOVE_TOKEN_CONSEQUENCE = 8
 
 class ConsequencesParser(lrparsing.Grammar):
     class T(lrparsing.TokenRegistry):
-        integer = Token(re='-?[0-9]+')
+        integer = Token(re='[0-9]+')
         float = Token(re='-?[0-9]+\.[0-9]+')
         string = Token(re='\'[A-Za-z_0-9]*\'')
         variable = Token(re='[A-Z][A-Z_0-9]*')
@@ -53,12 +53,14 @@ class ConsequencesParser(lrparsing.Grammar):
     consExpr = Prio(addExpr, removeExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr, editSpriteExpr, addTokenExpr,
                     editTokenExpr, removeTokenExpr)
 
-    addArithExpr = arithmExpr << (Token('+') | Token('-')) << arithmExpr
+    addArithExpr = arithmExpr << Token('+') << arithmExpr
+    minusArithExpr = Opt(arithmExpr) << Token('-') << arithmExpr
     multArithExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
     powerArithExpr = arithmExpr << Token('**') << arithmExpr
     parArithmExpr = '(' + arithmExpr + ')'
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, parArithmExpr, powerArithExpr, multArithExpr, addArithExpr)
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, parArithmExpr, powerArithExpr, multArithExpr,
+                      addArithExpr, minusArithExpr)
 
     START = consExpr
 
@@ -190,6 +192,13 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildLitteral():
             return ALitteral(cls.buildExpression(tree))
 
+        def buildMinusExpression():
+            if len(tree) == 4:
+                return buildBinaryExpression()
+            else:
+                a1 = cls.buildArithmeticExpression(tree[2])
+                return Subtraction(0, a1)
+
         def buildBinaryExpression():
             a1 = cls.buildArithmeticExpression(tree[1])
             a3 = cls.buildArithmeticExpression(tree[3])
@@ -216,6 +225,7 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.T.variable: buildLitteral,
             ConsequencesParser.T.string: buildLitteral,
             ConsequencesParser.addArithExpr: buildBinaryExpression,
+            ConsequencesParser.minusArithExpr: buildMinusExpression,
             ConsequencesParser.multArithExpr: buildBinaryExpression,
             ConsequencesParser.powerArithExpr: buildBinaryExpression
         }
@@ -397,5 +407,5 @@ class RemoveTokenConsequence(object):
         return self
 
 if __name__ == '__main__':
-    expr = 'A token(1)'
+    expr = 'A token(ID,-5)'
     print ConsequencesParser.parse(expr)

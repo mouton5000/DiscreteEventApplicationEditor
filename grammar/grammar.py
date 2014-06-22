@@ -1,5 +1,5 @@
 import lrparsing
-from lrparsing import Keyword, List, Prio, Ref, Token
+from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power
 from booleanExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
     EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
@@ -57,12 +57,13 @@ class BooleanExpressionParser(lrparsing.Grammar):
     boolExpr = Prio(litExpr, timerExpr, randExpr, randIntExpr, eLockExpr, propExpr,
                     eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr)
 
-    addExpr = arithmExpr << (Token('+') | Token('-')) << arithmExpr
+    addExpr = arithmExpr << Token('+') << arithmExpr
+    minusExpr = Opt(arithmExpr) << Token('-') << arithmExpr
     multExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
     powerExpr = arithmExpr << Token('**') << arithmExpr
     parArithmExpr = '(' + arithmExpr + ')'
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, parArithmExpr, powerExpr, multExpr, addExpr)
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, parArithmExpr, powerExpr, multExpr, addExpr, minusExpr)
 
     START = boolExpr
 
@@ -217,6 +218,13 @@ class BooleanExpressionParser(lrparsing.Grammar):
         def buildLitteral():
             return ALitteral(cls.buildExpression(tree))
 
+        def buildMinusExpression():
+            if len(tree) == 4:
+                return buildBinaryExpression()
+            else:
+                a1 = cls.buildArithmeticExpression(tree[2])
+                return Subtraction(0, a1)
+
         def buildBinaryExpression():
             a1 = cls.buildArithmeticExpression(tree[1])
             a3 = cls.buildArithmeticExpression(tree[3])
@@ -243,6 +251,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.T.variable: buildLitteral,
             BooleanExpressionParser.T.string: buildLitteral,
             BooleanExpressionParser.addExpr: buildBinaryExpression,
+            BooleanExpressionParser.minusExpr: buildBinaryExpression,
             BooleanExpressionParser.multExpr: buildBinaryExpression,
             BooleanExpressionParser.powerExpr: buildBinaryExpression
         }
