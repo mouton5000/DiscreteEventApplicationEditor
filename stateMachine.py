@@ -104,7 +104,7 @@ class StateMachine:
             tr, consequences = transitionGen[token]
             token.moveTo(tr.n2)
             for consType, cons in consequences:
-                if not cons:
+                if cons is None:
                     continue
                 if consType == ADD_CONSEQUENCE and isinstance(cons, Property):
                     Property.properties.add(cons)

@@ -1,7 +1,7 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power
-from database import Variable
+from database import Variable, Property, Event
 
 ADD_CONSEQUENCE = 0
 REMOVE_CONSEQUENCE = 1
@@ -230,7 +230,6 @@ class PropertyConsequence():
         self._args = args
 
     def eval_update(self, evaluation):
-        from stateMachine import Property
         try:
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
@@ -247,7 +246,6 @@ class EventConsequence():
         self._args = args
 
     def eval_update(self, evaluation):
-        from stateMachine import Event
         try:
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]

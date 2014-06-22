@@ -1,7 +1,7 @@
 from random import random, randint
 from itertools import chain
 from dictSet import DictContainer
-from database import Variable
+from database import Variable, Property, Event
 
 
 class BExpression(object):
@@ -393,27 +393,13 @@ class NamedExpression(object):
 
 
 class PropertyBooleanExpression(NamedExpression):
-    properties = set([])
 
     def __init__(self, name, *args):
         super(PropertyBooleanExpression, self).__init__(name, *args)
 
     @property
     def container(self):
-        from stateMachine import Property
         return Property.properties
-
-    def eval_update(self, evaluation):
-        from stateMachine import Property
-
-        def evalArg(arg):
-            return arg.value(evaluation)
-
-        try:
-            newArgs = [evalArg(arg) for arg in self]
-            return Property(self.name, *newArgs)
-        except (ArithmeticError, TypeError, ValueError):
-            pass
 
 
 class EventBooleanExpression(NamedExpression):
@@ -424,20 +410,7 @@ class EventBooleanExpression(NamedExpression):
 
     @property
     def container(self):
-        from stateMachine import Event
         return Event.events
-
-    def eval_update(self, evaluation):
-        from stateMachine import Event
-
-        def evalArg(arg):
-            return arg.value(evaluation)
-
-        try:
-            newArgs = [evalArg(arg) for arg in self]
-            return Event(self.name, *newArgs)
-        except (ArithmeticError, TypeError, ValueError):
-            pass
 
 
 class TokenExpression:

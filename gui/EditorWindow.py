@@ -269,7 +269,7 @@ class MainWindow(QMainWindow):
 
         gameWindow.init()
 
-        for i in xrange(20):
+        for i in xrange(600):
             print i
             retick = True
             while retick:
