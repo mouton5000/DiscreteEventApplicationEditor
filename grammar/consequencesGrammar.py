@@ -197,7 +197,7 @@ class ConsequencesParser(lrparsing.Grammar):
                 return buildBinaryExpression()
             else:
                 a1 = cls.buildArithmeticExpression(tree[2])
-                return Subtraction(0, a1)
+                return Subtraction(ALitteral(0), a1)
 
         def buildBinaryExpression():
             a1 = cls.buildArithmeticExpression(tree[1])

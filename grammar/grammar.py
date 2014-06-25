@@ -223,7 +223,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
                 return buildBinaryExpression()
             else:
                 a1 = cls.buildArithmeticExpression(tree[2])
-                return Subtraction(0, a1)
+                return Subtraction(ALitteral(0), a1)
 
         def buildBinaryExpression():
             a1 = cls.buildArithmeticExpression(tree[1])
@@ -251,7 +251,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.T.variable: buildLitteral,
             BooleanExpressionParser.T.string: buildLitteral,
             BooleanExpressionParser.addExpr: buildBinaryExpression,
-            BooleanExpressionParser.minusExpr: buildBinaryExpression,
+            BooleanExpressionParser.minusExpr: buildMinusExpression,
             BooleanExpressionParser.multExpr: buildBinaryExpression,
             BooleanExpressionParser.powerExpr: buildBinaryExpression
         }
@@ -259,4 +259,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    pass
+    expr = 'eLock(\'move\',-X)'
+    expr = BooleanExpressionParser.parse(expr)
+    for evaluation in expr.eval(1, {Variable('X'):1}):
+        print evaluation
