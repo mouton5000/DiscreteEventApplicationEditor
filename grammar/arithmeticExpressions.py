@@ -29,6 +29,7 @@ class ABiOp(object):
         return '(' + str(self._a1) + ' ' + self.symbol + ' ' + str(self._a2) + ')'
 
     def value(self, evaluation):
+        print self._a1
         v1 = self._a1.value(evaluation)
         v2 = self._a2.value(evaluation)
         return self.operation(v1, v2)
@@ -98,3 +99,25 @@ class Power(ABiOp):
 
     def operation(self, v1, v2):
         return v1 ** v2
+
+
+class AUnOp(object):
+    def __init__(self, a):
+        self._a = a
+
+    def __str__(self):
+        return self._symbol + '('  + str(self._a) + ')'
+
+    def value(self, evaluation):
+        v = self._a.value(evaluation)
+        return self.operation(v)
+
+
+class Func(AUnOp):
+    def __init__(self, a, func):
+        super(Func, self).__init__(a)
+        self._func = func
+        self._symbol = str(func)[19:-1]
+
+    def operation(self, v):
+        return self._func(v)

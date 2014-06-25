@@ -1,6 +1,6 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
-from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power
+from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power, Func
 from booleanExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
     EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is
@@ -61,9 +61,14 @@ class BooleanExpressionParser(lrparsing.Grammar):
     minusExpr = Opt(arithmExpr) << Token('-') << arithmExpr
     multExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
     powerExpr = arithmExpr << Token('**') << arithmExpr
+    constantExpr = Token('pi') | Token('e')
     parArithmExpr = '(' + arithmExpr + ')'
+    funcExpr = (Token('cos') | Token('sin') | Token('tan') | Token('exp') | Token('log') | Token('abs') |
+                Token('sign') | Token('floor') | Token('ceil') | Token('acos') | Token('asin') | Token('atan') |
+                Token('sh') | Token('ch') | Token('th') | Token('ash') | Token('ach') | Token('ath')) + parArithmExpr
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, parArithmExpr, powerExpr, multExpr, addExpr, minusExpr)
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, parArithmExpr, powerExpr,
+                      multExpr, addExpr, minusExpr, funcExpr)
 
     START = boolExpr
 
@@ -218,6 +223,14 @@ class BooleanExpressionParser(lrparsing.Grammar):
         def buildLitteral():
             return ALitteral(cls.buildExpression(tree))
 
+        def buildConstant():
+            from math import pi, e
+            if tree[1][1] == 'pi':
+                value = pi
+            else:
+                value = e
+            return ALitteral(value)
+
         def buildMinusExpression():
             if len(tree) == 4:
                 return buildBinaryExpression()
@@ -243,6 +256,68 @@ class BooleanExpressionParser(lrparsing.Grammar):
             elif tree[2][1] == '**':
                 return Power(a1, a3)
 
+        def buildFunctionExpression():
+            a = cls.buildArithmeticExpression(tree[2])
+            if tree[1][1] == 'cos':
+                from math import cos
+                return Func(a, cos)
+            elif tree[1][1] == 'sin':
+                from math import sin
+                return Func(a, sin)
+            elif tree[1][1] == 'tan':
+                from math import tan
+                return Func(a, tan)
+            elif tree[1][1] == 'acos':
+                from math import acos
+                return Func(a, acos)
+            elif tree[1][1] == 'asin':
+                from math import asin
+                return Func(a, asin)
+            elif tree[1][1] == 'atan':
+                from math import atan
+                return Func(a, atan)
+            elif tree[1][1] == 'ch':
+                from math import acosh
+                return Func(a, acosh)
+            elif tree[1][1] == 'sh':
+                from math import asinh
+                return Func(a, asinh)
+            elif tree[1][1] == 'th':
+                from math import atanh
+                return Func(a, atanh)
+            elif tree[1][1] == 'cosh':
+                from math import cosh
+                return Func(a, cosh)
+            elif tree[1][1] == 'sinh':
+                from math import sinh
+                return Func(a, sinh)
+            elif tree[1][1] == 'tanh':
+                from math import tanh
+                return Func(a, tanh)
+            elif tree[1][1] == 'exp':
+                from math import exp
+                return Func(a, exp)
+            elif tree[1][1] == 'log':
+                from math import log
+                return Func(a, log)
+            elif tree[1][1] == 'abs':
+                return Func(a, abs)
+            elif tree[1][1] == 'sign':
+                def sign(x):
+                    if x == 0:
+                        return 0
+                    elif x > 0:
+                        return 1
+                    else:
+                        return -1
+                return Func(a, sign)
+            elif tree[1][1] == 'ceil':
+                from math import ceil
+                return Func(a, ceil)
+            elif tree[1][1] == 'floor':
+                from math import floor
+                return Func(a, floor)
+
         arithmeticSymbols = {
             BooleanExpressionParser.arithmExpr: buildNext,
             BooleanExpressionParser.parArithmExpr: buildDoubleNext,
@@ -253,7 +328,9 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.addExpr: buildBinaryExpression,
             BooleanExpressionParser.minusExpr: buildMinusExpression,
             BooleanExpressionParser.multExpr: buildBinaryExpression,
-            BooleanExpressionParser.powerExpr: buildBinaryExpression
+            BooleanExpressionParser.powerExpr: buildBinaryExpression,
+            BooleanExpressionParser.constantExpr: buildConstant,
+            BooleanExpressionParser.funcExpr: buildFunctionExpression
         }
 
         return arithmeticSymbols[rootName]()
