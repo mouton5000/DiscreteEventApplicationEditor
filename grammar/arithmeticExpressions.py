@@ -29,7 +29,6 @@ class ABiOp(object):
         return '(' + str(self._a1) + ' ' + self.symbol + ' ' + str(self._a2) + ')'
 
     def value(self, evaluation):
-        print self._a1
         v1 = self._a1.value(evaluation)
         v2 = self._a2.value(evaluation)
         return self.operation(v1, v2)

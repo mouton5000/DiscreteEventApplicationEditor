@@ -315,23 +315,18 @@ class NotEquals(Compare):
         return v1 != v2
 
 
-class NamedExpression(object):
-    def __init__(self, name, *args):
-        self._name = name
+class ParameterizedExpression(object):
+    def __init__(self, *args):
         self._args = args
 
     def __str__(self):
-        return str(self._name) + '(' + ','.join([str(o) for o in self._args]) + ')'
+        return '(' + ','.join([str(o) for o in self._args]) + ')'
 
     def __repr__(self):
-        return str(self._name) + '(' + ','.join([str(o) for o in self._args]) + ')'
+        return '(' + ','.join([str(o) for o in self._args]) + ')'
 
     def __len__(self):
         return len(self._args)
-
-    @property
-    def name(self):
-        return self._name
 
     def __iter__(self):
         return iter(self._args)
@@ -339,15 +334,9 @@ class NamedExpression(object):
     def __getitem__(self, index):
         return self._args[index]
 
-    def weakCompare(self, namedExpr):
-        try:
-            return self.name == namedExpr.name and len(self) == len(namedExpr)
-        except AttributeError:
-            return False
-
-    def unify(self, namedExpr, evaluation):
+    def unify(self, params, evaluation):
         neval = evaluation.copy()
-        for p1, p2 in zip(self, namedExpr):
+        for p1, p2 in zip(self, params):
             try:
                 # p1 is supposed to be an identified or unnamed variable
                 if p1.isUnnamed():
@@ -372,6 +361,28 @@ class NamedExpression(object):
                 neval[p1] = p2  # p1 is identified with p2
 
         return neval
+
+
+class NamedExpression(ParameterizedExpression):
+    def __init__(self, name, *args):
+        super(NamedExpression, self).__init__(*args)
+        self._name = name
+
+    def __str__(self):
+        return str(self._name) + super(NamedExpression, self).__str__()
+
+    def __repr__(self):
+        return str(self._name) + super(NamedExpression, self).__repr__()
+
+    @property
+    def name(self):
+        return self._name
+
+    def weakCompare(self, namedExpr):
+        try:
+            return self.name == namedExpr.name and len(self) == len(namedExpr)
+        except AttributeError:
+            return False
 
     def eval(self, _, previousEvaluation):
         dc = DictContainer()
@@ -413,58 +424,21 @@ class EventBooleanExpression(NamedExpression):
         return Event.events
 
 
-class TokenExpression:
+class TokenExpression(ParameterizedExpression):
     def __init__(self, *args):
-        self._args = args
+        super(TokenExpression, self).__init__(*args)
 
     def __str__(self):
-        return 'TokenExpression(' + ','.join([str(o) for o in self._args]) + ')'
+        return 'TokenExpression' + super(TokenExpression, self).__str__()
 
     def __repr__(self):
-        return 'TokenExpression(' + ','.join([str(o) for o in self._args]) + ')'
-
-    def __len__(self):
-        return len(self._args)
-
-    def __iter__(self):
-        return iter(self._args)
-
-    def __getitem__(self, index):
-        return self._args[index]
+        return 'TokenExpression' + super(TokenExpression, self).__repr__()
 
     def weakCompare(self, token):
         try:
             return len(self) <= len(token)
         except AttributeError:
             return False
-
-    def unify(self, token, evaluation):
-        neval = evaluation.copy()
-        for p1, p2 in zip(self, token):
-            try:
-                # p1 is supposed to be an identified or unnamed variable
-                if p1.isUnnamed():
-                    continue
-                v1 = neval[p1]
-                if v1 == p2:
-                    continue
-                else:
-                    return
-
-            except AttributeError:  # p1 is not a variable
-                try:
-                    v1 = p1.value(evaluation)
-                    if v1 == p2:
-                        continue
-                    else:
-                        return
-                except (ArithmeticError, TypeError, ValueError):
-                    return
-
-            except KeyError:  # p1 is an unidentified variable
-                neval[p1] = p2  # p1 is identified with p2
-
-        return neval
 
     def eval(self, token, previousEvaluation):
         if self.weakCompare(token):
