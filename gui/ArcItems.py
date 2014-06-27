@@ -400,7 +400,7 @@ class CycleArcItem(ArcItem):
         path.closeSubpath()
         self.setPath(path)
 
-        textCenter = v1 + self._cl * u
+        textCenter = o  # v1 + self._cl * u
         self._labelItem.setCenter(textCenter)
-        if initLabel:
-            self._labelItem.setOffset(o)
+        #if initLabel:
+        #    self._labelItem.setOffset(0)
