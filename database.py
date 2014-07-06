@@ -27,7 +27,7 @@ class NamedExpression(object):
         return self._args[index]
 
     def __hash__(self):
-        return hash(self._name) + hash(self._args)
+        return hash(self._name)
 
     def __eq__(self, obj):
         try:

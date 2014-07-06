@@ -10,7 +10,7 @@ _scene = None
 
 class SpriteReg(Sprite):
 
-    registery = ['badCude.png', 'raquette.png', 'ok.png', 'explode.png']
+    registery = ['cadre.png', 'case_02.png', 'case_04.png', 'case_08.png', 'case_16.png', 'case_32.png', 'case_64.png']
 
     instances = {}
 

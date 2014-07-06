@@ -1,6 +1,8 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
-from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power, Func
+from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
+    Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
+    InsertExpression, RemoveAllExpression, RemoveExpression
 from database import Variable, Property, Event
 
 ADD_CONSEQUENCE = 0
@@ -53,6 +55,10 @@ class ConsequencesParser(lrparsing.Grammar):
     consExpr = Prio(addExpr, removeExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr, editSpriteExpr, addTokenExpr,
                     editTokenExpr, removeTokenExpr)
 
+    listExpr = '[' + List(arithmExpr, Token(',')) + ']'
+    linkedListExpr = 'll' + listExpr
+    setExpr = 'set' + listExpr
+
     addArithExpr = arithmExpr << Token('+') << arithmExpr
     minusArithExpr = Opt(arithmExpr) << Token('-') << arithmExpr
     multArithExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
@@ -61,10 +67,19 @@ class ConsequencesParser(lrparsing.Grammar):
     parArithmExpr = '(' + arithmExpr + ')'
     funcExpr = (Token('cos') | Token('sin') | Token('tan') | Token('exp') | Token('log') | Token('abs') |
                 Token('sign') | Token('floor') | Token('ceil') | Token('acos') | Token('asin') | Token('atan') |
-                Token('sh') | Token('ch') | Token('th') | Token('ash') | Token('ach') | Token('ath')) + parArithmExpr
+                Token('sh') | Token('ch') | Token('th') | Token('ash') | Token('ach') | Token('ath') | Token('len')) \
+               + parArithmExpr
+    getItemArithExpr = arithmExpr + '[' + arithmExpr + ']'
+    getSublistArithExpr = arithmExpr + '[' + Opt(arithmExpr) + ':' + Opt(arithmExpr) + ']'
+    insertArithExpr = arithmExpr << '<' << Opt(arithmExpr) << '<' << arithmExpr
+    removeArithExpr = arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, parArithmExpr, powerArithExpr,
-                      multArithExpr, addArithExpr, minusArithExpr, funcExpr)
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, listExpr, linkedListExpr,
+                      setExpr, parArithmExpr, getItemArithExpr, getSublistArithExpr, insertArithExpr, removeArithExpr,
+                      funcExpr, powerArithExpr, multArithExpr, addArithExpr, minusArithExpr)
+
+    # arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, parArithmExpr,
+    #                   funcExpr, powerArithExpr, multArithExpr, addArithExpr, minusArithExpr)
 
     START = consExpr
 
@@ -139,15 +154,6 @@ class ConsequencesParser(lrparsing.Grammar):
         def value():
             return tree[1]
 
-        def stringWithoutQuotes():
-            return tree[1][1:-1]
-
-        def intvalue():
-            return int(tree[1])
-
-        def floatvalue():
-            return float(tree[1])
-
         def variableValue():
             return Variable(tree[1])
 
@@ -167,9 +173,6 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.T.event: value,
             ConsequencesParser.T.prop: value,
             ConsequencesParser.T.variable: variableValue,
-            ConsequencesParser.T.string: stringWithoutQuotes,
-            ConsequencesParser.T.integer: intvalue,
-            ConsequencesParser.T.float: floatvalue,
             ConsequencesParser.parameters: buildParameters,
             ConsequencesParser.addSpriteExpr: buildAddSprite,
             ConsequencesParser.removeSpriteExpr: buildRemoveSprite,
@@ -193,8 +196,75 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildDoubleNext():
             return cls.buildArithmeticExpression(tree[2])
 
-        def buildLitteral():
-            return ALitteral(cls.buildExpression(tree))
+        def stringWithoutQuotes():
+            return ALitteral(tree[1][1:-1])
+
+        def intvalue():
+            return ALitteral(int(tree[1]))
+
+        def floatvalue():
+            return ALitteral(float(tree[1]))
+
+        def variableValue():
+            return ALitteral(Variable(tree[1]))
+
+        def listValue():
+            args = [cls.buildArithmeticExpression(arg) for arg in tree[2:-1:2]]
+            return ListLitteral(*args)
+
+        def linkedListValue():
+            args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
+            return LinkedListLitteral(*args)
+
+        def setValue():
+            args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
+            return SetLitteral(*args)
+
+        def buildGetItemExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            a2 = cls.buildArithmeticExpression(tree[3])
+            return GetItemExpression(l1, a2)
+
+        def buildGetSublistExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            s = len(tree)
+            if s == 7:
+                a1 = cls.buildArithmeticExpression(tree[3])
+                a2 = cls.buildArithmeticExpression(tree[5])
+            elif s == 5:
+                a1 = None
+                a2 = None
+            elif tree[3][1] == ':':
+                a1 = None
+                a2 = cls.buildArithmeticExpression(tree[4])
+            else:
+                a1 = cls.buildArithmeticExpression(tree[3])
+                a2 = None
+            return GetSublistExpression(l1, a1, a2)
+
+        def buildInsertExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            a2 = cls.buildArithmeticExpression(tree[-1])
+            s = len(tree)
+            if s == 6:
+                a1 = cls.buildArithmeticExpression(tree[3])
+            else:
+                a1 = None
+            return InsertExpression(l1, a1, a2)
+
+        def buildRemoveExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            s = len(tree)
+            if s == 6:
+                a2 = cls.buildArithmeticExpression(tree[-1])
+                return RemoveAllExpression(l1, a2)
+            else:
+                if tree[3][1] == '>':
+                    a2 = cls.buildArithmeticExpression(tree[-1])
+                    return RemoveExpression(l1, None, a2)
+                else:
+                    a1 = cls.buildArithmeticExpression(tree[3])
+                    return RemoveExpression(l1, a1, None)
 
         def buildMinusExpression():
             if len(tree) == 4:
@@ -290,14 +360,23 @@ class ConsequencesParser(lrparsing.Grammar):
             elif tree[1][1] == 'floor':
                 from math import floor
                 return Func(a, floor)
+            elif tree[1][1] == 'len':
+                return Func(a, len)
 
         arithmeticSymbols = {
             ConsequencesParser.arithmExpr: buildNext,
             ConsequencesParser.parArithmExpr: buildDoubleNext,
-            ConsequencesParser.T.integer: buildLitteral,
-            ConsequencesParser.T.float: buildLitteral,
-            ConsequencesParser.T.variable: buildLitteral,
-            ConsequencesParser.T.string: buildLitteral,
+            ConsequencesParser.T.integer: intvalue,
+            ConsequencesParser.T.float: floatvalue,
+            ConsequencesParser.T.variable: variableValue,
+            ConsequencesParser.T.string: stringWithoutQuotes,
+            ConsequencesParser.listExpr: listValue,
+            ConsequencesParser.linkedListExpr: linkedListValue,
+            ConsequencesParser.setExpr: setValue,
+            ConsequencesParser.getItemArithExpr: buildGetItemExpression,
+            ConsequencesParser.getSublistArithExpr: buildGetSublistExpression,
+            ConsequencesParser.insertArithExpr: buildInsertExpression,
+            ConsequencesParser.removeArithExpr: buildRemoveExpression,
             ConsequencesParser.addArithExpr: buildBinaryExpression,
             ConsequencesParser.minusArithExpr: buildMinusExpression,
             ConsequencesParser.multArithExpr: buildBinaryExpression,
@@ -483,5 +562,6 @@ class RemoveTokenConsequence(object):
         return self
 
 if __name__ == '__main__':
-    expr = 'A token(ID,-5)'
+    print ConsequencesParser.pre_compile_grammar()
+    expr = 'A pFree(L>(2*I)>)'
     print ConsequencesParser.parse(expr)

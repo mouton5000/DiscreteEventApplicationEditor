@@ -269,8 +269,11 @@ class MainWindow(QMainWindow):
 
         gameWindow.init()
 
-        for i in xrange(600):
+        i = 0
+        while True:
+        #for i in xrange(600):
             print i
+            i += 1
             retick = True
             while retick:
                 retick = self._stateMachine.tick()

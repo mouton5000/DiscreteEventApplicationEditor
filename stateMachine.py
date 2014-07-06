@@ -48,7 +48,6 @@ class StateMachine:
         print self._tokens, Property.properties, Event.events
         from itertools import chain
 
-
         # bug? la variable token est iteree a partir de la liste tokens
         # cependant la variable token dans les valeurs chain.from ... token.node.outputArcs)
         # est toujours egale au premier token alors que la cles est iteree correctement
@@ -140,7 +139,6 @@ class StateMachine:
                     token.setArgs(*cons.parameters)
                 elif consType == REMOVE_TOKEN_CONSEQUENCE:
                     self.removeToken(token)
-
         return True
 
 

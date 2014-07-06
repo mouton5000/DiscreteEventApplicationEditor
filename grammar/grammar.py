@@ -1,6 +1,8 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
-from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, Power, Func
+from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
+    Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
+    InsertExpression, RemoveAllExpression, RemoveExpression
 from booleanExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
     EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is
@@ -57,6 +59,10 @@ class BooleanExpressionParser(lrparsing.Grammar):
     boolExpr = Prio(litExpr, timerExpr, randExpr, randIntExpr, eLockExpr, propExpr,
                     eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr)
 
+    listExpr = '[' + List(arithmExpr, Token(',')) + ']'
+    linkedListExpr = 'll' + listExpr
+    setExpr = 'set' + listExpr
+
     addExpr = arithmExpr << Token('+') << arithmExpr
     minusExpr = Opt(arithmExpr) << Token('-') << arithmExpr
     multExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
@@ -65,10 +71,16 @@ class BooleanExpressionParser(lrparsing.Grammar):
     parArithmExpr = '(' + arithmExpr + ')'
     funcExpr = (Token('cos') | Token('sin') | Token('tan') | Token('exp') | Token('log') | Token('abs') |
                 Token('sign') | Token('floor') | Token('ceil') | Token('acos') | Token('asin') | Token('atan') |
-                Token('sh') | Token('ch') | Token('th') | Token('ash') | Token('ach') | Token('ath')) + parArithmExpr
+                Token('sh') | Token('ch') | Token('th') | Token('ash') | Token('ach') | Token('ath') | Token('len')) \
+               + parArithmExpr
+    getItemExpr = arithmExpr + '[' + arithmExpr + ']'
+    getSublistExpr = arithmExpr + '[' + Opt(arithmExpr) + ':' + Opt(arithmExpr) + ']'
+    insertExpr = arithmExpr << '<' << Opt(arithmExpr) << '<' << arithmExpr
+    removeExpr = arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, parArithmExpr, powerExpr,
-                      multExpr, addExpr, minusExpr, funcExpr)
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, listExpr, linkedListExpr,
+                      setExpr, parArithmExpr, getItemExpr, getSublistExpr, insertExpr, removeExpr,
+                      funcExpr, powerExpr, multExpr, addExpr, minusExpr)
 
     START = boolExpr
 
@@ -89,15 +101,6 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
         def value():
             return tree[1]
-
-        def stringWithoutQuotes():
-            return tree[1][1:-1]
-
-        def intvalue():
-            return int(tree[1])
-
-        def floatvalue():
-            return float(tree[1])
 
         def variableValue():
             return Variable(tree[1])
@@ -186,9 +189,6 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.T.prop: value,
             BooleanExpressionParser.T.variable: variableValue,
             BooleanExpressionParser.T.uvariable: variableValue,
-            BooleanExpressionParser.T.string: stringWithoutQuotes,
-            BooleanExpressionParser.T.integer: intvalue,
-            BooleanExpressionParser.T.float: floatvalue,
             BooleanExpressionParser.litExpr: buildLitteral,
             BooleanExpressionParser.timerExpr: buildTimer,
             BooleanExpressionParser.randExpr: buildRand,
@@ -214,14 +214,81 @@ class BooleanExpressionParser(lrparsing.Grammar):
     def buildArithmeticExpression(cls, tree):
         rootName = tree[0]
 
+        def stringWithoutQuotes():
+            return ALitteral(tree[1][1:-1])
+
+        def intvalue():
+            return ALitteral(int(tree[1]))
+
+        def floatvalue():
+            return ALitteral(float(tree[1]))
+
+        def variableValue():
+            return ALitteral(Variable(tree[1]))
+
+        def listValue():
+            args = [cls.buildArithmeticExpression(arg) for arg in tree[2:-1:2]]
+            return ListLitteral(*args)
+
+        def linkedListValue():
+            args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
+            return LinkedListLitteral(*args)
+
+        def setValue():
+            args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
+            return SetLitteral(*args)
+
+        def buildGetItemExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            a2 = cls.buildArithmeticExpression(tree[3])
+            return GetItemExpression(l1, a2)
+
+        def buildGetSublistExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            s = len(tree)
+            if s == 7:
+                a1 = cls.buildArithmeticExpression(tree[3])
+                a2 = cls.buildArithmeticExpression(tree[5])
+            elif s == 5:
+                a1 = None
+                a2 = None
+            elif tree[3][1] == ':':
+                a1 = None
+                a2 = cls.buildArithmeticExpression(tree[4])
+            else:
+                a1 = cls.buildArithmeticExpression(tree[3])
+                a2 = None
+            return GetSublistExpression(l1, a1, a2)
+
+        def buildInsertExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            a2 = cls.buildArithmeticExpression(tree[-1])
+            s = len(tree)
+            if s == 6:
+                a1 = cls.buildArithmeticExpression(tree[3])
+            else:
+                a1 = None
+            return InsertExpression(l1, a1, a2)
+
+        def buildRemoveExpression():
+            l1 = cls.buildArithmeticExpression(tree[1])
+            s = len(tree)
+            if s == 6:
+                a2 = cls.buildArithmeticExpression(tree[-1])
+                return RemoveAllExpression(l1, a2)
+            else:
+                if tree[3][1] == '>':
+                    a2 = cls.buildArithmeticExpression(tree[-1])
+                    return RemoveExpression(l1, None, a2)
+                else:
+                    a1 = cls.buildArithmeticExpression(tree[3])
+                    return RemoveExpression(l1, a1, None)
+
         def buildNext():
             return cls.buildArithmeticExpression(tree[1])
 
         def buildDoubleNext():
             return cls.buildArithmeticExpression(tree[2])
-
-        def buildLitteral():
-            return ALitteral(cls.buildExpression(tree))
 
         def buildConstant():
             from math import pi, e
@@ -317,14 +384,23 @@ class BooleanExpressionParser(lrparsing.Grammar):
             elif tree[1][1] == 'floor':
                 from math import floor
                 return Func(a, floor)
+            elif tree[1][1] == 'len':
+                return Func(a, len)
 
         arithmeticSymbols = {
             BooleanExpressionParser.arithmExpr: buildNext,
             BooleanExpressionParser.parArithmExpr: buildDoubleNext,
-            BooleanExpressionParser.T.integer: buildLitteral,
-            BooleanExpressionParser.T.float: buildLitteral,
-            BooleanExpressionParser.T.variable: buildLitteral,
-            BooleanExpressionParser.T.string: buildLitteral,
+            BooleanExpressionParser.T.integer: intvalue,
+            BooleanExpressionParser.T.float: floatvalue,
+            BooleanExpressionParser.T.variable: variableValue,
+            BooleanExpressionParser.T.string: stringWithoutQuotes,
+            BooleanExpressionParser.listExpr: listValue,
+            BooleanExpressionParser.linkedListExpr: linkedListValue,
+            BooleanExpressionParser.setExpr: setValue,
+            BooleanExpressionParser.getItemExpr: buildGetItemExpression,
+            BooleanExpressionParser.getSublistExpr: buildGetSublistExpression,
+            BooleanExpressionParser.insertExpr: buildInsertExpression,
+            BooleanExpressionParser.removeExpr: buildRemoveExpression,
             BooleanExpressionParser.addExpr: buildBinaryExpression,
             BooleanExpressionParser.minusExpr: buildMinusExpression,
             BooleanExpressionParser.multExpr: buildBinaryExpression,
@@ -336,7 +412,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    expr = 'eLock(\'move\',-X)'
+    print BooleanExpressionParser.pre_compile_grammar()
+    expr = 'X is [1,2,5,4,5,6] and randInt(I, len(X))'
     expr = BooleanExpressionParser.parse(expr)
-    for evaluation in expr.eval(1, {Variable('X'):1}):
+    for evaluation in expr.eval(1, {Variable('Y'): 1}):
         print evaluation
