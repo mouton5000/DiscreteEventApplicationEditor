@@ -182,23 +182,29 @@ class RandInt(object):
         return '( randInt ' + str(self._var) + ', ' + str(self._maxInt) + ')'
 
     def eval(self, _, previousEvaluation):
-        j = randint(0, self._maxInt - 1)
-        if isinstance(self._var, Variable):
-            try:
-                i = previousEvaluation[self._var]
-                if i == j:
-                    yield previousEvaluation
-            except KeyError:
-                neval = previousEvaluation.copy()
-                neval[self._var] = j
-                yield neval
-        else:
-            try:
-                i = self._var.value(previousEvaluation)
-                if int(i) == j:
-                    yield previousEvaluation
-            except (ArithmeticError, TypeError, ValueError):
-                pass
+        try:
+            maxInt = int(self._maxInt.value(previousEvaluation))
+        except (ArithmeticError, TypeError, ValueError):
+            maxInt = -1
+
+        if maxInt > 0:
+            j = randint(0, maxInt - 1)
+            if isinstance(self._var, Variable):
+                try:
+                    i = previousEvaluation[self._var]
+                    if i == j:
+                        yield previousEvaluation
+                except KeyError:
+                    neval = previousEvaluation.copy()
+                    neval[self._var] = j
+                    yield neval
+            else:
+                try:
+                    i = self._var.value(previousEvaluation)
+                    if int(i) == j:
+                        yield previousEvaluation
+                except (ArithmeticError, TypeError, ValueError):
+                    pass
 
 
 class eLock(object):

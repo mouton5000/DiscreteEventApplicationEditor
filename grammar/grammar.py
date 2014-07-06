@@ -36,7 +36,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
     timerExpr = T.timer + '(' + arithmExpr + ')'
     randExpr = T.rand + '(' + arithmExpr + ')'
-    randIntExpr = T.randInt + '(' + Prio(T.variable, arithmExpr) + ',' + T.integer + ')'
+    randIntExpr = T.randInt + '(' + Prio(T.variable, arithmExpr) + ',' + arithmExpr + ')'
 
     eLockParameters = List(arithmExpr, Token(','))
     eLockExpr = T.elock + '(' + arithmExpr + ',' + eLockParameters + ')'
