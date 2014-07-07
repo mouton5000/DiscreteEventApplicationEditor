@@ -1,6 +1,13 @@
 __author__ = 'mouton'
 
 
+class UndefinedParameter:
+    def __init__(self):
+        pass
+
+UNDEFINED_PARAMETER = UndefinedParameter()
+
+
 class NamedExpression(object):
 
     def __init__(self, name, *args):
@@ -42,6 +49,19 @@ class Property(NamedExpression):
     def __init__(self, name, *args):
         super(Property, self).__init__(name, *args)
 
+    def filter(self, name, *args):
+        if name != self.name or len(args) != len(self):
+            return False
+
+        def filterArgs(arg, propArg):
+            return arg == propArg or arg == UNDEFINED_PARAMETER
+
+        return all(filterArgs(arg, propArg) for arg, propArg in zip(args, self))
+
+    @staticmethod
+    def removeAll(name, *args):
+        Property.properties = {prop for prop in Property.properties if not prop.filter(name, *args)}
+
     @property
     def container(self):
         return Property.properties
@@ -52,7 +72,6 @@ class Event(NamedExpression):
 
     def __init__(self, name, *args):
         super(Event, self).__init__(name, *args)
-
 
     @property
     def container(self):

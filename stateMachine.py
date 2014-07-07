@@ -109,11 +109,7 @@ class StateMachine:
                     prop = Property(cons[0], *cons[1])
                     Property.properties.add(prop)
                 elif consType == REMOVE_PROPERTY_CONSEQUENCE:
-                    prop = Property(cons[0], *cons[1])
-                    try:
-                        Property.properties.remove(prop)
-                    except KeyError:
-                        pass
+                    Property.removeAll(cons[0], *cons[1])
                 elif consType == ADD_EVENT_CONSEQUENCE:
                     event = Event(cons[0], *cons[1])
                     Event.events.add(event)

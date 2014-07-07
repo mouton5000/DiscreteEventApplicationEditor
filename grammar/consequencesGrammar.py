@@ -2,7 +2,7 @@ import lrparsing
 from lrparsing import List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
-    InsertExpression, RemoveAllExpression, RemoveExpression
+    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral
 from database import Variable
 
 ADD_PROPERTY_CONSEQUENCE = 0
@@ -155,8 +155,8 @@ class ConsequencesParser(lrparsing.Grammar):
         def value():
             return tree[1]
 
-        def variableValue():
-            return Variable(tree[1])
+        def unnamedVariableValue():
+            return UndefinnedLitteral()
 
         def buildParameters():
             return (cls.buildExpression(arg) for arg in tree[1::2])
@@ -172,7 +172,7 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addEventExpr: buildAddEvent,
             ConsequencesParser.T.event: value,
             ConsequencesParser.T.prop: value,
-            ConsequencesParser.T.variable: variableValue,
+            ConsequencesParser.T.uvariable: unnamedVariableValue,
             ConsequencesParser.parameters: buildParameters,
             ConsequencesParser.incompleteParameters: buildParameters,
             ConsequencesParser.addSpriteExpr: buildAddSprite,
@@ -370,7 +370,6 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.T.integer: intvalue,
             ConsequencesParser.T.float: floatvalue,
             ConsequencesParser.T.variable: variableValue,
-            ConsequencesParser.T.uvariable: variableValue,
             ConsequencesParser.T.string: stringWithoutQuotes,
             ConsequencesParser.listExpr: listValue,
             ConsequencesParser.linkedListExpr: linkedListValue,

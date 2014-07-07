@@ -18,10 +18,25 @@ class ALitteral(object):
         except KeyError:
             pass
 
-        if isinstance(self._value, Variable):
+        if isinstance(self._value, Variable) and not self._value.isUnnamed():
             raise ValueError
         else:
             return self._value
+
+
+class UndefinnedLitteral(object):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return '_'
+
+    def __repr__(self):
+        return '_'
+
+    def value(self, _):
+        from database import UNDEFINED_PARAMETER
+        return UNDEFINED_PARAMETER
 
 
 class ListLitteral(object):
