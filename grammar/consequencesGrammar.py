@@ -1,19 +1,20 @@
 import lrparsing
-from lrparsing import Keyword, List, Prio, Ref, Token, Opt
+from lrparsing import List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
     InsertExpression, RemoveAllExpression, RemoveExpression
-from database import Variable, Property, Event
+from database import Variable
 
-ADD_CONSEQUENCE = 0
-REMOVE_CONSEQUENCE = 1
-ADD_SPRITE_CONSEQUENCE = 2
-REMOVE_SPRITE_CONSEQUENCE = 3
-MOVE_SPRITE_CONSEQUENCE = 4
-EDIT_SPRITE_CONSEQUENCE = 5
-ADD_TOKEN_CONSEQUENCE = 6
-EDIT_TOKEN_CONSEQUENCE = 7
-REMOVE_TOKEN_CONSEQUENCE = 8
+ADD_PROPERTY_CONSEQUENCE = 0
+REMOVE_PROPERTY_CONSEQUENCE = 1
+ADD_EVENT_CONSEQUENCE = 2
+ADD_SPRITE_CONSEQUENCE = 3
+REMOVE_SPRITE_CONSEQUENCE = 4
+MOVE_SPRITE_CONSEQUENCE = 5
+EDIT_SPRITE_CONSEQUENCE = 6
+ADD_TOKEN_CONSEQUENCE = 7
+EDIT_TOKEN_CONSEQUENCE = 8
+REMOVE_TOKEN_CONSEQUENCE = 9
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -22,6 +23,7 @@ class ConsequencesParser(lrparsing.Grammar):
         float = Token(re='-?[0-9]+\.[0-9]+')
         string = Token(re='\'[A-Za-z_0-9]*\'')
         variable = Token(re='[A-Z][A-Z_0-9]*')
+        uvariable = Token('_')
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
         sprite = Token('s')
@@ -35,11 +37,11 @@ class ConsequencesParser(lrparsing.Grammar):
     arithmExpr = Ref('arithmExpr')
 
     parameters = List(arithmExpr, Token(','))
-    propExpr = T.prop + '(' + parameters + ')'
-    eventExpr = T.event + '(' + parameters + ')'
+    incompleteParameters = List((arithmExpr, T.uvariable), Token(','))
 
-    addExpr = T.add + (propExpr | eventExpr)
-    removeExpr = T.remove + propExpr
+    addPropExpr = T.add + T.prop + '(' + parameters + ')'
+    removePropExpr = T.remove + T.prop + '(' + incompleteParameters + ')'
+    addEventExpr = T.add + T.event + '(' + parameters + ')'
 
     addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
     editTokenExpr = T.edit + T.token + '(' + Opt(parameters) + ')'
@@ -52,8 +54,8 @@ class ConsequencesParser(lrparsing.Grammar):
     moveSpriteExpr = T.move + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
                      arithmExpr + ')'
 
-    consExpr = Prio(addExpr, removeExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr, editSpriteExpr, addTokenExpr,
-                    editTokenExpr, removeTokenExpr)
+    consExpr = Prio(addPropExpr, removePropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr,
+                    editSpriteExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -95,11 +97,20 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildNext():
             return cls.buildExpression(tree[1])
 
-        def buildAdd():
-            return ADD_CONSEQUENCE, cls.buildExpression(tree[2])
+        def buildAddProperty():
+            name = cls.buildExpression(tree[2])[1:]
+            args = cls.buildExpression(tree[4])
+            return ADD_PROPERTY_CONSEQUENCE, AddPropertyConsequence(name, *args)
 
-        def buildRemove():
-            return REMOVE_CONSEQUENCE, cls.buildExpression(tree[2])
+        def buildRemoveProperty():
+            name = cls.buildExpression(tree[2])[1:]
+            args = cls.buildExpression(tree[4])
+            return REMOVE_PROPERTY_CONSEQUENCE, RemovePropertyConsequence(name, *args)
+
+        def buildAddEvent():
+            name = cls.buildExpression(tree[2])[1:]
+            args = cls.buildExpression(tree[4])
+            return ADD_EVENT_CONSEQUENCE, AddEventConsequence(name, *args)
 
         def buildAddSprite():
             name = cls.buildExpression(tree[4])
@@ -122,16 +133,6 @@ class ConsequencesParser(lrparsing.Grammar):
             dx = cls.buildExpression(tree[6])
             dy = cls.buildExpression(tree[8])
             return MOVE_SPRITE_CONSEQUENCE, MoveSpriteConsequence(name, dx, dy)
-
-        def buildProperty():
-            name = cls.buildExpression(tree[1])[1:]
-            args = cls.buildExpression(tree[3])
-            return PropertyConsequence(name, *args)
-
-        def buildEvent():
-            name = cls.buildExpression(tree[1])[1:]
-            args = cls.buildExpression(tree[3])
-            return EventConsequence(name, *args)
 
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
@@ -166,14 +167,14 @@ class ConsequencesParser(lrparsing.Grammar):
         exprSymbols = {
             ConsequencesParser.START: buildNext,
             ConsequencesParser.consExpr: buildNext,
-            ConsequencesParser.addExpr: buildAdd,
-            ConsequencesParser.removeExpr: buildRemove,
-            ConsequencesParser.propExpr: buildProperty,
-            ConsequencesParser.eventExpr: buildEvent,
+            ConsequencesParser.addPropExpr: buildAddProperty,
+            ConsequencesParser.removePropExpr: buildRemoveProperty,
+            ConsequencesParser.addEventExpr: buildAddEvent,
             ConsequencesParser.T.event: value,
             ConsequencesParser.T.prop: value,
             ConsequencesParser.T.variable: variableValue,
             ConsequencesParser.parameters: buildParameters,
+            ConsequencesParser.incompleteParameters: buildParameters,
             ConsequencesParser.addSpriteExpr: buildAddSprite,
             ConsequencesParser.removeSpriteExpr: buildRemoveSprite,
             ConsequencesParser.editSpriteExpr: buildEditSprite,
@@ -369,6 +370,7 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.T.integer: intvalue,
             ConsequencesParser.T.float: floatvalue,
             ConsequencesParser.T.variable: variableValue,
+            ConsequencesParser.T.uvariable: variableValue,
             ConsequencesParser.T.string: stringWithoutQuotes,
             ConsequencesParser.listExpr: listValue,
             ConsequencesParser.linkedListExpr: linkedListValue,
@@ -388,7 +390,11 @@ class ConsequencesParser(lrparsing.Grammar):
         return arithmeticSymbols[rootName]()
 
 
-class PropertyConsequence():
+def _evalArg(arg, evaluation):
+    return arg.value(evaluation)
+
+
+class AddPropertyConsequence():
 
     def __init__(self, name, *args):
         self._name = name
@@ -398,12 +404,27 @@ class PropertyConsequence():
         try:
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
-            return Property(name, *newArgs)
+            return name, newArgs
         except (ArithmeticError, TypeError, ValueError):
             pass
 
 
-class EventConsequence():
+class RemovePropertyConsequence():
+
+    def __init__(self, name, *args):
+        self._name = name
+        self._args = args
+
+    def eval_update(self, evaluation):
+        try:
+            name = self._name
+            newArgs = [_evalArg(arg, evaluation) for arg in self._args]
+            return name, newArgs
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class AddEventConsequence():
     events = set([])
 
     def __init__(self, name, *args):
@@ -414,7 +435,7 @@ class EventConsequence():
         try:
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
-            return Event(name, *newArgs)
+            return name, newArgs
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -426,10 +447,6 @@ class SpriteConsequence(object):
     @property
     def name(self):
         return self._name
-
-
-def _evalArg(arg, evaluation):
-    return arg.value(evaluation)
 
 
 class AddSpriteConsequence(SpriteConsequence):

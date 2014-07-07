@@ -1,8 +1,8 @@
 from grammar.grammar import BooleanExpressionParser
 from grammar.booleanExpressions import BExpression
-from grammar.consequencesGrammar import ConsequencesParser, ADD_CONSEQUENCE, REMOVE_CONSEQUENCE, \
-    ADD_SPRITE_CONSEQUENCE, REMOVE_SPRITE_CONSEQUENCE, MOVE_SPRITE_CONSEQUENCE, EDIT_SPRITE_CONSEQUENCE, \
-    ADD_TOKEN_CONSEQUENCE, EDIT_TOKEN_CONSEQUENCE, REMOVE_TOKEN_CONSEQUENCE
+from grammar.consequencesGrammar import ConsequencesParser, ADD_PROPERTY_CONSEQUENCE, REMOVE_PROPERTY_CONSEQUENCE, \
+    ADD_EVENT_CONSEQUENCE, ADD_SPRITE_CONSEQUENCE, REMOVE_SPRITE_CONSEQUENCE, MOVE_SPRITE_CONSEQUENCE, \
+    EDIT_SPRITE_CONSEQUENCE, ADD_TOKEN_CONSEQUENCE, EDIT_TOKEN_CONSEQUENCE, REMOVE_TOKEN_CONSEQUENCE
 from grammar.tokenGrammar import TokenParametersParser
 from database import Property, Event
 import game.gameWindow as gameWindow
@@ -105,15 +105,18 @@ class StateMachine:
             for consType, cons in consequences:
                 if cons is None:
                     continue
-                if consType == ADD_CONSEQUENCE and isinstance(cons, Property):
-                    Property.properties.add(cons)
-                elif consType == REMOVE_CONSEQUENCE and isinstance(cons, Property):
+                if consType == ADD_PROPERTY_CONSEQUENCE:
+                    prop = Property(cons[0], *cons[1])
+                    Property.properties.add(prop)
+                elif consType == REMOVE_PROPERTY_CONSEQUENCE:
+                    prop = Property(cons[0], *cons[1])
                     try:
-                        Property.properties.remove(cons)
+                        Property.properties.remove(prop)
                     except KeyError:
                         pass
-                elif consType == ADD_CONSEQUENCE and isinstance(cons, Event):
-                    Event.events.add(cons)
+                elif consType == ADD_EVENT_CONSEQUENCE:
+                    event = Event(cons[0], *cons[1])
+                    Event.events.add(event)
                 elif consType == ADD_SPRITE_CONSEQUENCE:
                     gameWindow.addSprite(cons.name, cons.num, cons.x, cons.y)
                 elif consType == REMOVE_SPRITE_CONSEQUENCE:
