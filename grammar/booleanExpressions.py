@@ -442,7 +442,7 @@ class TokenExpression(ParameterizedExpression):
 
     def weakCompare(self, token):
         try:
-            return len(self) <= len(token)
+            return len(self) == len(token)
         except AttributeError:
             return False
 
