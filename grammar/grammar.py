@@ -2,7 +2,7 @@ import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
-    InsertExpression, RemoveAllExpression, RemoveExpression
+    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral
 from booleanExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
     EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is
@@ -105,6 +105,9 @@ class BooleanExpressionParser(lrparsing.Grammar):
         def variableValue():
             return Variable(tree[1])
 
+        def unnamedVariableValue():
+            return UndefinnedLitteral()
+
         def buildLitteral():
             return BLitteral(tree[1][1] == 'true')
 
@@ -188,7 +191,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.T.event: value,
             BooleanExpressionParser.T.prop: value,
             BooleanExpressionParser.T.variable: variableValue,
-            BooleanExpressionParser.T.uvariable: variableValue,
+            BooleanExpressionParser.T.uvariable: unnamedVariableValue,
             BooleanExpressionParser.litExpr: buildLitteral,
             BooleanExpressionParser.timerExpr: buildTimer,
             BooleanExpressionParser.randExpr: buildRand,

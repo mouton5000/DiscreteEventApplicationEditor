@@ -80,21 +80,15 @@ class Event(NamedExpression):
 
 class Variable(object):
     def __init__(self, name):
-        if name != '_':
-            self._name = name
-        else:
-            self._name = None
+        self._name = name
 
     @property
     def name(self):
         return self._name
 
-    def isUnnamed(self):
-        return self._name is None
-
     def __eq__(self, other):
         try:
-            return self.name == other.name or (self.isUnnamed() and other.isUnnamed())
+            return self.name == other.name
         except AttributeError:
             return False
 

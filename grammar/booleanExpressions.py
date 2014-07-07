@@ -1,7 +1,7 @@
 from random import random, randint
 from itertools import chain
 from dictSet import DictContainer
-from database import Variable, Property, Event
+from database import Variable, Property, Event, UNDEFINED_PARAMETER
 
 
 class BExpression(object):
@@ -343,29 +343,25 @@ class ParameterizedExpression(object):
     def unify(self, params, evaluation):
         neval = evaluation.copy()
         for p1, p2 in zip(self, params):
-            try:
                 # p1 is supposed to be an identified or unnamed variable
-                if p1.isUnnamed():
-                    continue
-                v1 = neval[p1]
-                if v1 == p2:
-                    continue
+                if isinstance(p1, Variable):
+                    try:
+                        v1 = neval[p1]
+                        if v1 == p2:
+                            continue
+                        else:
+                            return
+                    except KeyError:  # p1 is an unidentified variable
+                        neval[p1] = p2  # p1 is identified with p2
                 else:
-                    return
-
-            except AttributeError:  # p1 is not a variable
-                try:
-                    v1 = p1.value(evaluation)
-                    if v1 == p2:
-                        continue
-                    else:
+                    try:
+                        v1 = p1.value(evaluation)
+                        if v1 == UNDEFINED_PARAMETER or v1 == p2:
+                            continue
+                        else:
+                            return
+                    except (ArithmeticError, TypeError, ValueError):
                         return
-                except (ArithmeticError, TypeError, ValueError):
-                    return
-
-            except KeyError:  # p1 is an unidentified variable
-                neval[p1] = p2  # p1 is identified with p2
-
         return neval
 
 
