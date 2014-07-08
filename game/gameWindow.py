@@ -47,13 +47,13 @@ def tick():
             return False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                Event.events.add(Event('Key', 'left'))
+                Event.events.add(Event('Key', ['left']))
             if event.key == pygame.K_RIGHT:
-                Event.events.add(Event('Key', 'right'))
+                Event.events.add(Event('Key', ['right']))
             if event.key == pygame.K_DOWN:
-                Event.events.add(Event('Key', 'down'))
+                Event.events.add(Event('Key', ['down']))
             if event.key == pygame.K_UP:
-                Event.events.add(Event('Key', 'up'))
+                Event.events.add(Event('Key', ['up']))
     _scene.fill((255, 255, 255))
     _all_list.draw(_scene)
     pygame.display.flip()

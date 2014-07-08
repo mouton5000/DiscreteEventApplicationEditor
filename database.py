@@ -10,9 +10,9 @@ UNDEFINED_PARAMETER = UndefinedParameter()
 
 class NamedExpression(object):
 
-    def __init__(self, name, *args):
+    def __init__(self, name, args):
         self._name = name
-        self._args = args
+        self._args = list(args)
 
     def __str__(self):
         return str(self._name) + '(' + ','.join([str(o) for o in self._args]) + ')'
@@ -46,10 +46,10 @@ class NamedExpression(object):
 class Property(NamedExpression):
     properties = set([])
 
-    def __init__(self, name, *args):
-        super(Property, self).__init__(name, *args)
+    def __init__(self, name, args):
+        super(Property, self).__init__(name, args)
 
-    def filter(self, name, *args):
+    def filter(self, name, args):
         if name != self.name or len(args) != len(self):
             return False
 
@@ -59,8 +59,9 @@ class Property(NamedExpression):
         return all(filterArgs(arg, propArg) for arg, propArg in zip(args, self))
 
     @staticmethod
-    def removeAll(name, *args):
-        Property.properties = {prop for prop in Property.properties if not prop.filter(name, *args)}
+    def removeAll(name, args):
+        Property.properties = {prop for prop in Property.properties if not prop.filter(name, args)}
+
 
     @property
     def container(self):
@@ -70,8 +71,8 @@ class Property(NamedExpression):
 class Event(NamedExpression):
     events = set([])
 
-    def __init__(self, name, *args):
-        super(Event, self).__init__(name, *args)
+    def __init__(self, name, args):
+        super(Event, self).__init__(name, args)
 
     @property
     def container(self):

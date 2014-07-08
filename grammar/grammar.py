@@ -130,21 +130,21 @@ class BooleanExpressionParser(lrparsing.Grammar):
         def buildElock():
             priority = cls.buildExpression(tree[3])
             args = cls.buildExpression(tree[5])
-            return eLock(priority, *args)
+            return eLock(priority, args)
 
         def buildProperty():
             name = cls.buildExpression(tree[1])[1:]
             args = cls.buildExpression(tree[3])
-            return PropertyBooleanExpression(name, *args)
+            return PropertyBooleanExpression(name, args)
 
         def buildEvent():
             name = cls.buildExpression(tree[1])[1:]
             args = cls.buildExpression(tree[3])
-            return EventBooleanExpression(name, *args)
+            return EventBooleanExpression(name, args)
 
         def buildToken():
             args = cls.buildExpression(tree[3])
-            return TokenExpression(*args)
+            return TokenExpression(args)
 
         def buildCompare():
             a1 = cls.buildExpression(tree[1])
@@ -231,15 +231,15 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
         def listValue():
             args = [cls.buildArithmeticExpression(arg) for arg in tree[2:-1:2]]
-            return ListLitteral(*args)
+            return ListLitteral(args)
 
         def linkedListValue():
             args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-            return LinkedListLitteral(*args)
+            return LinkedListLitteral(args)
 
         def setValue():
             args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-            return SetLitteral(*args)
+            return SetLitteral(args)
 
         def buildGetItemExpression():
             l1 = cls.buildArithmeticExpression(tree[1])

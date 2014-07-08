@@ -40,7 +40,7 @@ class UndefinnedLitteral(object):
 
 
 class ListLitteral(object):
-    def __init__(self, *args):
+    def __init__(self, args):
         self._args = args
 
     def __str__(self):
@@ -58,8 +58,8 @@ class ListLitteral(object):
 
 
 class LinkedListLitteral(ListLitteral):
-    def __init__(self, *args):
-        super(LinkedListLitteral, self).__init__(*args)
+    def __init__(self, args):
+        super(LinkedListLitteral, self).__init__(args)
 
     def value(self, evaluation):
         argsValue = self._evalArgs(evaluation)
@@ -67,8 +67,8 @@ class LinkedListLitteral(ListLitteral):
 
 
 class SetLitteral(ListLitteral):
-    def __init__(self, *args):
-        super(SetLitteral, self).__init__(*args)
+    def __init__(self, args):
+        super(SetLitteral, self).__init__(args)
 
     def value(self, evaluation):
         argsValue = self._evalArgs(evaluation)

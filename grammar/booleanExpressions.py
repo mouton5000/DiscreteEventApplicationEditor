@@ -208,7 +208,7 @@ class RandInt(object):
 
 
 class eLock(object):
-    def __init__(self, priority, *keys):
+    def __init__(self, priority, keys):
         self._priority = priority
         self._keys = keys
 
@@ -322,7 +322,7 @@ class NotEquals(Compare):
 
 
 class ParameterizedExpression(object):
-    def __init__(self, *args):
+    def __init__(self, args):
         self._args = args
 
     def __str__(self):
@@ -366,8 +366,8 @@ class ParameterizedExpression(object):
 
 
 class NamedExpression(ParameterizedExpression):
-    def __init__(self, name, *args):
-        super(NamedExpression, self).__init__(*args)
+    def __init__(self, name, args):
+        super(NamedExpression, self).__init__(args)
         self._name = name
 
     def __str__(self):
@@ -407,8 +407,8 @@ class NamedExpression(ParameterizedExpression):
 
 class PropertyBooleanExpression(NamedExpression):
 
-    def __init__(self, name, *args):
-        super(PropertyBooleanExpression, self).__init__(name, *args)
+    def __init__(self, name, args):
+        super(PropertyBooleanExpression, self).__init__(name, args)
 
     @property
     def container(self):
@@ -418,8 +418,8 @@ class PropertyBooleanExpression(NamedExpression):
 class EventBooleanExpression(NamedExpression):
     events = set([])
 
-    def __init__(self, name, *args):
-        super(EventBooleanExpression, self).__init__(name, *args)
+    def __init__(self, name, args):
+        super(EventBooleanExpression, self).__init__(name, args)
 
     @property
     def container(self):
@@ -427,8 +427,8 @@ class EventBooleanExpression(NamedExpression):
 
 
 class TokenExpression(ParameterizedExpression):
-    def __init__(self, *args):
-        super(TokenExpression, self).__init__(*args)
+    def __init__(self, args):
+        super(TokenExpression, self).__init__(args)
 
     def __str__(self):
         return 'TokenExpression' + super(TokenExpression, self).__str__()

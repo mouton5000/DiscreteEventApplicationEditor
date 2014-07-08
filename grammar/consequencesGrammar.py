@@ -100,17 +100,18 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildAddProperty():
             name = cls.buildExpression(tree[2])[1:]
             args = cls.buildExpression(tree[4])
-            return ADD_PROPERTY_CONSEQUENCE, AddPropertyConsequence(name, *args)
+            return ADD_PROPERTY_CONSEQUENCE, AddPropertyConsequence(name, args)
 
         def buildRemoveProperty():
             name = cls.buildExpression(tree[2])[1:]
             args = cls.buildExpression(tree[4])
-            return REMOVE_PROPERTY_CONSEQUENCE, RemovePropertyConsequence(name, *args)
+            return REMOVE_PROPERTY_CONSEQUENCE, RemovePropertyConsequence(name, args)
+
 
         def buildAddEvent():
             name = cls.buildExpression(tree[2])[1:]
             args = cls.buildExpression(tree[4])
-            return ADD_EVENT_CONSEQUENCE, AddEventConsequence(name, *args)
+            return ADD_EVENT_CONSEQUENCE, AddEventConsequence(name, args)
 
         def buildAddSprite():
             name = cls.buildExpression(tree[4])
@@ -137,17 +138,17 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
             if len(tree) == 6:
-                return ADD_TOKEN_CONSEQUENCE, AddTokenConsequence(nodeNum)
+                return ADD_TOKEN_CONSEQUENCE, AddTokenConsequence(nodeNum, [])
             else:
                 args = cls.buildExpression(tree[6])
-                return ADD_TOKEN_CONSEQUENCE, AddTokenConsequence(nodeNum, *args)
+                return ADD_TOKEN_CONSEQUENCE, AddTokenConsequence(nodeNum, args)
 
         def buildEditToken():
             if len(tree) == 5:
-                return EDIT_TOKEN_CONSEQUENCE, EditTokenConsequence()
+                return EDIT_TOKEN_CONSEQUENCE, EditTokenConsequence([])
             else:
                 args = cls.buildExpression(tree[4])
-                return EDIT_TOKEN_CONSEQUENCE, EditTokenConsequence(*args)
+                return EDIT_TOKEN_CONSEQUENCE, EditTokenConsequence(args)
 
         def buildRemoveToken():
             return REMOVE_TOKEN_CONSEQUENCE, RemoveTokenConsequence()
@@ -159,7 +160,7 @@ class ConsequencesParser(lrparsing.Grammar):
             return UndefinnedLitteral()
 
         def buildParameters():
-            return (cls.buildExpression(arg) for arg in tree[1::2])
+            return [cls.buildExpression(arg) for arg in tree[1::2]]
 
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)
@@ -211,15 +212,15 @@ class ConsequencesParser(lrparsing.Grammar):
 
         def listValue():
             args = [cls.buildArithmeticExpression(arg) for arg in tree[2:-1:2]]
-            return ListLitteral(*args)
+            return ListLitteral(args)
 
         def linkedListValue():
             args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-            return LinkedListLitteral(*args)
+            return LinkedListLitteral(args)
 
         def setValue():
             args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-            return SetLitteral(*args)
+            return SetLitteral(args)
 
         def buildGetItemExpression():
             l1 = cls.buildArithmeticExpression(tree[1])
@@ -395,7 +396,7 @@ def _evalArg(arg, evaluation):
 
 class AddPropertyConsequence():
 
-    def __init__(self, name, *args):
+    def __init__(self, name, args):
         self._name = name
         self._args = args
 
@@ -410,7 +411,7 @@ class AddPropertyConsequence():
 
 class RemovePropertyConsequence():
 
-    def __init__(self, name, *args):
+    def __init__(self, name, args):
         self._name = name
         self._args = args
 
@@ -426,7 +427,7 @@ class RemovePropertyConsequence():
 class AddEventConsequence():
     events = set([])
 
-    def __init__(self, name, *args):
+    def __init__(self, name, args):
         self._name = name
         self._args = args
 
@@ -461,7 +462,7 @@ class AddSpriteConsequence(SpriteConsequence):
             num = int(_evalArg(self._num, evaluation))
             x = int(_evalArg(self._x, evaluation))
             y = int(_evalArg(self._y, evaluation))
-            return AddSpriteConsequence(name, num, x, y)
+            return name, num, x, y
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -485,7 +486,7 @@ class RemoveSpriteConsequence(SpriteConsequence):
     def eval_update(self, evaluation):
         try:
             name = str(_evalArg(self._name, evaluation))
-            return RemoveSpriteConsequence(name)
+            return name
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -501,7 +502,7 @@ class MoveSpriteConsequence(SpriteConsequence):
             name = str(_evalArg(self._name, evaluation))
             dx = int(_evalArg(self._dx, evaluation))
             dy = int(_evalArg(self._dy, evaluation))
-            return MoveSpriteConsequence(name, dx, dy)
+            return name, dx, dy
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -523,7 +524,7 @@ class EditSpriteConsequence(SpriteConsequence):
         try:
             name = str(_evalArg(self._name, evaluation))
             num = int(_evalArg(self._num, evaluation))
-            return EditSpriteConsequence(name, num)
+            return name, num
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -533,7 +534,7 @@ class EditSpriteConsequence(SpriteConsequence):
 
 
 class AddTokenConsequence(object):
-    def __init__(self, nodeNum, *args):
+    def __init__(self, nodeNum, args):
         self._nodeNum = nodeNum
         self._parameters = args
 
@@ -548,14 +549,14 @@ class AddTokenConsequence(object):
     def eval_update(self, evaluation):
         try:
             nodeNum = int(_evalArg(self._nodeNum, evaluation))
-            newParameters = (_evalArg(arg, evaluation) for arg in self._parameters)
-            return AddTokenConsequence(nodeNum, *newParameters)
+            newParameters = [_evalArg(arg, evaluation) for arg in self._parameters]
+            return nodeNum, newParameters
         except (ArithmeticError, TypeError, ValueError):
             pass
 
 
 class EditTokenConsequence(object):
-    def __init__(self, *args):
+    def __init__(self, args):
         self._parameters = args
 
     @property
@@ -564,8 +565,8 @@ class EditTokenConsequence(object):
 
     def eval_update(self, evaluation):
         try:
-            newParameters = (_evalArg(arg, evaluation) for arg in self._parameters)
-            return EditTokenConsequence(*newParameters)
+            newParameters = [_evalArg(arg, evaluation) for arg in self._parameters]
+            return newParameters
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -575,7 +576,7 @@ class RemoveTokenConsequence(object):
         pass
 
     def eval_update(self, _):
-        return self
+        return
 
 if __name__ == '__main__':
     print ConsequencesParser.pre_compile_grammar()

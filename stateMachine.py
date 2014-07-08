@@ -15,7 +15,7 @@ class StateMachine:
         self.i = 0
 
     def addToken(self, node, tokenStr):
-        token = Token(node, *TokenParametersParser.parse(tokenStr))
+        token = Token(node, TokenParametersParser.parse(tokenStr))
         self._tokens.add(token)
 
     def removeToken(self, token):
@@ -106,43 +106,45 @@ class StateMachine:
                 if cons is None:
                     continue
                 if consType == ADD_PROPERTY_CONSEQUENCE:
-                    prop = Property(cons[0], *cons[1])
+                    prop = Property(cons[0], cons[1])
                     Property.properties.add(prop)
                 elif consType == REMOVE_PROPERTY_CONSEQUENCE:
-                    Property.removeAll(cons[0], *cons[1])
+                    Property.removeAll(cons[0], cons[1])
+                elif consType == EDIT_PROPERTY_CONSEQUENCE:
+                    Property.edit(cons[0], cons[1], cons[2])
                 elif consType == ADD_EVENT_CONSEQUENCE:
-                    event = Event(cons[0], *cons[1])
+                    event = Event(cons[0], cons[1])
                     Event.events.add(event)
                 elif consType == ADD_SPRITE_CONSEQUENCE:
-                    gameWindow.addSprite(cons.name, cons.num, cons.x, cons.y)
+                    gameWindow.addSprite(cons[0], cons[1], cons[2], cons[3])
                 elif consType == REMOVE_SPRITE_CONSEQUENCE:
                     try:
-                        gameWindow.removeSprite(cons.name)
+                        gameWindow.removeSprite(cons)
                     except KeyError:
                         pass
                 elif consType == MOVE_SPRITE_CONSEQUENCE:
                     try:
-                        gameWindow.moveSprite(cons.name, cons.dx, cons.dy)
+                        gameWindow.moveSprite(cons[0], cons[1], cons[2])
                     except KeyError:
                         pass
                 elif consType == EDIT_SPRITE_CONSEQUENCE:
                     try:
-                        gameWindow.editSprite(cons.name, cons.num)
+                        gameWindow.editSprite(cons[0], cons[1])
                     except KeyError:
                         pass
                 elif consType == ADD_TOKEN_CONSEQUENCE:
-                    node = self.getNodeByNum(cons.nodeNum)
-                    newToken = Token(node, *cons.parameters)
+                    node = self.getNodeByNum(cons[0])
+                    newToken = Token(node, cons[1])
                     self._tokens.add(newToken)
                 elif consType == EDIT_TOKEN_CONSEQUENCE:
-                    token.setArgs(*cons.parameters)
+                    token.setArgs(cons)
                 elif consType == REMOVE_TOKEN_CONSEQUENCE:
                     self.removeToken(token)
         return True
 
 
 class Token:
-    def __init__(self, node, *args):
+    def __init__(self, node, args):
         self._node = node
         self._args = args
         self._nbFrameSinceLastMove = 0
@@ -151,8 +153,8 @@ class Token:
     def node(self):
         return self._node
 
-    def setArgs(self, *args):
-        self._args = args
+    def setArgs(self, args):
+        self._args[:] = args
 
     def moveTo(self, node):
         self._node = node
