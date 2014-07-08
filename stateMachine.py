@@ -1,11 +1,8 @@
 from grammar.grammar import BooleanExpressionParser
 from grammar.booleanExpressions import BExpression
-from grammar.consequencesGrammar import ConsequencesParser, ADD_PROPERTY_CONSEQUENCE, REMOVE_PROPERTY_CONSEQUENCE, \
-    ADD_EVENT_CONSEQUENCE, ADD_SPRITE_CONSEQUENCE, REMOVE_SPRITE_CONSEQUENCE, MOVE_SPRITE_CONSEQUENCE, \
-    EDIT_SPRITE_CONSEQUENCE, ADD_TOKEN_CONSEQUENCE, EDIT_TOKEN_CONSEQUENCE, REMOVE_TOKEN_CONSEQUENCE, EDIT_PROPERTY_CONSEQUENCE
+from grammar.consequencesGrammar import ConsequencesParser
 from grammar.tokenGrammar import TokenParametersParser
 from database import Property, Event
-import game.gameWindow as gameWindow
 
 
 class StateMachine:
@@ -13,6 +10,11 @@ class StateMachine:
         self._tokens = set([])
         self._nodes = {}
         self.i = 0
+
+    def addTokenByNodeNum(self, nodeNum, parameters):
+        node = self.getNodeByNum(nodeNum)
+        token = Token(node, parameters)
+        self._tokens.add(token)
 
     def addToken(self, node, tokenStr):
         token = Token(node, TokenParametersParser.parse(tokenStr))
@@ -90,7 +92,7 @@ class StateMachine:
                     if locked:
                         toRecheck.add(token)
                     else:
-                        transitionGen[token] = (tr, tr.consequences(evaluation.variables))
+                        transitionGen[token] = (tr, evaluation.variables)
                 except StopIteration:
                     pass
             toCheck = toRecheck
@@ -100,46 +102,47 @@ class StateMachine:
             return False
 
         for token in transitionGen:
-            tr, consequences = transitionGen[token]
+            tr, evaluation = transitionGen[token]
             token.moveTo(tr.n2)
-            for consType, cons in consequences:
-                if cons is None:
-                    continue
-                if consType == ADD_PROPERTY_CONSEQUENCE:
-                    prop = Property(cons[0], cons[1])
-                    Property.properties.add(prop)
-                elif consType == REMOVE_PROPERTY_CONSEQUENCE:
-                    Property.removeAll(cons[0], cons[1])
-                elif consType == EDIT_PROPERTY_CONSEQUENCE:
-                    Property.edit(cons[0], cons[1], cons[2])
-                elif consType == ADD_EVENT_CONSEQUENCE:
-                    event = Event(cons[0], cons[1])
-                    Event.events.add(event)
-                elif consType == ADD_SPRITE_CONSEQUENCE:
-                    gameWindow.addSprite(cons[0], cons[1], cons[2], cons[3])
-                elif consType == REMOVE_SPRITE_CONSEQUENCE:
-                    try:
-                        gameWindow.removeSprite(cons)
-                    except KeyError:
-                        pass
-                elif consType == MOVE_SPRITE_CONSEQUENCE:
-                    try:
-                        gameWindow.moveSprite(cons[0], cons[1], cons[2])
-                    except KeyError:
-                        pass
-                elif consType == EDIT_SPRITE_CONSEQUENCE:
-                    try:
-                        gameWindow.editSprite(cons[0], cons[1])
-                    except KeyError:
-                        pass
-                elif consType == ADD_TOKEN_CONSEQUENCE:
-                    node = self.getNodeByNum(cons[0])
-                    newToken = Token(node, cons[1])
-                    self._tokens.add(newToken)
-                elif consType == EDIT_TOKEN_CONSEQUENCE:
-                    token.setArgs(cons)
-                elif consType == REMOVE_TOKEN_CONSEQUENCE:
-                    self.removeToken(token)
+            tr.applyConsequences(evaluation, self, token)
+            # for consType, cons in consequences:
+            #     if cons is None:
+            #         continue
+            #     if consType == ADD_PROPERTY_CONSEQUENCE:
+            #         prop = Property(cons[0], cons[1])
+            #         Property.properties.add(prop)
+            #     elif consType == REMOVE_PROPERTY_CONSEQUENCE:
+            #         Property.removeAll(cons[0], cons[1])
+            #     elif consType == EDIT_PROPERTY_CONSEQUENCE:
+            #         Property.edit(cons[0], cons[1], cons[2])
+            #     elif consType == ADD_EVENT_CONSEQUENCE:
+            #         event = Event(cons[0], cons[1])
+            #         Event.events.add(event)
+            #     elif consType == ADD_SPRITE_CONSEQUENCE:
+            #         gameWindow.addSprite(cons[0], cons[1], cons[2], cons[3])
+            #     elif consType == REMOVE_SPRITE_CONSEQUENCE:
+            #         try:
+            #             gameWindow.removeSprite(cons)
+            #         except KeyError:
+            #             pass
+            #     elif consType == MOVE_SPRITE_CONSEQUENCE:
+            #         try:
+            #             gameWindow.moveSprite(cons[0], cons[1], cons[2])
+            #         except KeyError:
+            #             pass
+            #     elif consType == EDIT_SPRITE_CONSEQUENCE:
+            #         try:
+            #             gameWindow.editSprite(cons[0], cons[1])
+            #         except KeyError:
+            #             pass
+            #     elif consType == ADD_TOKEN_CONSEQUENCE:
+            #         node = self.getNodeByNum(cons[0])
+            #         newToken = Token(node, cons[1])
+            #         self._tokens.add(newToken)
+            #     elif consType == EDIT_TOKEN_CONSEQUENCE:
+            #         token.setArgs(cons)
+            #     elif consType == REMOVE_TOKEN_CONSEQUENCE:
+            #         self.removeToken(token)
         return True
 
 
@@ -215,9 +218,9 @@ class Transition:
     def eval(self, token):
         return self._trigger.eval(token)
 
-    def consequences(self, evaluation):
-        consParsed = (ConsequencesParser.parse(cons) for cons in self._consequences)
-        return ((consType, cons.eval_update(evaluation)) for consType, cons in consParsed)
+    def applyConsequences(self, evaluation, stateMachine, token):
+        for cons in self._consequences:
+            ConsequencesParser.parse(cons).eval_update(evaluation, stateMachine, token)
 
     def __str__(self):
         return str(self.n1) + ' ' + str(self.n2)
