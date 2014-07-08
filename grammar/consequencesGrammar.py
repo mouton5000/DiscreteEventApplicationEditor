@@ -15,6 +15,7 @@ EDIT_SPRITE_CONSEQUENCE = 6
 ADD_TOKEN_CONSEQUENCE = 7
 EDIT_TOKEN_CONSEQUENCE = 8
 REMOVE_TOKEN_CONSEQUENCE = 9
+EDIT_PROPERTY_CONSEQUENCE = 10
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -41,6 +42,7 @@ class ConsequencesParser(lrparsing.Grammar):
 
     addPropExpr = T.add + T.prop + '(' + parameters + ')'
     removePropExpr = T.remove + T.prop + '(' + incompleteParameters + ')'
+    editPropExpr = T.edit + T.prop + '(' + incompleteParameters + '|' + incompleteParameters + ')'
     addEventExpr = T.add + T.event + '(' + parameters + ')'
 
     addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
@@ -54,8 +56,8 @@ class ConsequencesParser(lrparsing.Grammar):
     moveSpriteExpr = T.move + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
                      arithmExpr + ')'
 
-    consExpr = Prio(addPropExpr, removePropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr, moveSpriteExpr,
-                    editSpriteExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
+    consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
+                    moveSpriteExpr, editSpriteExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -107,6 +109,11 @@ class ConsequencesParser(lrparsing.Grammar):
             args = cls.buildExpression(tree[4])
             return REMOVE_PROPERTY_CONSEQUENCE, RemovePropertyConsequence(name, args)
 
+        def buildEditProperty():
+            name = cls.buildExpression(tree[2])[1:]
+            args1 = cls.buildExpression(tree[4])
+            args2 = cls.buildExpression(tree[6])
+            return EDIT_PROPERTY_CONSEQUENCE, EditPropertyConsequence(name, args1, args2)
 
         def buildAddEvent():
             name = cls.buildExpression(tree[2])[1:]
@@ -170,6 +177,7 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.consExpr: buildNext,
             ConsequencesParser.addPropExpr: buildAddProperty,
             ConsequencesParser.removePropExpr: buildRemoveProperty,
+            ConsequencesParser.editPropExpr: buildEditProperty,
             ConsequencesParser.addEventExpr: buildAddEvent,
             ConsequencesParser.T.event: value,
             ConsequencesParser.T.prop: value,
@@ -420,6 +428,23 @@ class RemovePropertyConsequence():
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
             return name, newArgs
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class EditPropertyConsequence():
+
+    def __init__(self, name, args1, args2):
+        self._name = name
+        self._args1 = args1
+        self._args2 = args2
+
+    def eval_update(self, evaluation):
+        try:
+            name = self._name
+            newArgs1 = [_evalArg(arg, evaluation) for arg in self._args1]
+            newArgs2 = [_evalArg(arg, evaluation) for arg in self._args2]
+            return name, newArgs1, newArgs2
         except (ArithmeticError, TypeError, ValueError):
             pass
 

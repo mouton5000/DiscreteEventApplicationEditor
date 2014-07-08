@@ -33,6 +33,9 @@ class NamedExpression(object):
     def __getitem__(self, index):
         return self._args[index]
 
+    def __setitem__(self, index, value):
+        self._args[index] = value
+
     def __hash__(self):
         return hash(self._name)
 
@@ -61,6 +64,19 @@ class Property(NamedExpression):
     @staticmethod
     def removeAll(name, args):
         Property.properties = {prop for prop in Property.properties if not prop.filter(name, args)}
+
+    @staticmethod
+    def edit(name, args1, args2):
+        size = len(args1)
+        if size != len(args2):
+            return
+        for prop in Property.properties:
+            if not prop.filter(name, args1):
+                continue
+            for index, arg in enumerate(args2):
+                if arg == UNDEFINED_PARAMETER:
+                    continue
+                prop[index] = arg
 
 
     @property

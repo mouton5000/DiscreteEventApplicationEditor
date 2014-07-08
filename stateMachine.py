@@ -2,7 +2,7 @@ from grammar.grammar import BooleanExpressionParser
 from grammar.booleanExpressions import BExpression
 from grammar.consequencesGrammar import ConsequencesParser, ADD_PROPERTY_CONSEQUENCE, REMOVE_PROPERTY_CONSEQUENCE, \
     ADD_EVENT_CONSEQUENCE, ADD_SPRITE_CONSEQUENCE, REMOVE_SPRITE_CONSEQUENCE, MOVE_SPRITE_CONSEQUENCE, \
-    EDIT_SPRITE_CONSEQUENCE, ADD_TOKEN_CONSEQUENCE, EDIT_TOKEN_CONSEQUENCE, REMOVE_TOKEN_CONSEQUENCE
+    EDIT_SPRITE_CONSEQUENCE, ADD_TOKEN_CONSEQUENCE, EDIT_TOKEN_CONSEQUENCE, REMOVE_TOKEN_CONSEQUENCE, EDIT_PROPERTY_CONSEQUENCE
 from grammar.tokenGrammar import TokenParametersParser
 from database import Property, Event
 import game.gameWindow as gameWindow
