@@ -282,9 +282,11 @@ class NodeParamEditorWidget(QWidget):
             self._upToken.setEnabled(True)
             self._tokenWidgets[-2].show()
             self._tokenWidgets[-1].show()
+            self._showTokenWidgetIndex = len(tokens) - 2
         else:
             for tokenWidget in self._tokenWidgets:
                 tokenWidget.show()
+            self._showTokenWidgetIndex = 0
 
     def labelChanged(self):
         try:
