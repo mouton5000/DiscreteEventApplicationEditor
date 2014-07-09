@@ -39,7 +39,7 @@ class TokenParametersParser(lrparsing.Grammar):
             return float(tree[1])
 
         def buildParameters():
-            return (cls.buildToken(arg) for arg in tree[1::2])
+            return [cls.buildToken(arg) for arg in tree[1::2]]
 
         tokenSymbols = {
             TokenParametersParser.START: build,

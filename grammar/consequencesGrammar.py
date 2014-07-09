@@ -2,12 +2,11 @@ import lrparsing
 from lrparsing import List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
-    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral
+    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral, SelfExpression
 from database import Variable
 from consequencesExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
-    AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, MoveSpriteConsequence, RemoveSpriteConsequence, \
+    AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence
-
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -17,6 +16,7 @@ class ConsequencesParser(lrparsing.Grammar):
         string = Token(re='\'[A-Za-z_0-9]*\'')
         variable = Token(re='[A-Z][A-Z_0-9]*')
         uvariable = Token('_')
+        selfvariable = Token('@')
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
         sprite = Token('s')
@@ -43,13 +43,12 @@ class ConsequencesParser(lrparsing.Grammar):
 
     addSpriteExpr = T.add + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
                     arithmExpr + ',' + arithmExpr + ')'
-    editSpriteExpr = T.edit + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ')'
+    editSpriteExpr = T.edit + T.sprite + '(' + arithmExpr + ',' + (arithmExpr, T.uvariable) + ',' + \
+                    (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ')'
     removeSpriteExpr = T.remove + T.sprite + '(' + arithmExpr + ')'
-    moveSpriteExpr = T.move + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
-                     arithmExpr + ')'
 
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
-                    moveSpriteExpr, editSpriteExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
+                    editSpriteExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -70,7 +69,7 @@ class ConsequencesParser(lrparsing.Grammar):
     insertArithExpr = arithmExpr << '<' << Opt(arithmExpr) << '<' << arithmExpr
     removeArithExpr = arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, listExpr, linkedListExpr,
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.selfvariable, T.string, constantExpr, listExpr, linkedListExpr,
                       setExpr, parArithmExpr, getItemArithExpr, getSublistArithExpr, insertArithExpr, removeArithExpr,
                       funcExpr, powerArithExpr, multArithExpr, addArithExpr, minusArithExpr)
 
@@ -122,17 +121,13 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildEditSprite():
             name = cls.buildExpression(tree[4])
             num = cls.buildExpression(tree[6])
-            return EditSpriteConsequence(name, num)
+            x = cls.buildExpression(tree[8])
+            y = cls.buildExpression(tree[10])
+            return EditSpriteConsequence(name, num, x, y)
 
         def buildRemoveSprite():
             name = cls.buildExpression(tree[4])
             return RemoveSpriteConsequence(name)
-
-        def buildMoveSprite():
-            name = cls.buildExpression(tree[4])
-            dx = cls.buildExpression(tree[6])
-            dy = cls.buildExpression(tree[8])
-            return MoveSpriteConsequence(name, dx, dy)
 
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
@@ -179,7 +174,6 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addSpriteExpr: buildAddSprite,
             ConsequencesParser.removeSpriteExpr: buildRemoveSprite,
             ConsequencesParser.editSpriteExpr: buildEditSprite,
-            ConsequencesParser.moveSpriteExpr: buildMoveSprite,
             ConsequencesParser.addTokenExpr: buildAddToken,
             ConsequencesParser.editTokenExpr: buildEditToken,
             ConsequencesParser.removeTokenExpr: buildRemoveToken,
@@ -209,6 +203,9 @@ class ConsequencesParser(lrparsing.Grammar):
 
         def variableValue():
             return ALitteral(Variable(tree[1]))
+
+        def selfVariableValue():
+            return SelfExpression()
 
         def listValue():
             args = [cls.buildArithmeticExpression(arg) for arg in tree[2:-1:2]]
@@ -371,6 +368,7 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.T.integer: intvalue,
             ConsequencesParser.T.float: floatvalue,
             ConsequencesParser.T.variable: variableValue,
+            ConsequencesParser.T.selfvariable: selfVariableValue,
             ConsequencesParser.T.string: stringWithoutQuotes,
             ConsequencesParser.listExpr: listValue,
             ConsequencesParser.linkedListExpr: linkedListValue,

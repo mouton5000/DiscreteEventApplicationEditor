@@ -66,17 +66,18 @@ class Property(NamedExpression):
         Property.properties = {prop for prop in Property.properties if not prop.filter(name, args)}
 
     @staticmethod
-    def edit(name, args1, args2):
+    def edit(name, args1, unevaluatedArgs2, evaluation):
         size = len(args1)
-        if size != len(args2):
+        if size != len(unevaluatedArgs2):
             return
         for prop in Property.properties:
             if not prop.filter(name, args1):
                 continue
-            for index, arg in enumerate(args2):
-                if arg == UNDEFINED_PARAMETER:
+            for (index, arg), param in zip(enumerate(unevaluatedArgs2), prop):
+                newArg = arg.value(evaluation, selfParam=param)
+                if newArg == UNDEFINED_PARAMETER:
                     continue
-                prop[index] = arg
+                prop[index] = newArg
 
 
     @property

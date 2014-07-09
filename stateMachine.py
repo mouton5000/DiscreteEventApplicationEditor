@@ -2,7 +2,7 @@ from grammar.grammar import BooleanExpressionParser
 from grammar.booleanExpressions import BExpression
 from grammar.consequencesGrammar import ConsequencesParser
 from grammar.tokenGrammar import TokenParametersParser
-from database import Property, Event
+from database import Property, Event, UNDEFINED_PARAMETER
 
 
 class StateMachine:
@@ -156,8 +156,17 @@ class Token:
     def node(self):
         return self._node
 
-    def setArgs(self, args):
-        self._args[:] = args
+    def setArgs(self, unevaluatedArgs, evaluation):
+        def evalArg(uArg, tArg):
+            if uArg is None:
+                return
+            value = uArg.value(evaluation, selfParam=tArg)
+            if value == UNDEFINED_PARAMETER:
+                value = tArg
+            return value
+
+        newArgs = (evalArg(unevaluatedArg, arg) for unevaluatedArg, arg in map(None, unevaluatedArgs, self))
+        self._args[:] = [arg for arg in newArgs if not arg is None]
 
     def moveTo(self, node):
         self._node = node

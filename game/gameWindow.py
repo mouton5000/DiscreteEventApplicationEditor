@@ -2,7 +2,7 @@ __author__ = 'mouton'
 
 import pygame
 from pygame.sprite import Sprite
-from database import Event
+from database import Event, UNDEFINED_PARAMETER
 
 
 _scene = None
@@ -16,6 +16,7 @@ class SpriteReg(Sprite):
 
     def __init__(self, name, num, x, y):
         Sprite.__init__(self)
+        self.num = num
         self.image = pygame.image.load('sprites/' + SpriteReg.registery[num]).convert_alpha(_scene)
         SpriteReg.instances[name] = self
         self.rect = self.image.get_rect()
@@ -72,20 +73,34 @@ def removeSprite(name):
     _all_list.remove(SpriteReg.instances[name])
 
 
-def moveSprite(name, dx, dy):
+def editSprite(name, unevaluatedNum, unevaluatedX, unevaluatedY, evaluation):
     sp = SpriteReg.instances[name]
-    sp.rect.x += dx
-    sp.rect.y += dy
+    newNum = unevaluatedNum.value(evaluation, selfParam=sp.num)
+    if newNum == UNDEFINED_PARAMETER:
+        newNum = sp.num
+    else:
+        newNum = int(newNum)
 
-
-def editSprite(name, num):
-    sp = SpriteReg.instances[name]
     x = sp.rect.x
     y = sp.rect.y
-    sp.image = pygame.image.load('sprites/' + SpriteReg.registery[num]).convert_alpha(_scene)
-    sp.rect = sp.image.get_rect()
-    sp.rect.x = x
-    sp.rect.y = y
+    newX = unevaluatedX.value(evaluation, selfParam=x)
+    if newX == UNDEFINED_PARAMETER:
+        newX = x
+    else:
+        newX = int(newX)
+    newY = unevaluatedY.value(evaluation, selfParam=y)
+    if newY == UNDEFINED_PARAMETER:
+        newY = y
+    else:
+        newY = int(newY)
+
+    if newNum != sp.num:
+        sp.image = pygame.image.load('sprites/' + SpriteReg.registery[newNum]).convert_alpha(_scene)
+        sp.rect = sp.image.get_rect()
+        sp.num = newNum
+
+    sp.rect.x = newX
+    sp.rect.y = newY
 
 
 def hide():

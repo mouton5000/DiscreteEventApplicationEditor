@@ -12,13 +12,13 @@ class ALitteral(object):
     def __repr__(self):
         return str(self._value)
 
-    def value(self, evaluation):
+    def value(self, evaluation, selfParam=None):
         try:
             return evaluation[self._value]
         except KeyError:
             pass
 
-        if isinstance(self._value, Variable) and not self._value.isUnnamed():
+        if isinstance(self._value, Variable):
             raise ValueError
         else:
             return self._value
@@ -34,7 +34,7 @@ class UndefinnedLitteral(object):
     def __repr__(self):
         return '_'
 
-    def value(self, _):
+    def value(self, _, selfParam=None):
         from database import UNDEFINED_PARAMETER
         return UNDEFINED_PARAMETER
 
@@ -49,11 +49,11 @@ class ListLitteral(object):
     def __repr__(self):
         return '(' + ','.join([str(o) for o in self._args]) + ')'
 
-    def _evalArgs(self, evaluation):
-        return [arg.value(evaluation) for arg in self._args]
+    def _evalArgs(self, evaluation, selfParam):
+        return [arg.value(evaluation, selfParam) for arg in self._args]
 
-    def value(self, evaluation):
-        argsValue = self._evalArgs(evaluation)
+    def value(self, evaluation, selfParam=None):
+        argsValue = self._evalArgs(evaluation, selfParam)
         return argsValue
 
 
@@ -61,8 +61,8 @@ class LinkedListLitteral(ListLitteral):
     def __init__(self, args):
         super(LinkedListLitteral, self).__init__(args)
 
-    def value(self, evaluation):
-        argsValue = self._evalArgs(evaluation)
+    def value(self, evaluation, selfParam=None):
+        argsValue = self._evalArgs(evaluation, selfParam)
         return deque(argsValue)
 
 
@@ -70,8 +70,8 @@ class SetLitteral(ListLitteral):
     def __init__(self, args):
         super(SetLitteral, self).__init__(args)
 
-    def value(self, evaluation):
-        argsValue = self._evalArgs(evaluation)
+    def value(self, evaluation, selfParam=None):
+        argsValue = self._evalArgs(evaluation, selfParam)
         return set(argsValue)
 
 
@@ -86,9 +86,9 @@ class ABiOp(object):
     def __repr__(self):
         return '(' + str(self._a1) + ' ' + self.symbol + ' ' + str(self._a2) + ')'
 
-    def value(self, evaluation):
-        v1 = self._a1.value(evaluation)
-        v2 = self._a2.value(evaluation)
+    def value(self, evaluation, selfParam=None):
+        v1 = self._a1.value(evaluation, selfParam)
+        v2 = self._a2.value(evaluation, selfParam)
         return self.operation(v1, v2)
 
 
@@ -169,10 +169,10 @@ class GetItemExpression(object):
     def __repr__(self):
         return str(self._list) + '[' + str(self._index) + ']'
 
-    def value(self, evaluation):
-        l1 = self._list.value(evaluation)
+    def value(self, evaluation, selfParam=None):
+        l1 = self._list.value(evaluation, selfParam)
         if isinstance(l1, (list, deque)):
-            a2 = self._index.value(evaluation)
+            a2 = self._index.value(evaluation, selfParam)
             return l1[a2]
         else:
             return next(iter(l1))
@@ -208,14 +208,14 @@ class GetSublistExpression(object):
             else:
                 return str(self._list) + '[' + str(self._index1) + ':' + str(self._index2) + ']'
 
-    def value(self, evaluation):
+    def value(self, evaluation, selfParam=None):
         import itertools
-        l1 = self._list.value(evaluation)
+        l1 = self._list.value(evaluation, selfParam)
         if self._index1 is None:
             if self._index2 is None:
                 return l1
             else:
-                a2 = self._index2.value(evaluation) % len(l1)
+                a2 = self._index2.value(evaluation, selfParam) % len(l1)
                 if isinstance(l1, list):
                     return l1[:a2]
                 elif isinstance(l1, deque):
@@ -224,7 +224,7 @@ class GetSublistExpression(object):
                     it = iter(l1)
                     return set([next(it) for _ in xrange(a2)])
         else:
-            a1 = self._index1.value(evaluation) % len(l1)
+            a1 = self._index1.value(evaluation, selfParam) % len(l1)
             if self._index2 is None:
                 if isinstance(l1, list):
                     return l1[a1:]
@@ -234,7 +234,7 @@ class GetSublistExpression(object):
                     it = iter(l1)
                     return set([next(it) for _ in xrange(len(l1) - a1)])
             else:
-                a2 = self._index2.value(evaluation) % len(l1)
+                a2 = self._index2.value(evaluation, selfParam) % len(l1)
                 if isinstance(l1, list):
                     return l1[a1:a2]
                 elif isinstance(l1, deque):
@@ -262,8 +262,8 @@ class InsertExpression(object):
         else:
             return str(self._list) + '<' + str(self._index) + '<' + str(self._value)
 
-    def value(self, evaluation):
-        l1 = self._list.value(evaluation)
+    def value(self, evaluation, selfParam=None):
+        l1 = self._list.value(evaluation, selfParam)
         if isinstance(l1, list):
             l2 = l1[:]
         elif isinstance(l1, deque):
@@ -271,12 +271,12 @@ class InsertExpression(object):
         else:
             l2 = l1.copy()
 
-        v = self._value.value(evaluation)
+        v = self._value.value(evaluation, selfParam)
         if isinstance(l1, (list, deque)):
             if self._index is None:
                 l2.append(v)
             else:
-                index = self._index.value(evaluation)
+                index = self._index.value(evaluation, selfParam)
                 l2.insert(index, v)
         else:
             l2.add(v)
@@ -301,8 +301,8 @@ class RemoveExpression(object):
         else:
             return str(self._list) + '>' + str(self._index) + '>' + str(self._value)
 
-    def value(self, evaluation):
-        l1 = self._list.value(evaluation)
+    def value(self, evaluation, selfParam=None):
+        l1 = self._list.value(evaluation, selfParam)
         if isinstance(l1, list):
             l2 = l1[:]
         elif isinstance(l1, deque):
@@ -311,11 +311,11 @@ class RemoveExpression(object):
             l2 = l1.copy()
 
         if self._index is None:
-            v = self._value.value(evaluation)
+            v = self._value.value(evaluation, selfParam)
             l2.remove(v)
         else:
             if isinstance(l1, (list, deque)):
-                index = self._index.value(evaluation)
+                index = self._index.value(evaluation, selfParam)
                 l2.pop(index)
             else:
                 l2.pop()
@@ -333,9 +333,9 @@ class RemoveAllExpression(object):
     def __repr__(self):
         return str(self._list) + '>>>' + str(self._value)
 
-    def value(self, evaluation):
-        l1 = self._list.value(evaluation)
-        v = self._value.value(evaluation)
+    def value(self, evaluation, selfParam=None):
+        l1 = self._list.value(evaluation, selfParam)
+        v = self._value.value(evaluation, selfParam)
         if isinstance(l1, set):
             l2 = l1.copy()
             l2.remove(v)
@@ -353,13 +353,13 @@ class AUnOp(object):
         self._a = a
 
     def __str__(self):
-        return self._symbol + '('  + str(self._a) + ')'
+        return self._symbol + '(' + str(self._a) + ')'
 
     def __repr__(self):
-        return self._symbol + '('  + str(self._a) + ')'
+        return self._symbol + '(' + str(self._a) + ')'
 
-    def value(self, evaluation):
-        v = self._a.value(evaluation)
+    def value(self, evaluation, selfParam=None):
+        v = self._a.value(evaluation, selfParam)
         return self.operation(v)
 
 
@@ -371,3 +371,11 @@ class Func(AUnOp):
 
     def operation(self, v):
         return self._func(v)
+
+
+class SelfExpression():
+    def __init__(self):
+        pass
+
+    def value(self, _, selfParam=None):
+        return selfParam
