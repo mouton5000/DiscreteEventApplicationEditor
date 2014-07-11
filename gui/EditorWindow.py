@@ -320,7 +320,7 @@ class MainWidget(QWidget):
         super(MainWidget, self).__init__(parent)
 
         vbox = QVBoxLayout()
-        self.drawing = ViewWidget(self)
+        self.drawing = ViewWidget(parent=self, mainWindow=self.parent())
         self.propertiesEditor = PropertyWidget(self)
         self.drawing.setPropertiesEditor(self.propertiesEditor)
         vbox.addWidget(self.drawing)

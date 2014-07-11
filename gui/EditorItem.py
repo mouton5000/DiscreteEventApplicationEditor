@@ -11,9 +11,10 @@ from collections import deque
 
 
 class ViewWidget(QGraphicsView):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, mainWindow=None):
         super(ViewWidget, self).__init__(parent)
-        scene = SceneWidget(self)
+        self.mainWindow = mainWindow
+        scene = SceneWidget(self, mainWindow=self.mainWindow)
         self.setScene(scene)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -78,8 +79,9 @@ class SceneWidget(QGraphicsScene):
     StarMode = 2
     SelectMode = 3
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, mainWindow=None):
         super(SceneWidget, self).__init__(parent)
+        self.mainWindow = mainWindow
         self.init()
 
     def init(self):
@@ -211,21 +213,21 @@ class SceneWidget(QGraphicsScene):
 
     def setNodeMode(self):
         self.setMode(SceneWidget.NodeMode)
-        self.parent().parent().parent().statusBar().showMessage('Node mode')
+        self.mainWindow.statusBar().showMessage('Node mode')
         if isinstance(self._selected, ArcItem):
             self.setSelected(None)
 
     def setPathMode(self):
         self.setMode(SceneWidget.PathMode)
-        self.parent().parent().parent().statusBar().showMessage('Path mode')
+        self.mainWindow.statusBar().showMessage('Path mode')
 
     def setStarMode(self):
         self.setMode(SceneWidget.StarMode)
-        self.parent().parent().parent().statusBar().showMessage('Star mode')
+        self.mainWindow.statusBar().showMessage('Star mode')
 
     def setSelectMode(self):
         self.setMode(SceneWidget.SelectMode)
-        self.parent().parent().parent().statusBar().showMessage('Select mode')
+        self.mainWindow.statusBar().showMessage('Select mode')
 
     def setMode(self, mode):
         self._mode = mode
