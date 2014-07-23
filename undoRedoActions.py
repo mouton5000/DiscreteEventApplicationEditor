@@ -10,6 +10,7 @@ class AddItemCommand(QUndoCommand):
 
     def undo(self):
         self._scene.deleteItem(self._item)
+        self._scene.parent().showTab()
 
     def redo(self):
         # The item cannot be inserted twice. We prevent the stack from calling redo automatically
@@ -18,6 +19,7 @@ class AddItemCommand(QUndoCommand):
             return
 
         self._scene.addItem(self._item)
+        self._scene.parent().showTab()
 
         try:
             self._item.num = self._scene.getNextNodeId()
@@ -49,22 +51,26 @@ class DeleteItemCommand(QUndoCommand):
 
 
 class MoveNodeCommand(QUndoCommand):
-    def __init__(self, node, prevPos, newPos, parent=None):
+    def __init__(self, scene, node, prevPos, newPos, parent=None):
         super(MoveNodeCommand, self).__init__(parent)
+        self._scene = scene
         self._node = node
         self._prevPos = prevPos
         self._newPos = newPos
 
     def undo(self):
         self._node.setXY(self._prevPos.x, self._prevPos.y)
+        self._scene.parent().showTab()
 
     def redo(self):
         self._node.setXY(self._newPos.x, self._newPos.y)
+        self._scene.parent().showTab()
 
 
 class MoveArcCommand(QUndoCommand):
-    def __init__(self, arc, prevCl, newCl, prevDelta=None, newDelta=None, parent=None):
+    def __init__(self, scene, arc, prevCl, newCl, prevDelta=None, newDelta=None, parent=None):
         super(MoveArcCommand, self).__init__(parent)
+        self._scene = scene
         self._arc = arc
         self._prevCl = prevCl
         self._newCl = newCl
@@ -77,36 +83,28 @@ class MoveArcCommand(QUndoCommand):
             self._arc.setClAndDelta(self._prevCl, self._prevDelta)
         except AttributeError:
             self._arc.setCl(self._prevCl)
+        self._scene.parent().showTab()
 
     def redo(self):
         try:
             self._arc.setClAndDelta(self._newCl, self._newDelta)
         except AttributeError:
             self._arc.setCl(self._newCl)
+        self._scene.parent().showTab()
 
 
 class MoveLabelItemCommand(QUndoCommand):
-    def __init__(self, labelItem, prevOffset, newOffset, parent=None):
+    def __init__(self, scene, labelItem, prevOffset, newOffset, parent=None):
         super(MoveLabelItemCommand, self).__init__(parent)
+        self._scene = scene
         self._labelItem = labelItem
         self._prevOffset = prevOffset
         self._newOffset = newOffset
 
     def undo(self):
         self._labelItem.setOffset(self._prevOffset)
+        self._scene.parent().showTab()
 
     def redo(self):
         self._labelItem.setOffset(self._newOffset)
-
-
-class SetActiveNodeCommand(QUndoCommand):
-    def __init__(self, node, isActive, parent=None):
-        super(SetActiveNodeCommand, self).__init__(parent)
-        self._node = node
-        self._isActive = isActive
-
-    def undo(self):
-        self._node.setActive(not self._isActive)
-
-    def redo(self):
-        self._node.setActive(self._isActive)
+        self._scene.parent().showTab()

@@ -47,16 +47,12 @@ class NodeItem(QGraphicsEllipseItem):
     def add(self):
         self.scene().nodes.append(self)
 
-    # def mouseDoubleClickEvent(self, QGraphicsSceneMouseEvent):
-    #     if self.scene().isNodeMode():
-    #         self.scene().parent().window().stack.push(SetActiveNodeCommand(self, not self._isActive))
-
     def mousePressEvent(self, event):
         event.accept()
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().parent().window().stack.push(MoveNodeCommand(self, self._moveFrom, self._center))
+            self.scene().parent().window().stack.push(MoveNodeCommand(self.scene(), self, self._moveFrom, self._center))
             self._moveFromX = None
             self._moveFromY = None
             self._isMoving = False
