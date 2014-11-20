@@ -1,6 +1,6 @@
 from PyQt4 import QtCore
 from PyQt4.QtGui import QTabWidget, QTabBar, QWidget, QLineEdit
-from Settings import SettingsWidget
+from SettingsItems import SettingsWidget
 from gui.EditorItem import ViewWidget
 
 __author__ = 'mouton'
@@ -33,7 +33,7 @@ class TabbedEditor(QTabWidget):
         plusTabCLoseButton.resize(0, 0)
         plusTabCLoseButton.hide()
 
-        self.settings = SettingsWidget(mainWindow=self.mainWindow)
+        self.settings = SettingsWidget(parent=self.mainWindow, mainWindow=self.mainWindow)
         self.insertTab(0, self.settings, 'Settings')
         settingTabCLoseButton = self.tabBar().tabButton(0, QTabBar.RightSide)
         settingTabCLoseButton.resize(0, 0)
