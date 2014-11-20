@@ -15,16 +15,16 @@ class NodeItem(QGraphicsEllipseItem):
     def __init__(self, x, y, num, parent=None, scene=None):
         super(NodeItem, self).__init__(x - NodeItem.NodeWidth, y - NodeItem.NodeWidth, NodeItem.NodeWidth * 2,
                                        NodeItem.NodeWidth * 2, parent, scene)
+
         self._num = num
-        self._center = vector(x, y)
         self.outputArcs = []
         self.inputArcs = []
-
-        self._isMoving = False
-        self._moveFrom = None
-
         self._label = ''
         self._tokens = []
+
+        self._center = vector(x, y)
+        self._isMoving = False
+        self._moveFrom = None
 
         self.scene().parent().window().stack.push(AddItemCommand(self.scene(), self))
 
