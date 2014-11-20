@@ -211,18 +211,25 @@ class NodeParamEditorWidget(QWidget):
             tW.index -= 1
         self._vboxToken.removeWidget(tokenWidget)
 
+        self.updateTokenWidgetIndex()
+
+    def updateTokenWidgetIndex(self):
         if len(self._tokenWidgets) <= 2:
             self._upToken.setEnabled(False)
             self._downToken.setEnabled(False)
-        else:
-            self.updateTokenWidgetIndex()
+            for tokW in self._tokenWidgets:
+                tokW.show()
+            self._plusToken.show()
+            self._showTokenWidgetIndex = 0
+            return
 
-    def updateTokenWidgetIndex(self):
         maxIndex = len(self._tokenWidgets) - 1
-        if self._showTokenWidgetIndex >= maxIndex - 1:
+        if maxIndex == self._showTokenWidgetIndex:
             self._showTokenWidgetIndex -= 1
-            self._tokenWidgets[self._showTokenWidgetIndex].show()
-        elif self._showTokenWidgetIndex == maxIndex - 2:
+
+        self._tokenWidgets[self._showTokenWidgetIndex].show()
+        self._tokenWidgets[self._showTokenWidgetIndex + 1].show()
+        if maxIndex - self._showTokenWidgetIndex == 1:
             self._plusToken.show()
         else:
             self._tokenWidgets[self._showTokenWidgetIndex + 2].show()
