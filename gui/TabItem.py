@@ -66,6 +66,8 @@ class TabbedEditor(QTabWidget):
             self.insertTabbedView()
         elif index > 0:
             self.widget(index).scene().reinitSelectedProperties()
+        else:
+            self.propertiesEditor.setNoItem()
 
     def setSceneName(self, index, name):
         self.widget(index).scene().setName(name)

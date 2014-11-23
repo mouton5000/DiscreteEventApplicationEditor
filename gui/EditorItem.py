@@ -185,6 +185,8 @@ class SceneWidget(QGraphicsScene):
                 self.parent().propertiesEditor.setArcItem().setSelectedArc(self._selected)
             elif isinstance(self._selected, NodeItem):
                 self.parent().propertiesEditor.setNodeItem().setSelectedNode(self._selected)
+        else:
+            self.parent().propertiesEditor.setNoItem()
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_N:
