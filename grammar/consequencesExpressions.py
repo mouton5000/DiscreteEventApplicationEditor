@@ -89,13 +89,13 @@ class AddSpriteConsequence(SpriteConsequence):
         self._x = x
         self._y = y
 
-    def eval_update(self, evaluation, *_):
+    def eval_update(self, evaluation, stateMachine, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             num = int(_evalArg(self._num, evaluation))
             x = int(_evalArg(self._x, evaluation))
             y = int(_evalArg(self._y, evaluation))
-            gameWindow.addSprite(name, num, x, y)
+            stateMachine.gameWindow.addSprite(name, num, x, y)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -116,11 +116,11 @@ class RemoveSpriteConsequence(SpriteConsequence):
     def __init__(self, name):
         super(RemoveSpriteConsequence, self).__init__(name)
 
-    def eval_update(self, evaluation, *_):
+    def eval_update(self, evaluation, stateMachine, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
-                gameWindow.removeSprite(name)
+                stateMachine.gameWindow.removeSprite(name)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):
@@ -134,11 +134,11 @@ class EditSpriteConsequence(SpriteConsequence):
         self._x = x
         self._y = y
 
-    def eval_update(self, evaluation, *_):
+    def eval_update(self, evaluation, stateMachine, *_):
         try:
             name = _evalArg(self._name, evaluation)
             try:
-                gameWindow.editSprite(name, self._num, self._x, self._y, evaluation)
+                stateMachine.gameWindow.editSprite(name, self._num, self._x, self._y, evaluation)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):

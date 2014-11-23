@@ -71,6 +71,9 @@ class TabbedEditor(QTabWidget):
         self.widget(index).scene().setName(name)
         self.mainWindow.setModified()
 
+    def settingsWidget(self):
+        return self.settings
+
 
 class EditableTabBar(QTabBar):
     def __init__(self, parent):

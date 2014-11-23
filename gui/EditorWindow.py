@@ -105,6 +105,9 @@ class MainWindow(QMainWindow):
     def addScenes(self, scenesDesc):
         return (self.centralWidget().addScene(sceneDesc['name']) for sceneDesc in scenesDesc)
 
+    def settingsWidget(self):
+        return self.centralWidget().settingsWidget()
+
     def getNodesIdGenerator(self):
         return self.centralWidget().getNodesIdsGenerator()
 
@@ -172,9 +175,15 @@ class MainWindow(QMainWindow):
 
         nig = self.getNodesIdGenerator()
         l = [sceneDict(scene) for scene in self.scenes()]
+
+        setW = self.settingsWidget()
+        settingsDict = {"fps": int(setW.getFPS()), "width": int(setW.getWidth()),
+                        "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites()}
+
         d = {"nodeId": nig.getNodeId(),
              "nextIds": list(nig.getNextIds()),
-             "scenes": l}
+             "scenes": l,
+             "settings": settingsDict}
 
         try:
             with open(fname, 'w') as f:
@@ -251,6 +260,14 @@ class MainWindow(QMainWindow):
             nig.setNodeId(d['nodeId'])
             nig.setNextIds(deque(d['nextIds']))
 
+            settingsDict = d['settings']
+            setW = self.settingsWidget()
+            setW.setFPS(settingsDict['fps'])
+            setW.setWidth(settingsDict['width'])
+            setW.setHeight(settingsDict['height'])
+            for num, filePath in settingsDict['spritesRegistery']:
+                setW.addSpriteWithValues(num, filePath)
+
     def setCurrentFile(self, currentFile):
         self._currentFile = currentFile
         if currentFile is None:
@@ -293,12 +310,18 @@ class MainWindow(QMainWindow):
         if not self._stateMachine or not self._nodeDict:
             return
 
-        self._stateMachine.init()
+        setW = self.settingsWidget()
+        fps = setW.getFPS()
+        width = setW.getWidth()
+        height = setW.getHeight()
+        spritesRegistery = setW.getSpritesRegistery()
+
+        self._gw = gameWindow.GameWindow(fps, width, height, spritesRegistery)
+
+        self._stateMachine.init(self._gw)
         for node, compNode in self._nodeDict.iteritems():
             for token in node.getTokens():
                 self._stateMachine.addToken(compNode, token)
-
-        gameWindow.init()
 
         i = 0
         while True:
@@ -309,7 +332,7 @@ class MainWindow(QMainWindow):
             while retick:
                 retick = self._stateMachine.tick()
             self._stateMachine.updateTokensNbFrames()
-            if not gameWindow.tick():
+            if not self._gw.tick():
                 break
         self.stop()
 
@@ -320,7 +343,10 @@ class MainWindow(QMainWindow):
         # gameWindow.init()
 
     def stop(self):
-        gameWindow.hide()
+        try:
+            self._gw.hide()
+        except AttributeError:
+            pass
 
     def center(self):
         qr = self.frameGeometry()
@@ -366,6 +392,9 @@ class MainWidget(QWidget):
 
     def addScene(self, name):
         return self.drawing.insertTabbedView(name=name).scene()
+
+    def settingsWidget(self):
+        return self.drawing.settingsWidget()
 
     def reinit(self):
         self.nodesIdsGenerator.reinit()
