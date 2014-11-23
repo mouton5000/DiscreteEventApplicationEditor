@@ -265,8 +265,7 @@ class MainWindow(QMainWindow):
             setW.setFPS(settingsDict['fps'])
             setW.setWidth(settingsDict['width'])
             setW.setHeight(settingsDict['height'])
-            for num, filePath in settingsDict['spritesRegistery']:
-                setW.addSpriteWithValues(num, filePath)
+            setW.setSprites(settingsDict['spritesRegistery'])
 
     def setCurrentFile(self, currentFile):
         self._currentFile = currentFile
@@ -316,9 +315,10 @@ class MainWindow(QMainWindow):
         height = setW.getHeight()
         spritesRegistery = setW.getSpritesRegistery()
 
-        self._gw = gameWindow.GameWindow(fps, width, height, spritesRegistery)
+        gw = gameWindow.GameWindow(fps, width, height, spritesRegistery)
+        self._stateMachine.setGameWindow(gw)
 
-        self._stateMachine.init(self._gw)
+        self._stateMachine.init()
         for node, compNode in self._nodeDict.iteritems():
             for token in node.getTokens():
                 self._stateMachine.addToken(compNode, token)
@@ -332,7 +332,7 @@ class MainWindow(QMainWindow):
             while retick:
                 retick = self._stateMachine.tick()
             self._stateMachine.updateTokensNbFrames()
-            if not self._gw.tick():
+            if not self._stateMachine.gameWindow.tick():
                 break
         self.stop()
 
@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
 
     def stop(self):
         try:
-            self._gw.hide()
+            self._stateMachine.gameWindow.hide()
         except AttributeError:
             pass
 

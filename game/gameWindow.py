@@ -35,7 +35,6 @@ class GameWindow:
         self._all_list.draw(self._scene)
         self._fps = fps
         self._spriteRegistery = spritesRegistery
-        print spritesRegistery
         pygame.display.flip()
         self._clock = pygame.time.Clock()
 

@@ -10,6 +10,10 @@ class StateMachine:
         self._tokens = set([])
         self._nodes = {}
         self.i = 0
+        self.gameWindow = None
+
+    def setGameWindow(self, gw):
+        self.gameWindow = gw
 
     def addTokenByNodeNum(self, nodeNum, parameters):
         node = self.getNodeByNum(nodeNum)
@@ -41,11 +45,10 @@ class StateMachine:
     def clearNodes(self):
         self._nodes.clear()
 
-    def init(self, gameWindow):
+    def init(self):
         self.clearTokens()
         Property.properties.clear()
         Event.events.clear()
-        self.gameWindow = gameWindow
 
     def tick(self):
         print self._tokens, Property.properties, Event.events
@@ -83,13 +86,13 @@ class StateMachine:
                                     toRecheck |= locks[keys][1]
                                     for token2 in locks[keys][1]:
                                         del transitionGen[token2]
-                                    locks[keys] = (prio, set(token))
+                                    locks[keys] = (prio, set([token]))
                                 elif locks[keys][0] == prio:
                                     locks[keys][1].add(token)
                                 else:
                                     locked = True
                             except KeyError:
-                                locks[keys] = (prio, set(token))
+                                locks[keys] = (prio, set([token]))
                     if locked:
                         toRecheck.add(token)
                     else:
