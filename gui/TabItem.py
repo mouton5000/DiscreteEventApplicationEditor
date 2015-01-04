@@ -46,6 +46,9 @@ class TabbedEditor(QTabWidget):
     def scenes(self):
         return (self.widget(index).scene() for index in xrange(1, self.count() - 1))
 
+    def getScene(self, index):
+        return self.widget(index).scene()
+
     def insertTabbedView(self, name='unnamed'):
         index = self.count() - 1
         view = ViewWidget(mainWindow=self.mainWindow, nodesIdsGenerator=self.nodesIdsGenerator,

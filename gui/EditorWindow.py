@@ -379,10 +379,12 @@ class MainWidget(QWidget):
         vbox = QVBoxLayout()
         self.nodesIdsGenerator = NodesIdsGenerator()
         self.modeController = ModeController(mainWindow=self.parent())
+
         self.propertiesEditor = PropertyWidget(self)
 
         self.drawing = TabbedEditor(self.propertiesEditor, parent=self, mainWindow=self.parent(),
                                     nodesIdsGenerator=self.nodesIdsGenerator, modeController=self.modeController)
+
         vbox.addWidget(self.drawing)
         vbox.addWidget(self.propertiesEditor)
         self.setLayout(vbox)

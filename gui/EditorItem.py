@@ -5,7 +5,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import QRectF
 from PyQt4.QtGui import QGraphicsView, QGraphicsScene
 from undoRedoActions import *
-from NodeItems import NodeItem
+from NodeItems import NodeItem, ConnectedComponent
 from ArcItems import ArcItem, CycleArcItem
 from collections import deque
 
@@ -133,6 +133,21 @@ class SceneWidget(QGraphicsScene):
             self.setSelected(n2)
         return arc
 
+    def mousePressEvent(self, event):
+        super(SceneWidget, self).mousePressEvent(event)
+        item = self.mouseGrabberItem()
+        if not item is None and not self._selected is None and self.isComponentMode() and item in self._selected:
+            x, y = event.scenePos().x(), event.scenePos().y()
+            self._selected.initMove(x, y)
+
+    def mouseMoveEvent(self, event):
+        item = self.mouseGrabberItem()
+        if item and self._selected and self.isComponentMode() and item in self._selected:
+            x, y = event.scenePos().x(), event.scenePos().y()
+            self._selected.move(x, y)
+        else:
+            super(SceneWidget, self).mouseMoveEvent(event)
+
     def mouseReleaseEvent(self, event):
         item = self.mouseGrabberItem()
         if self.isNodeMode():
@@ -160,6 +175,19 @@ class SceneWidget(QGraphicsScene):
             if item:
                 self.setSelected(item)
                 item.mouseReleaseEvent(event)
+        elif self.isComponentMode():
+            if self._selected:
+                x, y = event.scenePos().x(), event.scenePos().y()
+                self._selected.endMove(x, y)
+                if item:
+                    item.mouseReleaseEvent(event)
+            else:
+                if item:
+                    try:
+                        self.setSelected(item.getConnectedComponent())
+                    except AttributeError:
+                        pass
+                    item.mouseReleaseEvent(event)
 
     def setSelected(self, item):
         if self._selected == item:
@@ -185,6 +213,8 @@ class SceneWidget(QGraphicsScene):
                 self.parent().propertiesEditor.setArcItem().setSelectedArc(self._selected)
             elif isinstance(self._selected, NodeItem):
                 self.parent().propertiesEditor.setNodeItem().setSelectedNode(self._selected)
+            elif isinstance(self._selected, ConnectedComponent):
+                self.parent().propertiesEditor.setConnectedComponentItem().setSelectedConnectedComponent(self._selected)
         else:
             self.parent().propertiesEditor.setNoItem()
 
@@ -198,9 +228,16 @@ class SceneWidget(QGraphicsScene):
                 self.setStarMode()
         elif event.key() == QtCore.Qt.Key_S:
             self.setSelectMode()
+        elif event.key() == QtCore.Qt.Key_C:
+            self.setComponentMode()
         elif event.key() == QtCore.Qt.Key_Delete:
-            if self._selected:
+            if self.isComponentMode() and not self._selected is None:
+                self._selected.remove()
+            elif self._selected:
                 self.deleteSelected()
+        elif event.key() == QtCore.Qt.Key_M:
+            if self.isComponentMode() and not self._selected is None:
+                self._selected.moveToNextScene()
         else:
             item = self.mouseGrabberItem()
             try:
@@ -210,17 +247,26 @@ class SceneWidget(QGraphicsScene):
 
     def setNodeMode(self):
         self.modeController.setNodeMode()
-        if isinstance(self._selected, ArcItem):
+        if isinstance(self._selected, ArcItem) or isinstance(self._selected, ConnectedComponent):
             self.setSelected(None)
 
     def setPathMode(self):
         self.modeController.setPathMode()
+        if isinstance(self._selected, ConnectedComponent):
+            self.setSelected(None)
 
     def setStarMode(self):
         self.modeController.setStarMode()
+        if isinstance(self._selected, ConnectedComponent):
+            self.setSelected(None)
 
     def setSelectMode(self):
         self.modeController.setSelectMode()
+        self.setSelected(None)
+
+    def setComponentMode(self):
+        self.modeController.setComponentMode()
+        self.setSelected(None)
 
     def isNodeMode(self):
         return self.modeController.isNodeMode()
@@ -236,6 +282,9 @@ class SceneWidget(QGraphicsScene):
 
     def isSelectMode(self):
         return self.modeController.isSelectMode()
+
+    def isComponentMode(self):
+        return self.modeController.isComponentMode()
 
     def deleteSelected(self):
         self.parent().window().stack.push(DeleteItemCommand(self, self._selected))
@@ -282,6 +331,7 @@ class ModeController():
     PathMode = 1
     StarMode = 2
     SelectMode = 3
+    ComponentMode = 4
 
     def __init__(self, mainWindow=None):
         self._mode = ModeController.NodeMode
@@ -303,6 +353,10 @@ class ModeController():
         self.setMode(ModeController.SelectMode)
         self.mainWindow.statusBar().showMessage('Select mode')
 
+    def setComponentMode(self):
+        self.setMode(ModeController.ComponentMode)
+        self.mainWindow.statusBar().showMessage('Component mode')
+
     def setMode(self, mode):
         self._mode = mode
 
@@ -320,3 +374,6 @@ class ModeController():
 
     def isSelectMode(self):
         return self._mode == ModeController.SelectMode
+
+    def isComponentMode(self):
+        return self._mode == ModeController.ComponentMode

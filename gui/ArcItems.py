@@ -1,5 +1,6 @@
-__author__ = 'mouton'
 # -*- coding: utf-8 -*-
+
+__author__ = 'mouton'
 
 from PyQt4 import QtCore
 from PyQt4.QtGui import QGraphicsPathItem, QBrush, QPainterPath
@@ -15,7 +16,7 @@ class ArcItem(QGraphicsPathItem):
     """
     Attributs
 
-    arrowAlpha : Demi-Largeur angulaire des arcs aux extrêmités
+    arrowAlpha : Demi-Largeur angulaire des arcs aux extremites
     arrowBeta : Demi angle de la pointe de l'arc
     """
 
@@ -165,6 +166,9 @@ class ArcItem(QGraphicsPathItem):
         self.node2.inputArcs.remove(self)
         self.scene().removeItem(self._labelItem)
 
+    def getConnectedComponent(self):
+        return self.node1.getConnectedComponent()
+
     def __str__(self):
         return str(self.node1) + ' ' + str(self.node2)
 
@@ -173,13 +177,13 @@ class ArcItem(QGraphicsPathItem):
 
     def drawPath(self, initLabel=False):
         """
-        Tracé d'un arc reliant les noeuds node1 et node2 dans le plan.
-        Attention, puisque dans le plan de l'interface, l'axe des ordonnées est inveré,
-        mais pas l'axe des abscisses la rotation dans le sens trigonométrique et le sens horaire sont inversés.
+        Trace d'un arc reliant les noeuds node1 et node2 dans le plan.
+        Attention, puisque dans le plan de l'interface, l'axe des ordonnees est invere,
+        mais pas l'axe des abscisses la rotation dans le sens trigonometrique et le sens horaire sont inverses.
         """
 
-        # Il est conseillé de prendre une feuille est un stylo pour dessiner en lisant les commentaires
-        # de cette méthode
+        # Il est conseille de prendre une feuille est un stylo pour dessiner en lisant les commentaires
+        # de cette methode
 
         v1 = self.node1.getXY()
         v2 = self.node2.getXY()
@@ -187,8 +191,8 @@ class ArcItem(QGraphicsPathItem):
         u = v2 - v1  # Vecteur reliant v1 à v2
         n = (u.rotate(pi / 2)).norm()  # Vecteur unitaire perpendiculaire à u
 
-        # Point sur la médiatrice de [v1,v2] situé à une distance cl
-        # Il servira (presque) de point de contrôle pour les courbes de Beziers traçant les deux bords de l'arc.
+        # Point sur la mediatrice de [v1,v2] situe a une distance cl
+        # Il servira (presque) de point de controle pour les courbes de Beziers traçant les deux bords de l'arc.
         c = v1 + u / 2 + self._cl * n
 
         v1m1norm = (c - v1).norm()  # Vecteur unitaire de la droite (v1,c), de v1 vers c

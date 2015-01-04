@@ -108,3 +108,58 @@ class MoveLabelItemCommand(QUndoCommand):
     def redo(self):
         self._labelItem.setOffset(self._newOffset)
         self._scene.parent().showTab()
+
+
+class MoveConnectedComponentCommand(QUndoCommand):
+    def __init__(self, scene, component, prevPos, newPos, parent=None):
+        super(MoveConnectedComponentCommand, self).__init__(parent)
+        self._scene = scene
+        self._component = component
+        self._prevPos = prevPos
+        self._newPos = newPos
+        self._firstCall = True
+
+    def undo(self):
+        dvect = self._prevPos - self._newPos
+        dx, dy = dvect.x, dvect.y
+        self._component.setDXDY(dx, dy)
+        self._scene.parent().showTab()
+
+    def redo(self):
+        if self._firstCall:
+            self._firstCall = not self._firstCall
+            return
+        dvect = self._newPos - self._prevPos
+        dx, dy = dvect.x, dvect.y
+        self._component.setDXDY(dx, dy)
+        self._scene.parent().showTab()
+
+
+class ChangeConnectedComponentSceneCommand(QUndoCommand):
+    def __init__(self, oldScene, component, newScene, parent=None):
+        super(ChangeConnectedComponentSceneCommand, self).__init__(parent)
+        self._oldScene = oldScene
+        self._newScene = newScene
+        self._component = component
+
+    def undo(self):
+        self.changeScene(self._newScene, self._oldScene)
+
+    def redo(self):
+        self.changeScene(self._oldScene, self._newScene)
+
+    def changeScene(self, oldScene, newScene):
+        self._component._scene = newScene
+        for node in self._component.nodes:
+            oldScene.nodes.remove(node)
+            oldScene.removeItem(node._labelItem)
+            newScene.addItem(node)
+            newScene.addItem(node._labelItem)
+            for a in node.outputArcs:
+                oldScene.removeItem(a)
+                oldScene.removeItem(a._labelItem)
+                newScene.addItem(a)
+                newScene.addItem(a._labelItem)
+        oldScene.setSelected(None)
+        self._component._scene.parent().showTab()
+        self._component._scene.setSelected(self._component)

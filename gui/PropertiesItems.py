@@ -12,12 +12,15 @@ class PropertyWidget(QWidget):
 
         self.arcParamEditor = ArcParamEditorWidget(self)
         self.nodeParamEditor = NodeParamEditorWidget(self)
+        self.connectedComponentParamEditor = ConnectedComponentParamEditorWidget(self)
 
         self.layout.addWidget(self.noItem)
         self.layout.addWidget(self.arcParamEditor)
         self.arcParamEditor.hide()
         self.layout.addWidget(self.nodeParamEditor)
         self.nodeParamEditor.hide()
+        self.layout.addWidget(self.connectedComponentParamEditor)
+        self.connectedComponentParamEditor.hide()
 
         self.propertyItem = self.noItem
 
@@ -40,6 +43,9 @@ class PropertyWidget(QWidget):
 
     def setNodeItem(self):
         return self.setItem(self.nodeParamEditor)
+
+    def setConnectedComponentItem(self):
+        return self.setItem(self.connectedComponentParamEditor)
 
 
 class ArcParamEditorWidget(QWidget):
@@ -367,3 +373,40 @@ class TokenWidget(QWidget):
         self.parent().tokenChanged(self)
 
 
+class ConnectedComponentParamEditorWidget(QWidget):
+    def __init__(self, parent=None):
+        super(ConnectedComponentParamEditorWidget, self).__init__(parent)
+        hbox = QHBoxLayout()
+        hbox.addWidget(QLabel('Scene : '))
+
+        self._sceneQCB = QComboBox(self)
+        self._sceneQCB.setMaxVisibleItems(5)
+        hbox.addWidget(self._sceneQCB)
+
+        self._sceneQCB.clear()
+        self.setLayout(hbox)
+
+    def initSceneQCB(self):
+        try:
+            self._sceneQCB.currentIndexChanged.disconnect(self.changeScene)
+        except TypeError:
+            pass
+        sceneOfCC = self._selectedConnectedComponent.scene()
+        self._sceneQCB.clear()
+        i = 0
+        for scene in self.parent().parent().scenes():
+            self._sceneQCB.addItem(scene.getName())
+            if scene == sceneOfCC:
+                self._sceneQCB.setCurrentIndex(i)
+            i += 1
+
+        self._sceneQCB.currentIndexChanged.connect(self.changeScene)
+
+    def setSelectedConnectedComponent(self, cc):
+        self._selectedConnectedComponent = cc
+        self.initSceneQCB()
+
+    def changeScene(self, sceneIndex):
+        self._selectedConnectedComponent.setScene(sceneIndex)
+        self._sceneQCB.clear()
+        self._selectedConnectedComponent = None

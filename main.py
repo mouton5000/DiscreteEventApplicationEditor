@@ -7,7 +7,7 @@ from gui.EditorWindow import MainWindow
 
 def main():
 
-    hasToCompile = True
+    hasToCompile = False
 
     if hasToCompile:
         print 'Compile grammar (0/3)'
