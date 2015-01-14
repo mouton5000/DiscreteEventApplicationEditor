@@ -29,7 +29,7 @@ class NodeItem(QGraphicsEllipseItem):
         self._isMoving = False
         self._moveFrom = None
 
-        self.scene().parent().window().stack.push(AddItemCommand(self.scene(), self))
+        self.scene().mainWindow.stack.push(AddItemCommand(self.scene(), self))
 
         self.setBrush(QBrush(QtCore.Qt.black))
 
@@ -55,7 +55,7 @@ class NodeItem(QGraphicsEllipseItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().parent().window().stack.push(MoveNodeCommand(self.scene(), self, self._moveFrom, self._center))
+            self.scene().mainWindow.stack.push(MoveNodeCommand(self.scene(), self, self._moveFrom, self._center))
             self._moveFromX = None
             self._moveFromY = None
             self._isMoving = False
@@ -159,9 +159,9 @@ class NodeItem(QGraphicsEllipseItem):
         self.scene().removeNodeIndex(self.num)
 
         for a in copy(self.inputArcs):
-            self.scene().parent().window().stack.push(DeleteItemCommand(self.scene(), a))
+            self.scene().mainWindow.stack.push(DeleteItemCommand(self.scene(), a))
         for a in copy(self.outputArcs):
-            self.scene().parent().window().stack.push(DeleteItemCommand(self.scene(), a))
+            self.scene().mainWindow.stack.push(DeleteItemCommand(self.scene(), a))
 
         self.scene().removeItem(self._labelItem)
 
@@ -214,7 +214,7 @@ class ConnectedComponent():
         if oldScene == newScene:
             return
 
-        self.scene().parent().window().stack.push(ChangeConnectedComponentSceneCommand(
+        self.scene().mainWindow.stack.push(ChangeConnectedComponentSceneCommand(
             oldScene, self, newScene))
 
 
@@ -264,7 +264,7 @@ class ConnectedComponent():
 
     def endMove(self, x, y):
         if self._isMoving:
-            self.scene().parent().window().stack.push(MoveConnectedComponentCommand(self.scene(), self, self._moveFrom,
+            self.scene().mainWindow.stack.push(MoveConnectedComponentCommand(self.scene(), self, self._moveFrom,
                                                                                     vector(x, y)))
             self._isMoving = False
         else:
@@ -272,7 +272,7 @@ class ConnectedComponent():
 
     def remove(self):
         for node in self.nodes:
-            self.scene().parent().window().stack.push(DeleteItemCommand(self.scene(), node))
+            self.scene().mainWindow.stack.push(DeleteItemCommand(self.scene(), node))
         self.scene().setSelected(None)
 
     def moveToNextScene(self):

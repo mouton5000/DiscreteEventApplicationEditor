@@ -288,7 +288,7 @@ class SceneWidget(QGraphicsScene):
         return self.modeController.isComponentMode()
 
     def deleteSelected(self):
-        self.parent().window().stack.push(DeleteItemCommand(self, self._selected))
+        self.mainWindow.stack.push(DeleteItemCommand(self, self._selected))
         self.setSelected(None)
 
     def deleteItem(self, item):

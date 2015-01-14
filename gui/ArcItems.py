@@ -40,7 +40,7 @@ class ArcItem(QGraphicsPathItem):
         self._isMoving = False
         self._moveFromCl = None
 
-        self.scene().parent().window().stack.push(AddItemCommand(self.scene(), self))
+        self.scene().mainWindow.stack.push(AddItemCommand(self.scene(), self))
 
         self._label = 'false'
         self._formula = 'false'
@@ -122,7 +122,7 @@ class ArcItem(QGraphicsPathItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().parent().window().stack.push(MoveArcCommand(self.scene(), self, self._moveFromCl, self._cl))
+            self.scene().mainWindow.stack.push(MoveArcCommand(self.scene(), self, self._moveFromCl, self._cl))
             self._isMoving = False
         self.ungrabMouse()
 
@@ -269,7 +269,7 @@ class CycleArcItem(ArcItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().parent().window().stack.push(MoveArcCommand(self.scene(), self, self._moveFromCl, self._cl,
+            self.scene().mainWindow.stack.push(MoveArcCommand(self.scene(), self, self._moveFromCl, self._cl,
                                                                      self._moveFromDelta, self._delta))
             self._isMoving = False
         self.ungrabMouse()
