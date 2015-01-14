@@ -146,7 +146,6 @@ class MainWindow(QMainWindow):
             d = dict()
             xy = node.getXY()
             d['x'], d['y'] = xy.x, xy.y
-            # d['isActive'] = node.isActive()
             d['num'] = node.num
             d['label'] = node.getLabel()
             d['tokens'] = node.getTokens()
@@ -215,7 +214,6 @@ class MainWindow(QMainWindow):
         def addNode(node, scene):
             x = node['x']
             y = node['y']
-            # n.setActive(node['isActive'])
             n = scene.addNode(x, y)
             n.num = node['num']
             n.setLabel(node['label'])
@@ -328,7 +326,6 @@ class MainWindow(QMainWindow):
 
         i = 0
         while True:
-        #for i in xrange(600):
             print i
             i += 1
             retick = True
@@ -341,9 +338,6 @@ class MainWindow(QMainWindow):
 
     def debug(self):
         pass
-        # if not self._stateMachine:
-        #     return
-        # gameWindow.init()
 
     def stop(self):
         try:
@@ -424,18 +418,4 @@ class MainWidget(QWidget):
         self._viewsManager.reinit()
 
     def getNodesIdsGenerator(self):
-
-    # def __init__(self, parent=None):
-    #     super(MainWidget, self).__init__(parent)
-    #
-    #     vbox = QVBoxLayout()
-    #     self.drawing = ViewWidget(parent=self, mainWindow=self.parent())
-    #     self.propertiesEditor = PropertyWidget(self)
-    #     self.drawing.setPropertiesEditor(self.propertiesEditor)
-    #     vbox.addWidget(self.drawing)
-    #     vbox.addWidget(self.propertiesEditor)
-    #     self.setLayout(vbox)
-    #
-    # def scene(self):
-    #     return self.drawing.scene()
         return self._nodesIdsGenerator
