@@ -300,8 +300,9 @@ class MainWindow(QMainWindow):
             n2 = self._nodeDict[a.node2]
             Transition(n1, n2, a.getFormula(), a.getConsequences())
 
+        self._nodeDict = {}
         for scene in self.scenes():
-            self._nodeDict = {node: compileNode(node) for node in scene.nodes}
+            self._nodeDict.update({node: compileNode(node) for node in scene.nodes})
             for arc in chain.from_iterable(node.outputArcs for node in scene.nodes):
                 compileArc(arc)
 
