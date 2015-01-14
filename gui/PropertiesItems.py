@@ -1,3 +1,5 @@
+# -*- coding: latin-1 -*-
+
 __author__ = 'mouton'
 
 from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QWidget, QLabel, QComboBox, QPushButton
@@ -8,7 +10,7 @@ class PropertyWidget(QWidget):
         super(PropertyWidget, self).__init__(parent)
         self.layout = QVBoxLayout()
 
-        self.noItem = QLabel('Proprietes de l\'element selectionne')
+        self.noItem = QLabel('Property of the selected element.')
 
         self.arcParamEditor = ArcParamEditorWidget(self)
         self.nodeParamEditor = NodeParamEditorWidget(self)
@@ -56,7 +58,7 @@ class ArcParamEditorWidget(QWidget):
         vbox = QVBoxLayout()
 
         hbox2 = QHBoxLayout()
-        self._lb1 = QLabel('Indice de l\'arc : ', self)
+        self._lb1 = QLabel('Arc index : ', self)
         self._indexQCB = QComboBox(self)
         self._indexQCB.setMaxVisibleItems(5)
         hbox2.addWidget(self._lb1)
@@ -89,9 +91,9 @@ class ArcParamEditorWidget(QWidget):
 
     def init(self):
         self._indexQCB.clear()
-        self.setLabel('Etiquette de l\'arc.')
-        self.setFormula('Formule d\'acceptance de l\'arc.')
-        self.setConsequences('Consequences du passage par l\'arc.')
+        self.setLabel('Arc label.')
+        self.setFormula('Arc boolean formula.')
+        self.setConsequences('Arc consequeneces.')
 
     def setIndexes(self, maxIndex, index):
         self._indexQCB.clear()
@@ -153,7 +155,7 @@ class NodeParamEditorWidget(QWidget):
         vbox = QVBoxLayout()
 
         hboxTitle = QHBoxLayout()
-        self._lb1 = QLabel('Indice du noeud : ', self)
+        self._lb1 = QLabel('Node index : ', self)
         self._lb2 = QLabel('', self)
         self._lb2.setMinimumWidth(50)
         self._lb2.setMaximumWidth(50)
@@ -268,7 +270,7 @@ class NodeParamEditorWidget(QWidget):
             self._downToken.setEnabled(False)
 
     def init(self):
-        self.setLabel('Etiquette du noeud.')
+        self.setLabel('Node label.')
 
     def setIndex(self, num):
         self._lb2.setText(str(num))
