@@ -28,6 +28,7 @@ class SpriteReg(Sprite):
 class GameWindow:
 
     def __init__(self, fps, width, height, spritesRegistery):
+        pygame.init()
         pygame.display.init()
         self._scene = pygame.display.set_mode([width, height])
         self._scene.fill((255, 255, 255))
