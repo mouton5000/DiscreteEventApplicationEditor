@@ -75,7 +75,10 @@ class GameWindow:
             pass
 
     def editSprite(self, name, unevaluatedNum, unevaluatedX, unevaluatedY, evaluation):
-        sp = SpriteReg.instances[name]
+        try:
+            sp = SpriteReg.instances[name]
+        except KeyError:
+            return
         newNum = unevaluatedNum.value(evaluation, selfParam=sp.num)
         if newNum == UNDEFINED_PARAMETER:
             newNum = sp.num
