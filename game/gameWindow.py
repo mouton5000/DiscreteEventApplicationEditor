@@ -31,8 +31,8 @@ class GameWindow:
         pygame.display.init()
         self._scene = pygame.display.set_mode([width, height])
         self._scene.fill((255, 255, 255))
-        self._all_list = pygame.sprite.OrderedUpdates()
-        self._all_list.draw(self._scene)
+        self._spritesList = pygame.sprite.OrderedUpdates()
+        self._spritesList.draw(self._scene)
         self._fps = fps
         self._spriteRegistery = spritesRegistery
         pygame.display.flip()
@@ -52,8 +52,10 @@ class GameWindow:
                 if event.key == pygame.K_UP:
                     Event.events.add(Event('Key', ['up']))
         self._scene.fill((255, 255, 255))
-        self._all_list.draw(self._scene)
+        self._spritesList.draw(self._scene)
+
         pygame.display.flip()
+
         self._clock.tick(self._fps)
 
         return True
@@ -61,13 +63,13 @@ class GameWindow:
     def addSprite(self, name, num, x, y):
         try:
             filePath = self._spriteRegistery[num]
-            self._all_list.add(SpriteReg(name, num, filePath, x, y, self._scene))
+            self._spritesList.add(SpriteReg(name, num, filePath, x, y, self._scene))
         except KeyError:
             pass
 
     def removeSprite(self, name):
         try:
-            self._all_list.remove(SpriteReg.instances[name])
+            self._spritesList.remove(SpriteReg.instances[name])
         except KeyError:
             pass
 
