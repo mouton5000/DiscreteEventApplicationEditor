@@ -236,9 +236,6 @@ class SceneWidget(QGraphicsScene):
                 self._selected.remove()
             elif self._selected:
                 self.deleteSelected()
-        elif event.key() == QtCore.Qt.Key_M:
-            if self.isComponentMode() and not self._selected is None:
-                self._selected.moveToNextScene()
         else:
             item = self.mouseGrabberItem()
             try:

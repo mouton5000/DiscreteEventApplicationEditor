@@ -275,21 +275,6 @@ class ConnectedComponent():
             self.scene().mainWindow.stack.push(DeleteItemCommand(self.scene(), node))
         self.scene().setSelected(None)
 
-    def moveToNextScene(self):
-        scene = self.scene()
-        scene2 = scene.parent().parent().parent().getScene(2)
-        for node in self.nodes:
-            scene.removeItem(node)
-            scene2.addItem(node)
-            scene.removeItem(node._labelItem)
-            scene2.addItem(node._labelItem)
-        for arc in self.arcs:
-            scene.removeItem(arc)
-            scene2.addItem(arc)
-            scene.removeItem(arc._labelItem)
-            scene2.addItem(arc._labelItem)
-        self._scene = scene
-
     def __str__(self):
         return str(self.nodes) + ' ' + str(self.arcs)
 
