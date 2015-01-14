@@ -11,6 +11,12 @@ from collections import deque
 
 
 class ViewWidget(QGraphicsView):
+
+    DEFAULT_X = -200
+    DEFAULT_Y = -200
+    DEFAULT_W = 400
+    DEFAULT_H = 400
+
     def __init__(self, parent=None, mainWindow=None, nodesIdsGenerator=None, modeController=None):
         super(ViewWidget, self).__init__(parent)
         self.mainWindow = mainWindow
@@ -20,7 +26,7 @@ class ViewWidget(QGraphicsView):
         self.setScene(scene)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.rect = QRectF(-200, -200, 400, 400)
+        self.rect = QRectF(ViewWidget.DEFAULT_X, ViewWidget.DEFAULT_Y, ViewWidget.DEFAULT_W, ViewWidget.DEFAULT_H)
         self.setSceneRect(self.rect)
         self.px = None
         self.py = None
@@ -66,14 +72,23 @@ class ViewWidget(QGraphicsView):
             dx, dy = 0, 30
         elif event.key() == QtCore.Qt.Key_Down:
             dx, dy = 0, -30
-        else:
-            super(ViewWidget, self).keyPressEvent(event)
         if dx != 0 or dy != 0:
             self.translate(dx, dy)
+            return
+        if event.key() == QtCore.Qt.Key_F:
+            self.center()
+        else:
+            super(ViewWidget, self).keyPressEvent(event)
 
     def translate(self, dx, dy):
         self.rect.translate(-dx, -dy)
         self.setSceneRect(self.rect)
+
+    def center(self):
+        scale = self.scl
+        self.scale(1 / scale, 1 / scale)
+        self.scl = 1
+        self.translate(self.rect.x() - ViewWidget.DEFAULT_X, self.rect.y() - ViewWidget.DEFAULT_Y)
 
     def setPropertiesEditor(self, pe):
         self.propertiesEditor = pe
