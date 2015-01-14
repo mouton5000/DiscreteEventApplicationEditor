@@ -11,9 +11,10 @@ from collections import deque
 
 
 class ViewWidget(QGraphicsView):
-    def __init__(self, parent=None, mainWindow=None, nodesIdsGenerator=None, modeController=None, tabIndex=None):
+    def __init__(self, parent=None, mainWindow=None, nodesIdsGenerator=None, modeController=None):
         super(ViewWidget, self).__init__(parent)
         self.mainWindow = mainWindow
+        self._tabIndex = None
         scene = SceneWidget(self, mainWindow=self.mainWindow, nodesIdsGenerator=nodesIdsGenerator,
                             modeController=modeController)
         self.setScene(scene)
@@ -25,11 +26,10 @@ class ViewWidget(QGraphicsView):
         self.py = None
         self.propertiesEditor = None
         self.scl = 1
-        self._tabIndex = tabIndex
 
     def showTab(self):
-        tabWidget = self.parent().parent()
-        tabWidget.setCurrentIndex(self._tabIndex)
+        tabItem = self.mainWindow.centralWidget().tabItem()
+        tabItem.showTabbedView(self)
 
     def wheelEvent(self, event):
         step = event.delta() / 120
@@ -98,6 +98,7 @@ class SceneWidget(QGraphicsScene):
 
     def setName(self, name):
         self._name = name
+        self.mainWindow.centralWidget().tabItem().setTabbedViewText(self.parent(), name)
 
     def addItem(self, item):
         super(SceneWidget, self).addItem(item)

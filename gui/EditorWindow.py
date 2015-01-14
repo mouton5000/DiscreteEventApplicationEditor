@@ -1,11 +1,7 @@
-from collections import deque
-from gui.EditorItem import NodesIdsGenerator, ModeController
-from gui.TabItem import TabbedEditor
-
 __author__ = 'mouton'
 
 from PyQt4.QtGui import QVBoxLayout, QAction, \
-    QFileDialog, QMainWindow, QWidget, QDesktopWidget, QUndoStack, QMessageBox
+    QFileDialog, QMainWindow, QWidget, QDesktopWidget, QUndoStack, QMessageBox, QHBoxLayout
 from visual import vector
 import json
 import os.path
@@ -13,6 +9,10 @@ import game.gameWindow as gameWindow
 from stateMachine import StateMachine, Transition
 from itertools import chain
 from PropertiesItems import PropertyWidget
+from ScenesManagerItems import ViewsManagerWidget
+from collections import deque
+from gui.EditorItem import NodesIdsGenerator, ModeController
+from gui.TabItem import TabbedEditor
 
 
 class MainWindow(QMainWindow):
@@ -60,11 +60,17 @@ class MainWindow(QMainWindow):
         loadAction.setShortcut('Ctrl+O')
         loadAction.triggered.connect(self.load)
 
+        newSceneAction = QAction('New Scene', self)
+        newSceneAction.setShortcut('Ctrl+M')
+        newSceneAction.triggered.connect(self.addNewScene)
+
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(newAction)
         fileMenu.addAction(saveAction)
         fileMenu.addAction(saveAsAction)
         fileMenu.addAction(loadAction)
+        fileMenu.addSeparator()
+        fileMenu.addAction(newSceneAction)
 
         undoAction = QAction('&Undo', self)
         undoAction.setShortcut('Ctrl+Z')
@@ -78,10 +84,6 @@ class MainWindow(QMainWindow):
         editMenu.addAction(undoAction)
         editMenu.addAction(redoAction)
 
-        compileAction = QAction('&Compile', self)
-        compileAction.setShortcut('Shift+F9')
-        compileAction.triggered.connect(self.compile)
-
         runAction = QAction('&Run', self)
         runAction.setShortcut('Shift+F10')
         runAction.triggered.connect(self.run)
@@ -94,7 +96,6 @@ class MainWindow(QMainWindow):
         stopAction.triggered.connect(self.stop)
 
         runMenu = menubar.addMenu('&Run')
-        runMenu.addAction(compileAction)
         runMenu.addAction(runAction)
         runMenu.addAction(debugAction)
         runMenu.addAction(stopAction)
@@ -102,8 +103,11 @@ class MainWindow(QMainWindow):
     def scenes(self):
         return self.centralWidget().scenes()
 
+    def addNewScene(self):
+        self.centralWidget().addScene()
+
     def addScenes(self, scenesDesc):
-        return (self.centralWidget().addScene(sceneDesc['name']) for sceneDesc in scenesDesc)
+        return (self.centralWidget().addNamedScene(sceneDesc['name']) for sceneDesc in scenesDesc)
 
     def settingsWidget(self):
         return self.centralWidget().settingsWidget()
@@ -288,7 +292,8 @@ class MainWindow(QMainWindow):
     def redo(self):
         self.stack.redo()
 
-    def compile(self):
+    def run(self):
+
         self._stateMachine.clearNodes()
         self._stateMachine.clearTokens()
 
@@ -306,9 +311,6 @@ class MainWindow(QMainWindow):
             for arc in chain.from_iterable(node.outputArcs for node in scene.nodes):
                 compileArc(arc)
 
-    def run(self):
-        if not self._stateMachine or not self._nodeDict:
-            return
 
         setW = self.settingsWidget()
         fps = setW.getFPS()
@@ -377,34 +379,51 @@ class MainWidget(QWidget):
     def __init__(self, parent=None):
         super(MainWidget, self).__init__(parent)
 
+        hbox = QHBoxLayout()
         vbox = QVBoxLayout()
-        self.nodesIdsGenerator = NodesIdsGenerator()
-        self.modeController = ModeController(mainWindow=self.parent())
+        self._nodesIdsGenerator = NodesIdsGenerator()
+        self._modeController = ModeController(mainWindow=self.parent())
 
-        self.propertiesEditor = PropertyWidget(self)
+        self._propertiesEditor = PropertyWidget(self)
+        self._viewsManager = \
+            ViewsManagerWidget(parent=self, propertiesEditor=self._propertiesEditor, mainWindow=self.parent(),
+                               nodesIdsGenerator=self._nodesIdsGenerator, modeController=self._modeController)
+        self._tabItem = TabbedEditor(self._propertiesEditor, parent=self, mainWindow=self.parent(),
+                                     nodesIdsGenerator=self._nodesIdsGenerator, modeController=self._modeController)
 
-        self.drawing = TabbedEditor(self.propertiesEditor, parent=self, mainWindow=self.parent(),
-                                    nodesIdsGenerator=self.nodesIdsGenerator, modeController=self.modeController)
+        vbox.addWidget(self._tabItem)
+        vbox.addWidget(self._propertiesEditor)
 
-        vbox.addWidget(self.drawing)
-        vbox.addWidget(self.propertiesEditor)
-        self.setLayout(vbox)
+        hbox.addWidget(self._viewsManager)
+        hbox.addLayout(vbox)
+        self.setLayout(hbox)
+
+        self._machin = 0
+
+    def viewsManager(self):
+        return self._viewsManager
+
+    def tabItem(self):
+        return self._tabItem
 
     def scenes(self):
-        return self.drawing.scenes()
+        return self._viewsManager.scenes()
 
-    def addScene(self, name):
-        return self.drawing.insertTabbedView(name=name).scene()
+    def addScene(self):
+        return self._viewsManager.addView().scene()
+
+    def addNamedScene(self, name):
+        return self._viewsManager.addNamedView(name).scene()
 
     def settingsWidget(self):
-        return self.drawing.settingsWidget()
+        return self._tabItem.settingsWidget()
 
     def reinit(self):
-        self.nodesIdsGenerator.reinit()
-        self.drawing.reinit()
+        self._nodesIdsGenerator.reinit()
+        self._tabItem.reinit()
+        self._viewsManager.reinit()
 
     def getNodesIdsGenerator(self):
-        return self.nodesIdsGenerator
 
     # def __init__(self, parent=None):
     #     super(MainWidget, self).__init__(parent)
@@ -419,3 +438,4 @@ class MainWidget(QWidget):
     #
     # def scene(self):
     #     return self.drawing.scene()
+        return self._nodesIdsGenerator
