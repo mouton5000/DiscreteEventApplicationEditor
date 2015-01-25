@@ -6,20 +6,22 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
 from database import Variable
 from consequencesExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
-    AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence
+    AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
+    RemoveTextConsequence
 
 
 class ConsequencesParser(lrparsing.Grammar):
     class T(lrparsing.TokenRegistry):
         integer = Token(re='[0-9]+')
         float = Token(re='-?[0-9]+\.[0-9]+')
-        string = Token(re='\'[A-Za-z_0-9]*\'')
+        string = Token(re='\'[^\']*\'')
         variable = Token(re='[A-Z][A-Z_0-9]*')
         uvariable = Token('_')
         selfvariable = Token('@')
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
         sprite = Token('s')
+        text = Token('t')
         token = Token('token')
         add = Token('add')
         remove = Token('remove')
@@ -47,8 +49,16 @@ class ConsequencesParser(lrparsing.Grammar):
                     (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ')'
     removeSpriteExpr = T.remove + T.sprite + '(' + arithmExpr + ')'
 
+    addTextExpr = T.add + T.text + '(' + arithmExpr + ',' + arithmExpr + ',' + \
+                  arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ')'
+    editTextExpr = T.edit + T.text + '(' + arithmExpr + ',' + (arithmExpr, T.uvariable) + ',' + \
+                   (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' + \
+                   (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ')'
+    removeTextExpr = T.remove + T.text + '(' + arithmExpr + ')'
+
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
-                    editSpriteExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
+                    editSpriteExpr, addTextExpr, removeTextExpr,
+                    editTextExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -129,6 +139,30 @@ class ConsequencesParser(lrparsing.Grammar):
             name = cls.buildExpression(tree[4])
             return RemoveSpriteConsequence(name)
 
+        def buildAddText():
+            name = cls.buildExpression(tree[4])
+            text = cls.buildExpression(tree[6])
+            x = cls.buildExpression(tree[8])
+            y = cls.buildExpression(tree[10])
+            color = cls.buildExpression(tree[12])
+            font = cls.buildExpression(tree[14])
+            fontSize = cls.buildExpression(tree[16])
+            return AddTextConsequence(name, text, x, y, color, font, fontSize)
+
+        def buildEditText():
+            name = cls.buildExpression(tree[4])
+            text = cls.buildExpression(tree[6])
+            x = cls.buildExpression(tree[8])
+            y = cls.buildExpression(tree[10])
+            color = cls.buildExpression(tree[12])
+            font = cls.buildExpression(tree[14])
+            fontSize = cls.buildExpression(tree[16])
+            return EditTextConsequence(name, text, x, y, color, font, fontSize)
+
+        def buildRemoveText():
+            name = cls.buildExpression(tree[4])
+            return RemoveTextConsequence(name)
+
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
             if len(tree) == 6:
@@ -174,6 +208,9 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addSpriteExpr: buildAddSprite,
             ConsequencesParser.removeSpriteExpr: buildRemoveSprite,
             ConsequencesParser.editSpriteExpr: buildEditSprite,
+            ConsequencesParser.addTextExpr: buildAddText,
+            ConsequencesParser.removeTextExpr: buildRemoveText,
+            ConsequencesParser.editTextExpr: buildEditText,
             ConsequencesParser.addTokenExpr: buildAddToken,
             ConsequencesParser.editTokenExpr: buildEditToken,
             ConsequencesParser.removeTokenExpr: buildRemoveToken,

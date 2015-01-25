@@ -13,7 +13,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
     class T(lrparsing.TokenRegistry):
         integer = Token(re='[0-9]+')
         float = Token(re='[0-9]+\.[0-9]+')
-        string = Token(re='\'[A-Za-z_0-9]*\'')
+        string = Token(re='\'[^\']*\'')
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
         variable = Token(re='[A-Z][A-Z_0-9]*')

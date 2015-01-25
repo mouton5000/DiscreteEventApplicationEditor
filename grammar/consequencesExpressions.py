@@ -149,6 +149,116 @@ class EditSpriteConsequence(SpriteConsequence):
         return self._num
 
 
+class AddTextConsequence(SpriteConsequence):
+    def __init__(self, name, text, x, y, colorName, font, fontSize):
+        super(AddTextConsequence, self).__init__(name)
+        self._text = text
+        self._x = x
+        self._y = y
+        self._colorName = colorName
+        self._font = font
+        self._fontSize = fontSize
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            text = str(_evalArg(self._text, evaluation))
+            x = int(_evalArg(self._x, evaluation))
+            y = int(_evalArg(self._y, evaluation))
+            colorName = str(_evalArg(self._colorName, evaluation))
+            font = str(_evalArg(self._font, evaluation))
+            fontSize = int(_evalArg(self._fontSize, evaluation))
+            stateMachine.gameWindow.addText(name, text, x, y, colorName, font, fontSize)
+        except (ArithmeticError, TypeError, ValueError):
+            import traceback
+            print traceback.format_exc()
+
+    @property
+    def text(self):
+        return self._text
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def y(self):
+        return self._y
+
+    @property
+    def colorName(self):
+        return self._colorName
+
+    @property
+    def font(self):
+        return self._font
+
+    @property
+    def fontSize(self):
+        return self._fontSize
+
+
+class RemoveTextConsequence(SpriteConsequence):
+    def __init__(self, name):
+        super(RemoveTextConsequence, self).__init__(name)
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            try:
+                stateMachine.gameWindow.removeText(name)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class EditTextConsequence(SpriteConsequence):
+    def __init__(self, name, text, x, y, colorName, font, fontSize):
+        super(EditTextConsequence, self).__init__(name)
+        self._text = text
+        self._x = x
+        self._y = y
+        self._colorName = colorName
+        self._font = font
+        self._fontSize = fontSize
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = _evalArg(self._name, evaluation)
+            try:
+                stateMachine.gameWindow.editText(name, self._text, self._x, self._y, self._colorName,
+                                                 self._font, self._fontSize, evaluation)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+    @property
+    def text(self):
+        return self._text
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def y(self):
+        return self._y
+
+    @property
+    def colorName(self):
+        return self._colorName
+
+    @property
+    def font(self):
+        return self._font
+
+    @property
+    def fontSize(self):
+        return self._fontSize
+
+
 class AddTokenConsequence(object):
     def __init__(self, nodeNum, args):
         self._nodeNum = nodeNum

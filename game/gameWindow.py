@@ -1,18 +1,15 @@
 __author__ = 'mouton'
 
 import pygame
+from pygame import Color
 from pygame.sprite import Sprite
 from database import Event, UNDEFINED_PARAMETER
 
 
 class SpriteReg(Sprite):
 
-    instances = {}
-
-    def __init__(self, name, num, filePath, x, y, scene):
+    def __init__(self, num, filePath, x, y, scene):
         Sprite.__init__(self)
-        self.name = name
-        SpriteReg.instances[name] = self
         self.num = None
         self.reload(num, filePath, x, y, scene)
 
@@ -25,7 +22,20 @@ class SpriteReg(Sprite):
         self.rect.y = y
 
 
-class GameWindow:
+class TextReg:
+
+    def __init__(self, text, x, y, colorName, fontName, fontSize):
+        self.reload(text, x, y, colorName, fontName, fontSize)
+
+    def reload(self, text, x, y, colorName, fontName, fontSize):
+        self.text = text
+        self.colorName = colorName
+        self.fontName = fontName
+        self.fontSize = fontSize
+        self.x = x
+        self.y = y
+        labelFont = pygame.font.SysFont(fontName, fontSize)
+        self.label = labelFont.render(text, True, Color('#' + self.colorName))
 
 
 class GameWindow:
@@ -41,6 +51,8 @@ class GameWindow:
         self._rootDir = rootDir
         pygame.display.flip()
         self._clock = pygame.time.Clock()
+        self._spriteRegs = {}
+        self._textRegs = {}
 
     def tick(self):
         for event in pygame.event.get():
@@ -56,7 +68,15 @@ class GameWindow:
                 if event.key == pygame.K_UP:
                     Event.events.add(Event('Key', ['up']))
         self._scene.fill((255, 255, 255))
+
         self._spritesList.draw(self._scene)
+
+        for textReg in self._textRegs.itervalues():
+            label = textReg.label
+            textPos = label.get_rect()
+            textPos.centerx = textReg.x
+            textPos.centery = textReg.y
+            self._scene.blit(label, textPos)
 
         pygame.display.flip()
 
@@ -67,19 +87,21 @@ class GameWindow:
     def addSprite(self, name, num, x, y):
         try:
             filePath = self._rootDir + '/' + self._spriteRegistery[num]
-            self._spritesList.add(SpriteReg(name, num, filePath, x, y, self._scene))
+            sp = SpriteReg(num, filePath, x, y, self._scene)
+            self._spritesList.add(sp)
+            self._spriteRegs[name] = sp
         except KeyError:
             pass
 
     def removeSprite(self, name):
         try:
-            self._spritesList.remove(SpriteReg.instances[name])
+            self._spritesList.remove(self._spriteRegs[name])
         except KeyError:
             pass
 
     def editSprite(self, name, unevaluatedNum, unevaluatedX, unevaluatedY, evaluation):
         try:
-            sp = SpriteReg.instances[name]
+            sp = self._spriteRegs[name]
         except KeyError:
             return
         newNum = unevaluatedNum.value(evaluation, selfParam=sp.num)
@@ -106,6 +128,56 @@ class GameWindow:
             sp.reload(newNum, newFilePath, newX, newY, self._scene)
         except KeyError:
             pass
+
+    def addText(self, name, text, x, y, color, fontName, fontSize):
+        self._textRegs[name] = TextReg(text, x, y, color, fontName, fontSize)
+
+    def removeText(self, name):
+        try:
+            del self._textRegs[name]
+        except KeyError:
+            pass
+
+    def editText(self, name, unevaluatedText, unevaluatedX, unevaluatedY, unevaluatedColorName,
+                 unevaluatedFontName, unevaluatedFontSize, evaluation):
+        label = self._textRegs[name]
+        newText = unevaluatedText.value(evaluation, selfParam=label.text)
+        if newText == UNDEFINED_PARAMETER:
+            newText = label.text
+        else:
+            newText = str(newText)
+
+        newX = unevaluatedX.value(evaluation, selfParam=label.x)
+        if newX == UNDEFINED_PARAMETER:
+            newX = label.x
+        else:
+            newX = int(newX)
+
+        newY = unevaluatedY.value(evaluation, selfParam=label.y)
+        if newY == UNDEFINED_PARAMETER:
+            newY = label.y
+        else:
+            newY = int(newY)
+
+        newColorName = unevaluatedColorName.value(evaluation, selfParam=label.colorName)
+        if newColorName == UNDEFINED_PARAMETER:
+            newColorName = label.colorName
+        else:
+            newColorName = str(newColorName)
+
+        newFontName = unevaluatedFontName.value(evaluation, selfParam=label.fontName)
+        if newFontName == UNDEFINED_PARAMETER:
+            newFontName = label.fontName
+        else:
+            newFontName = str(newFontName)
+
+        newFontSize = unevaluatedFontSize.value(evaluation, selfParam=label.fontSize)
+        if newFontSize == UNDEFINED_PARAMETER:
+            newFontSize = label.fontSize
+        else:
+            newFontSize = int(newFontSize)
+
+        label.reload(newText, newX, newY, newColorName, newFontName, newFontSize)
 
     def hide(self):
         pygame.display.quit()
