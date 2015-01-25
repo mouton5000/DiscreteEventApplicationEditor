@@ -27,7 +27,9 @@ class SpriteReg(Sprite):
 
 class GameWindow:
 
-    def __init__(self, fps, width, height, spritesRegistery):
+
+class GameWindow:
+    def __init__(self, fps, width, height, spritesRegistery, rootDir):
         pygame.init()
         pygame.display.init()
         self._scene = pygame.display.set_mode([width, height])
@@ -36,6 +38,7 @@ class GameWindow:
         self._spritesList.draw(self._scene)
         self._fps = fps
         self._spriteRegistery = spritesRegistery
+        self._rootDir = rootDir
         pygame.display.flip()
         self._clock = pygame.time.Clock()
 
@@ -63,7 +66,7 @@ class GameWindow:
 
     def addSprite(self, name, num, x, y):
         try:
-            filePath = self._spriteRegistery[num]
+            filePath = self._rootDir + '/' + self._spriteRegistery[num]
             self._spritesList.add(SpriteReg(name, num, filePath, x, y, self._scene))
         except KeyError:
             pass
@@ -99,7 +102,7 @@ class GameWindow:
             newY = int(newY)
 
         try:
-            newFilePath = self._spriteRegistery[newNum]
+            newFilePath = self._rootDir + '/' + self._spriteRegistery[newNum]
             sp.reload(newNum, newFilePath, newX, newY, self._scene)
         except KeyError:
             pass

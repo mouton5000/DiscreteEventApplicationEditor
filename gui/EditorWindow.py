@@ -315,8 +315,9 @@ class MainWindow(QMainWindow):
         width = setW.getWidth()
         height = setW.getHeight()
         spritesRegistery = setW.getSpritesRegistery()
+        rootDir = self._lastSaveOpenFileDirectory
 
-        gw = gameWindow.GameWindow(fps, width, height, spritesRegistery)
+        gw = gameWindow.GameWindow(fps, width, height, spritesRegistery, rootDir)
         self._stateMachine.setGameWindow(gw)
 
         self._stateMachine.init()
