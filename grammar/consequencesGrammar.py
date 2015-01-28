@@ -8,7 +8,7 @@ from consequencesExpressions import AddPropertyConsequence, RemovePropertyConseq
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
     RemoveTextConsequence, RemoveLineConsequence, EditLineConsequence, AddLineConsequence, AddRectConsequence, \
-    EditRectConsequence, RemoveRectConsequence
+    EditRectConsequence, RemoveRectConsequence, AddOvalConsequence, EditOvalConsequence, RemoveOvalConsequence
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -30,6 +30,7 @@ class ConsequencesParser(lrparsing.Grammar):
         edit = Token('edit')
         shapeLine = Token('shpL')
         shapeRect = Token('shpR')
+        shapeOval = Token('shpO')
 
 
     consExpr = Ref('consExpr')
@@ -75,10 +76,19 @@ class ConsequencesParser(lrparsing.Grammar):
                    + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
                    + (arithmExpr, T.uvariable) + ')'
     removeRectExpr = T.remove + T.shapeRect + '(' + arithmExpr + ')'
+
+    addOvalExpr = T.add + T.shapeOval + '(' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + \
+                  arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ')'
+    editOvalExpr = T.edit + T.shapeOval + '(' + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
+                   + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ','\
+                   + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
+                   + (arithmExpr, T.uvariable) + ')'
+    removeOvalExpr = T.remove + T.shapeOval + '(' + arithmExpr + ')'
+
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
                     editSpriteExpr, addTextExpr, removeTextExpr, editTextExpr, addLineExpr, editLineExpr,
-                    removeLineExpr, addRectExpr, editRectExpr,
-                    removeRectExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
+                    removeLineExpr, addRectExpr, editRectExpr, removeRectExpr, addOvalExpr, editOvalExpr,
+                    removeOvalExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -231,6 +241,30 @@ class ConsequencesParser(lrparsing.Grammar):
             name = cls.buildExpression(tree[4])
             return RemoveRectConsequence(name)
 
+        def buildAddOval():
+            name = cls.buildExpression(tree[4])
+            x = cls.buildExpression(tree[6])
+            y = cls.buildExpression(tree[8])
+            a = cls.buildExpression(tree[10])
+            b = cls.buildExpression(tree[12])
+            width = cls.buildExpression(tree[14])
+            colorName = cls.buildExpression(tree[16])
+            return AddOvalConsequence(name, x, y, a, b, width, colorName)
+
+        def buildEditOval():
+            name = cls.buildExpression(tree[4])
+            x = cls.buildExpression(tree[6])
+            y = cls.buildExpression(tree[8])
+            a = cls.buildExpression(tree[10])
+            b = cls.buildExpression(tree[12])
+            width = cls.buildExpression(tree[14])
+            colorName = cls.buildExpression(tree[16])
+            return EditOvalConsequence(name, x, y, a, b, width, colorName)
+
+        def buildRemoveOval():
+            name = cls.buildExpression(tree[4])
+            return RemoveOvalConsequence(name)
+
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
             if len(tree) == 6:
@@ -285,6 +319,9 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addRectExpr: buildAddRect,
             ConsequencesParser.removeRectExpr: buildRemoveRect,
             ConsequencesParser.editRectExpr: buildEditRect,
+            ConsequencesParser.addOvalExpr: buildAddOval,
+            ConsequencesParser.removeOvalExpr: buildRemoveOval,
+            ConsequencesParser.editOvalExpr: buildEditOval,
             ConsequencesParser.addTokenExpr: buildAddToken,
             ConsequencesParser.editTokenExpr: buildEditToken,
             ConsequencesParser.removeTokenExpr: buildRemoveToken,
@@ -497,7 +534,6 @@ class ConsequencesParser(lrparsing.Grammar):
         }
 
         return arithmeticSymbols[rootName]()
-
 
 
 if __name__ == '__main__':

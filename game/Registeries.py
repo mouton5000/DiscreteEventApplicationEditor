@@ -64,3 +64,17 @@ class RectReg:
         self.w = w
         self.h = h
         self.width = width
+
+
+class OvalReg:
+
+    def __init__(self, x, y, a, b, width, colorName):
+        self.reload(x, y, a, b, width, colorName)
+
+    def reload(self, x, y, a, b, width, colorName):
+        self.colorName = colorName
+        self.x = x
+        self.y = y
+        self.a = a
+        self.b = b
+        self.width = width

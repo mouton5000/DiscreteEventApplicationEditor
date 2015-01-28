@@ -1,5 +1,5 @@
 from pygame.rect import Rect
-from game.Registeries import SpriteReg, TextReg, LineReg, RectReg
+from game.Registeries import SpriteReg, TextReg, LineReg, RectReg, OvalReg
 
 __author__ = 'mouton'
 
@@ -25,6 +25,7 @@ class GameWindow:
         self._textRegs = {}
         self._lineRegs = {}
         self._rectRegs = {}
+        self._ovalRegs = {}
 
     def tick(self):
         for event in pygame.event.get():
@@ -50,6 +51,11 @@ class GameWindow:
         for rectReg in self._rectRegs.itervalues():
             color = Color('#' + rectReg.colorName)
             pygame.draw.rect(self._scene, color, Rect(rectReg.x, rectReg.y, rectReg.w, rectReg.h), rectReg.width)
+
+        for ovalReg in self._ovalRegs.itervalues():
+            color = Color('#' + ovalReg.colorName)
+            pygame.draw.ellipse(self._scene, color, Rect(ovalReg.x - ovalReg.a, ovalReg.y - ovalReg.b,
+                                                         2 * ovalReg.a, 2 * ovalReg.b), ovalReg.width)
 
         self._spritesList.draw(self._scene)
 
@@ -268,6 +274,60 @@ class GameWindow:
             newColorName = str(newColorName)
 
         rect.reload(newX, newY, newW, newH, newWidth, newColorName)
+
+    def addOval(self, name, x, y, a, b, width, colorName):
+        self._ovalRegs[name] = OvalReg(x, y, a, b, width, colorName)
+
+    def removeOval(self, name):
+        try:
+            del self._ovalRegs[name]
+        except KeyError:
+            pass
+
+    def editOval(self, name, unevaluatedX, unevaluatedY, unevaluatedA, unevaluatedB,
+                 unevaluatedWidth, unevaluatedColorName, evaluation):
+        try:
+            oval = self._ovalRegs[name]
+        except KeyError:
+            return
+
+        newX = unevaluatedX.value(evaluation, selfParam=oval.x)
+        if newX == UNDEFINED_PARAMETER:
+            newX = oval.x
+        else:
+            newX = int(newX)
+
+        newY = unevaluatedY.value(evaluation, selfParam=oval.y)
+        if newY == UNDEFINED_PARAMETER:
+            newY = oval.y
+        else:
+            newY = int(newY)
+
+        newA = unevaluatedA.value(evaluation, selfParam=oval.a)
+        if newA == UNDEFINED_PARAMETER:
+            newA = oval.a
+        else:
+            newA = int(newA)
+
+        newB = unevaluatedB.value(evaluation, selfParam=oval.b)
+        if newB == UNDEFINED_PARAMETER:
+            newB = oval.b
+        else:
+            newB = int(newB)
+
+        newWidth = unevaluatedWidth.value(evaluation, selfParam=oval.width)
+        if newWidth == UNDEFINED_PARAMETER:
+            newWidth = oval.width
+        else:
+            newWidth = int(newWidth)
+
+        newColorName = unevaluatedColorName.value(evaluation, selfParam=oval.colorName)
+        if newColorName == UNDEFINED_PARAMETER:
+            newColorName = oval.colorName
+        else:
+            newColorName = str(newColorName)
+
+        oval.reload(newX, newY, newA, newB, newWidth, newColorName)
 
     def hide(self):
         pygame.display.quit()

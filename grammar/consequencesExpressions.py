@@ -335,6 +335,68 @@ class EditRectConsequence(NamedConsequence):
             pass
 
 
+class AddOvalConsequence(NamedConsequence):
+    def __init__(self, name, x, y, a, b, width, colorName):
+        super(AddOvalConsequence, self).__init__(name)
+        self._x = x
+        self._y = y
+        self._a = a
+        self._b = b
+        self._colorName = colorName
+        self._width = width
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            x = int(_evalArg(self._x, evaluation))
+            y = int(_evalArg(self._y, evaluation))
+            a = int(_evalArg(self._a, evaluation))
+            b = int(_evalArg(self._b, evaluation))
+            width = int(_evalArg(self._width, evaluation))
+            colorName = str(_evalArg(self._colorName, evaluation))
+            stateMachine.gameWindow.addOval(name, x, y, a, b, width, colorName)
+        except (ArithmeticError, TypeError, ValueError):
+            import traceback
+            print traceback.format_exc()
+
+
+class RemoveOvalConsequence(NamedConsequence):
+    def __init__(self, name):
+        super(RemoveOvalConsequence, self).__init__(name)
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            try:
+                stateMachine.gameWindow.removeOval(name)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class EditOvalConsequence(NamedConsequence):
+    def __init__(self, name, x, y, a, b, width, colorName):
+        super(EditOvalConsequence, self).__init__(name)
+        self._x = x
+        self._y = y
+        self._b = a
+        self._a = b
+        self._colorName = colorName
+        self._width = width
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = _evalArg(self._name, evaluation)
+            try:
+                stateMachine.gameWindow.editOval(name, self._x, self._y, self._a, self._b, self._width,
+                                                 self._colorName, evaluation)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
 class AddTokenConsequence(object):
     def __init__(self, nodeNum, args):
         self._nodeNum = nodeNum
