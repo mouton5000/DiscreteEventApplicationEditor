@@ -73,7 +73,7 @@ class AddEventConsequence():
             pass
 
 
-class SpriteConsequence(object):
+class NamedConsequence(object):
     def __init__(self, name):
         self._name = name
 
@@ -82,7 +82,7 @@ class SpriteConsequence(object):
         return self._name
 
 
-class AddSpriteConsequence(SpriteConsequence):
+class AddSpriteConsequence(NamedConsequence):
     def __init__(self, name, num, x, y):
         super(AddSpriteConsequence, self).__init__(name)
         self._num = num
@@ -112,7 +112,7 @@ class AddSpriteConsequence(SpriteConsequence):
         return self._y
 
 
-class RemoveSpriteConsequence(SpriteConsequence):
+class RemoveSpriteConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveSpriteConsequence, self).__init__(name)
 
@@ -127,7 +127,7 @@ class RemoveSpriteConsequence(SpriteConsequence):
             pass
 
 
-class EditSpriteConsequence(SpriteConsequence):
+class EditSpriteConsequence(NamedConsequence):
     def __init__(self, name, num, x, y):
         super(EditSpriteConsequence, self).__init__(name)
         self._num = num
@@ -149,7 +149,7 @@ class EditSpriteConsequence(SpriteConsequence):
         return self._num
 
 
-class AddTextConsequence(SpriteConsequence):
+class AddTextConsequence(NamedConsequence):
     def __init__(self, name, text, x, y, colorName, font, fontSize):
         super(AddTextConsequence, self).__init__(name)
         self._text = text
@@ -174,7 +174,7 @@ class AddTextConsequence(SpriteConsequence):
             print traceback.format_exc()
 
 
-class RemoveTextConsequence(SpriteConsequence):
+class RemoveTextConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveTextConsequence, self).__init__(name)
 
@@ -189,7 +189,7 @@ class RemoveTextConsequence(SpriteConsequence):
             pass
 
 
-class EditTextConsequence(SpriteConsequence):
+class EditTextConsequence(NamedConsequence):
     def __init__(self, name, text, x, y, colorName, font, fontSize):
         super(EditTextConsequence, self).__init__(name)
         self._text = text
@@ -211,7 +211,7 @@ class EditTextConsequence(SpriteConsequence):
             pass
 
 
-class AddLineConsequence(SpriteConsequence):
+class AddLineConsequence(NamedConsequence):
     def __init__(self, name, x1, y1, x2, y2, width, colorName):
         super(AddLineConsequence, self).__init__(name)
         self._x1 = x1
@@ -236,7 +236,7 @@ class AddLineConsequence(SpriteConsequence):
             print traceback.format_exc()
 
 
-class RemoveLineConsequence(SpriteConsequence):
+class RemoveLineConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveLineConsequence, self).__init__(name)
 
@@ -251,7 +251,7 @@ class RemoveLineConsequence(SpriteConsequence):
             pass
 
 
-class EditLineConsequence(SpriteConsequence):
+class EditLineConsequence(NamedConsequence):
     def __init__(self, name, x1, y1, x2, y2, width, colorName):
         super(EditLineConsequence, self).__init__(name)
         self._x1 = x1
