@@ -273,6 +273,68 @@ class EditLineConsequence(NamedConsequence):
             pass
 
 
+class AddRectConsequence(NamedConsequence):
+    def __init__(self, name, x, y, w, h, width, colorName):
+        super(AddRectConsequence, self).__init__(name)
+        self._x = x
+        self._y = y
+        self._w = w
+        self._h = h
+        self._colorName = colorName
+        self._width = width
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            x = int(_evalArg(self._x, evaluation))
+            y = int(_evalArg(self._y, evaluation))
+            w = int(_evalArg(self._w, evaluation))
+            h = int(_evalArg(self._h, evaluation))
+            width = int(_evalArg(self._width, evaluation))
+            colorName = str(_evalArg(self._colorName, evaluation))
+            stateMachine.gameWindow.addRect(name, x, y, w, h, width, colorName)
+        except (ArithmeticError, TypeError, ValueError):
+            import traceback
+            print traceback.format_exc()
+
+
+class RemoveRectConsequence(NamedConsequence):
+    def __init__(self, name):
+        super(RemoveRectConsequence, self).__init__(name)
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            try:
+                stateMachine.gameWindow.removeRect(name)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class EditRectConsequence(NamedConsequence):
+    def __init__(self, name, x, y, w, h, width, colorName):
+        super(EditRectConsequence, self).__init__(name)
+        self._x = x
+        self._y = y
+        self._w = w
+        self._h = h
+        self._colorName = colorName
+        self._width = width
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = _evalArg(self._name, evaluation)
+            try:
+                stateMachine.gameWindow.editRect(name, self._x, self._y, self._w, self._h, self._width,
+                                                 self._colorName, evaluation)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
 class AddTokenConsequence(object):
     def __init__(self, nodeNum, args):
         self._nodeNum = nodeNum

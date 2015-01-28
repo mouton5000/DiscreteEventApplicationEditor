@@ -50,3 +50,17 @@ class LineReg:
         self.x2 = x2
         self.y2 = y2
         self.width = width
+
+
+class RectReg:
+
+    def __init__(self, x, y, w, h, width, colorName):
+        self.reload(x, y, w, h, width, colorName)
+
+    def reload(self, x, y, w, h, width, colorName):
+        self.colorName = colorName
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.width = width

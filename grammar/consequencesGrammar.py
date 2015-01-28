@@ -7,7 +7,8 @@ from database import Variable
 from consequencesExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
-    RemoveTextConsequence, RemoveLineConsequence, EditLineConsequence, AddLineConsequence
+    RemoveTextConsequence, RemoveLineConsequence, EditLineConsequence, AddLineConsequence, AddRectConsequence, \
+    EditRectConsequence, RemoveRectConsequence
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -28,6 +29,7 @@ class ConsequencesParser(lrparsing.Grammar):
         move = Token('move')
         edit = Token('edit')
         shapeLine = Token('shpL')
+        shapeRect = Token('shpR')
 
 
     consExpr = Ref('consExpr')
@@ -66,9 +68,17 @@ class ConsequencesParser(lrparsing.Grammar):
                    + (arithmExpr, T.uvariable) + ')'
     removeLineExpr = T.remove + T.shapeLine + '(' + arithmExpr + ')'
 
+    addRectExpr = T.add + T.shapeRect + '(' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + \
+                  arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ')'
+    editRectExpr = T.edit + T.shapeRect + '(' + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
+                   + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ','\
+                   + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
+                   + (arithmExpr, T.uvariable) + ')'
+    removeRectExpr = T.remove + T.shapeRect + '(' + arithmExpr + ')'
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
                     editSpriteExpr, addTextExpr, removeTextExpr, editTextExpr, addLineExpr, editLineExpr,
-                    removeLineExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
+                    removeLineExpr, addRectExpr, editRectExpr,
+                    removeRectExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -197,6 +207,30 @@ class ConsequencesParser(lrparsing.Grammar):
             name = cls.buildExpression(tree[4])
             return RemoveLineConsequence(name)
 
+        def buildAddRect():
+            name = cls.buildExpression(tree[4])
+            x = cls.buildExpression(tree[6])
+            y = cls.buildExpression(tree[8])
+            w = cls.buildExpression(tree[10])
+            h = cls.buildExpression(tree[12])
+            width = cls.buildExpression(tree[14])
+            colorName = cls.buildExpression(tree[16])
+            return AddRectConsequence(name, x, y, w, h, width, colorName)
+
+        def buildEditRect():
+            name = cls.buildExpression(tree[4])
+            x = cls.buildExpression(tree[6])
+            y = cls.buildExpression(tree[8])
+            w = cls.buildExpression(tree[10])
+            h = cls.buildExpression(tree[12])
+            width = cls.buildExpression(tree[14])
+            colorName = cls.buildExpression(tree[16])
+            return EditRectConsequence(name, x, y, w, h, width, colorName)
+
+        def buildRemoveRect():
+            name = cls.buildExpression(tree[4])
+            return RemoveRectConsequence(name)
+
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
             if len(tree) == 6:
@@ -248,6 +282,9 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addLineExpr: buildAddLine,
             ConsequencesParser.removeLineExpr: buildRemoveLine,
             ConsequencesParser.editLineExpr: buildEditLine,
+            ConsequencesParser.addRectExpr: buildAddRect,
+            ConsequencesParser.removeRectExpr: buildRemoveRect,
+            ConsequencesParser.editRectExpr: buildEditRect,
             ConsequencesParser.addTokenExpr: buildAddToken,
             ConsequencesParser.editTokenExpr: buildEditToken,
             ConsequencesParser.removeTokenExpr: buildRemoveToken,

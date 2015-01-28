@@ -1,4 +1,5 @@
-from game.Registeries import SpriteReg, TextReg, LineReg
+from pygame.rect import Rect
+from game.Registeries import SpriteReg, TextReg, LineReg, RectReg
 
 __author__ = 'mouton'
 
@@ -23,6 +24,7 @@ class GameWindow:
         self._spriteRegs = {}
         self._textRegs = {}
         self._lineRegs = {}
+        self._rectRegs = {}
 
     def tick(self):
         for event in pygame.event.get():
@@ -44,6 +46,10 @@ class GameWindow:
         for lineReg in self._lineRegs.itervalues():
             color = Color('#' + lineReg.colorName)
             pygame.draw.line(self._scene, color, (lineReg.x1, lineReg.y1), (lineReg.x2, lineReg.y2), lineReg.width)
+
+        for rectReg in self._rectRegs.itervalues():
+            color = Color('#' + rectReg.colorName)
+            pygame.draw.rect(self._scene, color, Rect(rectReg.x, rectReg.y, rectReg.w, rectReg.h), rectReg.width)
 
         self._spritesList.draw(self._scene)
 
@@ -208,6 +214,60 @@ class GameWindow:
             newColorName = str(newColorName)
 
         line.reload(newX1, newY1, newX2, newY2, newWidth, newColorName)
+
+    def addRect(self, name, x, y, w, h, width, colorName):
+        self._rectRegs[name] = RectReg(x, y, w, h, width, colorName)
+
+    def removeRect(self, name):
+        try:
+            del self._rectRegs[name]
+        except KeyError:
+            pass
+
+    def editRect(self, name, unevaluatedX, unevaluatedY, unevaluatedW, unevaluatedH,
+                 unevaluatedWidth, unevaluatedColorName, evaluation):
+        try:
+            rect = self._rectRegs[name]
+        except KeyError:
+            return
+
+        newX = unevaluatedX.value(evaluation, selfParam=rect.x)
+        if newX == UNDEFINED_PARAMETER:
+            newX = rect.x
+        else:
+            newX = int(newX)
+
+        newY = unevaluatedY.value(evaluation, selfParam=rect.y)
+        if newY == UNDEFINED_PARAMETER:
+            newY = rect.y
+        else:
+            newY = int(newY)
+
+        newW = unevaluatedW.value(evaluation, selfParam=rect.w)
+        if newW == UNDEFINED_PARAMETER:
+            newW = rect.w
+        else:
+            newW = int(newW)
+
+        newH = unevaluatedH.value(evaluation, selfParam=rect.h)
+        if newH == UNDEFINED_PARAMETER:
+            newH = rect.h
+        else:
+            newH = int(newH)
+
+        newWidth = unevaluatedWidth.value(evaluation, selfParam=rect.width)
+        if newWidth == UNDEFINED_PARAMETER:
+            newWidth = rect.width
+        else:
+            newWidth = int(newWidth)
+
+        newColorName = unevaluatedColorName.value(evaluation, selfParam=rect.colorName)
+        if newColorName == UNDEFINED_PARAMETER:
+            newColorName = rect.colorName
+        else:
+            newColorName = str(newColorName)
+
+        rect.reload(newX, newY, newW, newH, newWidth, newColorName)
 
     def hide(self):
         pygame.display.quit()
