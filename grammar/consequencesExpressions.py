@@ -173,30 +173,6 @@ class AddTextConsequence(SpriteConsequence):
             import traceback
             print traceback.format_exc()
 
-    @property
-    def text(self):
-        return self._text
-
-    @property
-    def x(self):
-        return self._x
-
-    @property
-    def y(self):
-        return self._y
-
-    @property
-    def colorName(self):
-        return self._colorName
-
-    @property
-    def font(self):
-        return self._font
-
-    @property
-    def fontSize(self):
-        return self._fontSize
-
 
 class RemoveTextConsequence(SpriteConsequence):
     def __init__(self, name):
@@ -234,29 +210,67 @@ class EditTextConsequence(SpriteConsequence):
         except (ArithmeticError, TypeError, ValueError):
             pass
 
-    @property
-    def text(self):
-        return self._text
 
-    @property
-    def x(self):
-        return self._x
+class AddLineConsequence(SpriteConsequence):
+    def __init__(self, name, x1, y1, x2, y2, width, colorName):
+        super(AddLineConsequence, self).__init__(name)
+        self._x1 = x1
+        self._y1 = y1
+        self._x2 = x2
+        self._y2 = y2
+        self._colorName = colorName
+        self._width = width
 
-    @property
-    def y(self):
-        return self._y
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            x1 = int(_evalArg(self._x1, evaluation))
+            y1 = int(_evalArg(self._y1, evaluation))
+            x2 = int(_evalArg(self._x2, evaluation))
+            y2 = int(_evalArg(self._y2, evaluation))
+            width = int(_evalArg(self._width, evaluation))
+            colorName = str(_evalArg(self._colorName, evaluation))
+            stateMachine.gameWindow.addLine(name, x1, y1, x2, y2, width, colorName)
+        except (ArithmeticError, TypeError, ValueError):
+            import traceback
+            print traceback.format_exc()
 
-    @property
-    def colorName(self):
-        return self._colorName
 
-    @property
-    def font(self):
-        return self._font
+class RemoveLineConsequence(SpriteConsequence):
+    def __init__(self, name):
+        super(RemoveLineConsequence, self).__init__(name)
 
-    @property
-    def fontSize(self):
-        return self._fontSize
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            try:
+                stateMachine.gameWindow.removeLine(name)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class EditLineConsequence(SpriteConsequence):
+    def __init__(self, name, x1, y1, x2, y2, width, colorName):
+        super(EditLineConsequence, self).__init__(name)
+        self._x1 = x1
+        self._y1 = y1
+        self._x2 = x2
+        self._y2 = y2
+        self._colorName = colorName
+        self._width = width
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = _evalArg(self._name, evaluation)
+            try:
+                stateMachine.gameWindow.editLine(name, self._x1, self._y1, self._x2, self._y2, self._width,
+                                                 self._colorName, evaluation)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
 
 
 class AddTokenConsequence(object):

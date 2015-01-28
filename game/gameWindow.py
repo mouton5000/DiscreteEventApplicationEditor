@@ -38,6 +38,20 @@ class TextReg:
         self.label = labelFont.render(text, True, Color('#' + self.colorName))
 
 
+class LineReg:
+
+    def __init__(self, x1, y1, x2, y2, width, colorName):
+        self.reload(x1, y1, x2, y2, width, colorName)
+
+    def reload(self, x1, y1, x2, y2, width, colorName):
+        self.colorName = colorName
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.width = width
+
+
 class GameWindow:
     def __init__(self, fps, width, height, spritesRegistery, rootDir):
         pygame.init()
@@ -53,6 +67,7 @@ class GameWindow:
         self._clock = pygame.time.Clock()
         self._spriteRegs = {}
         self._textRegs = {}
+        self._lineRegs = {}
 
     def tick(self):
         for event in pygame.event.get():
@@ -67,7 +82,13 @@ class GameWindow:
                     Event.events.add(Event('Key', ['down']))
                 if event.key == pygame.K_UP:
                     Event.events.add(Event('Key', ['up']))
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                Event.events.add(Event('Mouse', [event.pos[0], event.pos[1]]))
         self._scene.fill((255, 255, 255))
+
+        for lineReg in self._lineRegs.itervalues():
+            color = Color('#' + lineReg.colorName)
+            pygame.draw.line(self._scene, color, (lineReg.x1, lineReg.y1), (lineReg.x2, lineReg.y2), lineReg.width)
 
         self._spritesList.draw(self._scene)
 
@@ -178,6 +199,60 @@ class GameWindow:
             newFontSize = int(newFontSize)
 
         label.reload(newText, newX, newY, newColorName, newFontName, newFontSize)
+
+    def addLine(self, name, x1, y1, x2, y2, width, colorName):
+        self._lineRegs[name] = LineReg(x1, y1, x2, y2, width, colorName)
+
+    def removeLine(self, name):
+        try:
+            del self._lineRegs[name]
+        except KeyError:
+            pass
+
+    def editLine(self, name, unevaluatedX1, unevaluatedY1, unevaluatedX2, unevaluatedY2,
+                 unevaluatedWidth, unevaluatedColorName, evaluation):
+        try:
+            line = self._lineRegs[name]
+        except KeyError:
+            return
+
+        newX1 = unevaluatedX1.value(evaluation, selfParam=line.x1)
+        if newX1 == UNDEFINED_PARAMETER:
+            newX1 = line.x1
+        else:
+            newX1 = int(newX1)
+
+        newY1 = unevaluatedY1.value(evaluation, selfParam=line.y1)
+        if newY1 == UNDEFINED_PARAMETER:
+            newY1 = line.y1
+        else:
+            newY1 = int(newY1)
+
+        newX2 = unevaluatedX2.value(evaluation, selfParam=line.x2)
+        if newX2 == UNDEFINED_PARAMETER:
+            newX2 = line.x2
+        else:
+            newX2 = int(newX2)
+
+        newY2 = unevaluatedY2.value(evaluation, selfParam=line.y2)
+        if newY2 == UNDEFINED_PARAMETER:
+            newY2 = line.y2
+        else:
+            newY2 = int(newY2)
+
+        newWidth = unevaluatedWidth.value(evaluation, selfParam=line.width)
+        if newWidth == UNDEFINED_PARAMETER:
+            newWidth = line.width
+        else:
+            newWidth = int(newWidth)
+
+        newColorName = unevaluatedColorName.value(evaluation, selfParam=line.colorName)
+        if newColorName == UNDEFINED_PARAMETER:
+            newColorName = line.colorName
+        else:
+            newColorName = str(newColorName)
+
+        line.reload(newX1, newY1, newX2, newY2, newWidth, newColorName)
 
     def hide(self):
         pygame.display.quit()
