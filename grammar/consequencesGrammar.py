@@ -1,5 +1,5 @@
 import lrparsing
-from lrparsing import List, Prio, Ref, Token, Opt
+from lrparsing import List, Prio, Ref, Token, Opt, Sequence
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
     InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral, SelfExpression
@@ -8,7 +8,8 @@ from consequencesExpressions import AddPropertyConsequence, RemovePropertyConseq
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
     RemoveTextConsequence, RemoveLineConsequence, EditLineConsequence, AddLineConsequence, AddRectConsequence, \
-    EditRectConsequence, RemoveRectConsequence, AddOvalConsequence, EditOvalConsequence, RemoveOvalConsequence
+    EditRectConsequence, RemoveRectConsequence, AddOvalConsequence, EditOvalConsequence, \
+    RemoveOvalConsequence, AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -31,7 +32,7 @@ class ConsequencesParser(lrparsing.Grammar):
         shapeLine = Token('shpL')
         shapeRect = Token('shpR')
         shapeOval = Token('shpO')
-
+        shapePolygon = Token('shpP')
 
     consExpr = Ref('consExpr')
     arithmExpr = Ref('arithmExpr')
@@ -85,10 +86,22 @@ class ConsequencesParser(lrparsing.Grammar):
                    + (arithmExpr, T.uvariable) + ')'
     removeOvalExpr = T.remove + T.shapeOval + '(' + arithmExpr + ')'
 
+    listPoint = List('(' + arithmExpr + ',' + arithmExpr + ')', Token(','), min=2)
+    addPolygonExpr = T.add + T.shapePolygon + '(' + arithmExpr + ',' + '[' + listPoint + ']' + ',' \
+                     + arithmExpr + ',' + arithmExpr + ')'
+
+    listEditPoint = List(Sequence('(', (arithmExpr, T.uvariable)) + ',' + (arithmExpr, T.uvariable) + ')', Token(','),
+                         min=2)
+    editPolygonExpr = T.edit + T.shapePolygon + '(' + (arithmExpr, T.uvariable) + ',' + '[' + listEditPoint + ']' + ',' \
+                   + (arithmExpr, T.uvariable) + ',' \
+                   + (arithmExpr, T.uvariable) + ')'
+    removePolygonExpr = T.remove + T.shapePolygon + '(' + arithmExpr + ')'
+
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
                     editSpriteExpr, addTextExpr, removeTextExpr, editTextExpr, addLineExpr, editLineExpr,
                     removeLineExpr, addRectExpr, editRectExpr, removeRectExpr, addOvalExpr, editOvalExpr,
-                    removeOvalExpr, addTokenExpr, editTokenExpr, removeTokenExpr)
+                    removeOvalExpr, addPolygonExpr, editPolygonExpr, removePolygonExpr, addTokenExpr,
+                    editTokenExpr, removeTokenExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -265,6 +278,34 @@ class ConsequencesParser(lrparsing.Grammar):
             name = cls.buildExpression(tree[4])
             return RemoveOvalConsequence(name)
 
+        def buildListPoint():
+            argsX = [cls.buildExpression(arg) for arg in tree[2::6]]
+            argsY = [cls.buildExpression(arg) for arg in tree[4::6]]
+            return zip(argsX, argsY)
+
+        def buildAddPolygon():
+            name = cls.buildExpression(tree[4])
+            listPoint = cls.buildExpression(tree[7])
+            width = cls.buildExpression(tree[10])
+            colorName = cls.buildExpression(tree[12])
+            return AddPolygonConsequence(name, listPoint, width, colorName)
+
+        def buildListEditPoint():
+            argsX = [cls.buildExpression(arg) for arg in tree[2::6]]
+            argsY = [cls.buildExpression(arg) for arg in tree[4::6]]
+            return zip(argsX, argsY)
+
+        def buildEditPolygon():
+            name = cls.buildExpression(tree[4])
+            listEditPoint = cls.buildExpression(tree[7])
+            width = cls.buildExpression(tree[10])
+            colorName = cls.buildExpression(tree[12])
+            return EditPolygonConsequence(name, listEditPoint, width, colorName)
+
+        def buildRemovePolygon():
+            name = cls.buildExpression(tree[4])
+            return RemovePolygonConsequence(name)
+
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
             if len(tree) == 6:
@@ -322,6 +363,11 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addOvalExpr: buildAddOval,
             ConsequencesParser.removeOvalExpr: buildRemoveOval,
             ConsequencesParser.editOvalExpr: buildEditOval,
+            ConsequencesParser.listPoint: buildListPoint,
+            ConsequencesParser.addPolygonExpr: buildAddPolygon,
+            ConsequencesParser.removePolygonExpr: buildRemovePolygon,
+            ConsequencesParser.listEditPoint: buildListEditPoint,
+            ConsequencesParser.editPolygonExpr: buildEditPolygon,
             ConsequencesParser.addTokenExpr: buildAddToken,
             ConsequencesParser.editTokenExpr: buildEditToken,
             ConsequencesParser.removeTokenExpr: buildRemoveToken,

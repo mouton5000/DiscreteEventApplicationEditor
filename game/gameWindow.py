@@ -1,11 +1,10 @@
-from pygame.rect import Rect
-from game.Registeries import SpriteReg, TextReg, LineReg, RectReg, OvalReg
-
 __author__ = 'mouton'
 
 import pygame
 from pygame import Color
 from database import Event, UNDEFINED_PARAMETER
+from pygame.rect import Rect
+from game.Registeries import SpriteReg, TextReg, LineReg, RectReg, OvalReg, PolygonReg
 
 
 class GameWindow:
@@ -26,6 +25,7 @@ class GameWindow:
         self._lineRegs = {}
         self._rectRegs = {}
         self._ovalRegs = {}
+        self._polygonRegs = {}
 
     def tick(self):
         for event in pygame.event.get():
@@ -56,6 +56,10 @@ class GameWindow:
             color = Color('#' + ovalReg.colorName)
             pygame.draw.ellipse(self._scene, color, Rect(ovalReg.x - ovalReg.a, ovalReg.y - ovalReg.b,
                                                          2 * ovalReg.a, 2 * ovalReg.b), ovalReg.width)
+
+        for polygonReg in self._polygonRegs.itervalues():
+            color = Color('#' + polygonReg.colorName)
+            pygame.draw.polygon(self._scene, color, polygonReg.pointList, polygonReg.width)
 
         self._spritesList.draw(self._scene)
 
@@ -328,6 +332,61 @@ class GameWindow:
             newColorName = str(newColorName)
 
         oval.reload(newX, newY, newA, newB, newWidth, newColorName)
+
+    def addPolygon(self, name, listPoint, width, colorName):
+        self._polygonRegs[name] = PolygonReg(listPoint, width, colorName)
+
+    def removePolygon(self, name):
+        try:
+            del self._polygonRegs[name]
+        except KeyError:
+            pass
+
+    def editPolygon(self, name, unevaluatedPointList, unevaluatedWidth, unevaluatedColorName, evaluation):
+        try:
+            polygon = self._polygonRegs[name]
+        except KeyError:
+            return
+
+        minLen = min(len(unevaluatedPointList), len(polygon.pointList))
+
+        def addPoint(i, point):
+            unevaluatedPoint = unevaluatedPointList[i]
+
+            def getPoint(j):
+                if point is None:
+                    v = None
+                else:
+                    v = point[j]
+                newXj = unevaluatedPoint[j].value(evaluation, selfParam=v)
+                if newXj == UNDEFINED_PARAMETER:
+                    newXj = v
+                else:
+                    newXj = int(newXj)
+                return newXj
+
+            newPoint = [getPoint(0), getPoint(1)]
+            return newPoint
+
+        newPointList = [addPoint(k, polygon.pointList[k]) for k in xrange(minLen)]
+
+        if minLen < len(unevaluatedPointList):
+            for k in xrange(minLen, len(unevaluatedPointList)):
+                newPointList.append(addPoint(k, None))
+
+        newWidth = unevaluatedWidth.value(evaluation, selfParam=polygon.width)
+        if newWidth == UNDEFINED_PARAMETER:
+            newWidth = polygon.width
+        else:
+            newWidth = int(newWidth)
+
+        newColorName = unevaluatedColorName.value(evaluation, selfParam=polygon.colorName)
+        if newColorName == UNDEFINED_PARAMETER:
+            newColorName = polygon.colorName
+        else:
+            newColorName = str(newColorName)
+
+        polygon.reload(newPointList, newWidth, newColorName)
 
     def hide(self):
         pygame.display.quit()

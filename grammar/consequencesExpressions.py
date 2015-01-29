@@ -397,6 +397,65 @@ class EditOvalConsequence(NamedConsequence):
             pass
 
 
+class AddPolygonConsequence(NamedConsequence):
+    def __init__(self, name, listPoint, width, colorName):
+        super(AddPolygonConsequence, self).__init__(name)
+        self._listPoint = listPoint
+        self._colorName = colorName
+        self._width = width
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+
+            def addPoint(point):
+                xPoint = int(_evalArg(point[0], evaluation))
+                yPoint = int(_evalArg(point[1], evaluation))
+                return xPoint, yPoint
+
+            listPoint = [addPoint(point) for point in self._listPoint]
+            width = int(_evalArg(self._width, evaluation))
+            colorName = str(_evalArg(self._colorName, evaluation))
+            stateMachine.gameWindow.addPolygon(name, listPoint, width, colorName)
+        except (ArithmeticError, TypeError, ValueError):
+            import traceback
+            print traceback.format_exc()
+
+
+class RemovePolygonConsequence(NamedConsequence):
+    def __init__(self, name):
+        super(RemovePolygonConsequence, self).__init__(name)
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = str(_evalArg(self._name, evaluation))
+            try:
+                stateMachine.gameWindow.removePolygon(name)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
+class EditPolygonConsequence(NamedConsequence):
+    def __init__(self, name, listPoint, width, colorName):
+        super(EditPolygonConsequence, self).__init__(name)
+        self._listPoint = listPoint
+        self._colorName = colorName
+        self._width = width
+
+    def eval_update(self, evaluation, stateMachine, *_):
+        try:
+            name = _evalArg(self._name, evaluation)
+            try:
+                stateMachine.gameWindow.editPolygon(name, self._listPoint, self._width,
+                                                    self._colorName, evaluation)
+            except KeyError:
+                pass
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+
 class AddTokenConsequence(object):
     def __init__(self, nodeNum, args):
         self._nodeNum = nodeNum

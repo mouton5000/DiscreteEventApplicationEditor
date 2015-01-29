@@ -78,3 +78,14 @@ class OvalReg:
         self.a = a
         self.b = b
         self.width = width
+
+
+class PolygonReg:
+
+    def __init__(self, pointList, width, colorName):
+        self.reload(pointList, width, colorName)
+
+    def reload(self, pointList, width, colorName):
+        self.colorName = colorName
+        self.pointList = pointList
+        self.width = width
