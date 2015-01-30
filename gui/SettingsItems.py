@@ -6,6 +6,7 @@ __author__ = 'mouton'
 class SettingsWidget(QWidget):
 
     DEFAULT_FPS = 60
+    DEFAULT_MAX_TICK = 1000
     DEFAULT_WIDTH = 800
     DEFAULT_HEIGHT = 640
 
@@ -23,7 +24,12 @@ class SettingsWidget(QWidget):
         self._spriteWidgets = []
         self._showSpritesWidgetIndex = 0
 
+        hboxFPSTick = QHBoxLayout()
         self._fpsTE = QLineEdit(self)
+        self._maxTickTE = QLineEdit(self)
+        
+        hboxFPSTick.addWidget(self._fpsTE)
+        hboxFPSTick.addWidget(self._maxTickTE)
 
         hboxSize = QHBoxLayout()
         self._widthTE = QLineEdit(self)
@@ -32,7 +38,7 @@ class SettingsWidget(QWidget):
         hboxSize.addWidget(self._widthTE)
         hboxSize.addWidget(self._heightTE)
 
-        vbox.addWidget(self._fpsTE)
+        vbox.addLayout(hboxFPSTick)
         vbox.addLayout(hboxSize)
 
         self._spritesTE = QTextEdit(self)
@@ -43,6 +49,7 @@ class SettingsWidget(QWidget):
         self.init()
 
         self._fpsTE.textChanged.connect(self.window().setModified)
+        self._maxTickTE.textChanged.connect(self.window().setModified)
         self._widthTE.textChanged.connect(self.window().setModified)
         self._heightTE.textChanged.connect(self.window().setModified)
         self._spritesTE.textChanged.connect(self.window().setModified)
@@ -67,6 +74,7 @@ class SettingsWidget(QWidget):
 
     def init(self):
         self._fpsTE.setText(str(SettingsWidget.DEFAULT_FPS))
+        self._maxTickTE.setText(str(SettingsWidget.DEFAULT_MAX_TICK))
         self._heightTE.setText(str(SettingsWidget.DEFAULT_HEIGHT))
         self._widthTE.setText(str(SettingsWidget.DEFAULT_WIDTH))
 
@@ -78,6 +86,15 @@ class SettingsWidget(QWidget):
 
     def setFPS(self, fps):
         self._fpsTE.setText(str(fps))
+    
+    def getMaxTick(self):
+        try:
+            return int(self._maxTickTE.text())
+        except ValueError:
+            return SettingsWidget.DEFAULT_MAX_TICK
+
+    def setMaxTick(self, maxTick):
+        self._maxTickTE.setText(str(maxTick))
 
     def getWidth(self):
         try:

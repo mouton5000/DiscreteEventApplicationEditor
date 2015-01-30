@@ -182,8 +182,7 @@ class MainWindow(QMainWindow):
         l = [sceneDict(scene) for scene in self.scenes()]
 
         setW = self.settingsWidget()
-        settingsDict = {"fps": int(setW.getFPS()), "width": int(setW.getWidth()),
-                        "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites()}
+        settingsDict = {"fps": int(setW.getFPS()), "maxTick" : int(setW.getMaxTick()), "width": int(setW.getWidth()), "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites()}
 
         d = {"nodeId": nig.getNodeId(),
              "nextIds": list(nig.getNextIds()),
@@ -269,6 +268,7 @@ class MainWindow(QMainWindow):
             settingsDict = d['settings']
             setW = self.settingsWidget()
             setW.setFPS(settingsDict['fps'])
+            setW.setMaxTick(settingsDict['maxTick'])
             setW.setWidth(settingsDict['width'])
             setW.setHeight(settingsDict['height'])
             setW.setSprites(settingsDict['spritesRegistery'])
@@ -316,6 +316,7 @@ class MainWindow(QMainWindow):
 
         setW = self.settingsWidget()
         fps = setW.getFPS()
+        maxTick = setW.getMaxTick()
         width = setW.getWidth()
         height = setW.getHeight()
         spritesRegistery = setW.getSpritesRegistery()
@@ -329,13 +330,15 @@ class MainWindow(QMainWindow):
             for token in node.getTokens():
                 self._stateMachine.addToken(compNode, token)
 
-        i = 0
-        while True:
-            print i
-            i += 1
+        frame = 0
+        tick = 0
+        while maxTick <= 0 or tick < maxTick:
             retick = True
             while retick:
+                print frame, tick
+                tick += 1
                 retick = self._stateMachine.tick()
+            frame += 1
             self._stateMachine.updateTokensNbFrames()
             if not self._stateMachine.gameWindow.tick():
                 break
