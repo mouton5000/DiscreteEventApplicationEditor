@@ -46,7 +46,7 @@ class ConsequencesParser(lrparsing.Grammar):
     addEventExpr = T.add + T.event + '(' + parameters + ')'
 
     addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
-    editTokenExpr = T.edit + T.token + '(' + Opt(parameters) + ')'
+    editTokenExpr = T.edit + T.token + '(' + Opt(incompleteParameters) + ')'
     removeTokenExpr = T.remove + T.token
 
     addSpriteExpr = T.add + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
