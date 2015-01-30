@@ -123,6 +123,8 @@ class MainWindow(QMainWindow):
         self.centralWidget().reinit()
 
     def new(self):
+        if not self.checkSave():
+            return
         scenes = self.scenes()
         for scene in scenes:
             scene.clear()
@@ -198,6 +200,8 @@ class MainWindow(QMainWindow):
             return
 
     def load(self):
+        if not self.checkSave():
+            return
         try:
             fname = str(QFileDialog.getOpenFileName(self, 'Choose file to open',
                                                     self._lastSaveOpenFileDirectory, 'JSON files (*.json)'))
@@ -353,8 +357,14 @@ class MainWindow(QMainWindow):
         self.move(qr.topLeft())
 
     def closeEvent(self, event):
+        if self.checkSave():
+            event.accept()
+        else:
+            event.ignore()
+
+    def checkSave(self):
         if not self._modified:
-            return
+            return True
 
         reply = QMessageBox.question(self, 'Graph Editor',
                                      'The current graph has been modified. Do you want to save the changes?',
@@ -363,11 +373,9 @@ class MainWindow(QMainWindow):
 
         if reply == QMessageBox.Save:
             self.save()
-            event.accept()
-        elif reply == QMessageBox.Discard:
-            event.accept()
+            return True
         else:
-            event.ignore()
+            return reply == QMessageBox.Discard
 
 
 class MainWidget(QWidget):
