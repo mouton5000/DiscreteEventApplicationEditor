@@ -9,7 +9,7 @@ from consequencesExpressions import AddPropertyConsequence, RemovePropertyConseq
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
     RemoveTextConsequence, RemoveLineConsequence, EditLineConsequence, AddLineConsequence, AddRectConsequence, \
     EditRectConsequence, RemoveRectConsequence, AddOvalConsequence, EditOvalConsequence, \
-    RemoveOvalConsequence, AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence
+    RemoveOvalConsequence, AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, PrintConsequence
 
 
 class ConsequencesParser(lrparsing.Grammar):
@@ -29,6 +29,7 @@ class ConsequencesParser(lrparsing.Grammar):
         remove = Token('remove')
         move = Token('move')
         edit = Token('edit')
+        printToken = Token('print')
         shapeLine = Token('shpL')
         shapeRect = Token('shpR')
         shapeOval = Token('shpO')
@@ -97,11 +98,13 @@ class ConsequencesParser(lrparsing.Grammar):
                    + (arithmExpr, T.uvariable) + ')'
     removePolygonExpr = T.remove + T.shapePolygon + '(' + arithmExpr + ')'
 
+    printExpr = T.printToken + arithmExpr
+
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
                     editSpriteExpr, addTextExpr, removeTextExpr, editTextExpr, addLineExpr, editLineExpr,
                     removeLineExpr, addRectExpr, editRectExpr, removeRectExpr, addOvalExpr, editOvalExpr,
                     removeOvalExpr, addPolygonExpr, editPolygonExpr, removePolygonExpr, addTokenExpr,
-                    editTokenExpr, removeTokenExpr)
+                    editTokenExpr, removeTokenExpr, printExpr)
 
     listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     linkedListExpr = 'll' + listExpr
@@ -336,6 +339,10 @@ class ConsequencesParser(lrparsing.Grammar):
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)
 
+        def buildPrintExpr():
+            toPrint = cls.buildArithmeticExpression(tree[2])
+            return PrintConsequence(toPrint)
+
         exprSymbols = {
             ConsequencesParser.START: buildNext,
             ConsequencesParser.consExpr: buildNext,
@@ -371,6 +378,7 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.addTokenExpr: buildAddToken,
             ConsequencesParser.editTokenExpr: buildEditToken,
             ConsequencesParser.removeTokenExpr: buildRemoveToken,
+            ConsequencesParser.printExpr: buildPrintExpr,
             ConsequencesParser.arithmExpr: buildArithmetic
         }
 

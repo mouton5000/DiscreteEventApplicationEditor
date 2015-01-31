@@ -499,3 +499,11 @@ class RemoveTokenConsequence(object):
 
     def eval_update(self, _, stateMachine, token):
         stateMachine.removeToken(token)
+
+
+class PrintConsequence(object):
+    def __init__(self, toPrint):
+        self.toPrint = toPrint
+
+    def eval_update(self, evaluation, *_):
+        print _evalArg(self.toPrint, evaluation)
