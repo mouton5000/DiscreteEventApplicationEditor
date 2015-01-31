@@ -334,7 +334,7 @@ class MainWindow(QMainWindow):
         tick = 0
         while maxTick <= 0 or tick < maxTick:
             retick = True
-            while retick:
+            while retick and (maxTick <= 0 or tick < maxTick):
                 print frame, tick
                 tick += 1
                 retick = self._stateMachine.tick()
