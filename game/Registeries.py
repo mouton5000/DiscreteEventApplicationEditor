@@ -21,6 +21,12 @@ class SpriteReg(Sprite):
         self.rect.x = x
         self.rect.y = y
 
+    def __str__(self):
+        return str((self.num, self.rect))
+
+    def __repr__(self):
+        return str((self.num, self.rect))
+
 
 class TextReg:
 
@@ -37,6 +43,12 @@ class TextReg:
         labelFont = pygame.font.SysFont(fontName, fontSize)
         self.label = labelFont.render(text, True, Color('#' + self.colorName))
 
+    def __str__(self):
+        return str((self.text, self.x, self.y, self.colorName, self.fontName, self.fontSize))
+
+    def __repr__(self):
+        return str((self.text, self.x, self.y, self.colorName, self.fontName, self.fontSize))
+
 
 class LineReg:
 
@@ -50,6 +62,12 @@ class LineReg:
         self.x2 = x2
         self.y2 = y2
         self.width = width
+
+    def __str__(self):
+        return str((self.x1, self.y1, self.x2, self.y2, self.width, self.colorName))
+
+    def __repr__(self):
+        return str((self.x1, self.y1, self.x2, self.y2, self.width, self.colorName))
 
 
 class RectReg:
@@ -65,6 +83,12 @@ class RectReg:
         self.h = h
         self.width = width
 
+    def __str__(self):
+        return str((self.x, self.y, self.w, self.h, self.width, self.colorName))
+
+    def __repr__(self):
+        return str((self.x, self.y, self.w, self.h, self.width, self.colorName))
+
 
 class OvalReg:
 
@@ -79,6 +103,12 @@ class OvalReg:
         self.b = b
         self.width = width
 
+    def __str__(self):
+        return str((self.x, self.y, self.a, self.b, self.width, self.colorName))
+
+    def __repr__(self):
+        return str((self.x, self.y, self.a, self.b, self.width, self.colorName))
+
 
 class PolygonReg:
 
@@ -89,3 +119,9 @@ class PolygonReg:
         self.colorName = colorName
         self.pointList = pointList
         self.width = width
+
+    def __str__(self):
+        return str((self.pointList, self.width, self.colorName))
+
+    def __repr__(self):
+        return str((self.pointList, self.width, self.colorName))
