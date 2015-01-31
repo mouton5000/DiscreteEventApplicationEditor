@@ -127,7 +127,7 @@ class ConsequencesParser(lrparsing.Grammar):
 
     arithmExpr = Prio(T.integer, T.float, T.variable, T.selfvariable, T.string, constantExpr, listExpr, linkedListExpr,
                       setExpr, parArithmExpr, getItemArithExpr, getSublistArithExpr, insertArithExpr, removeArithExpr,
-                      funcExpr, powerArithExpr, multArithExpr, addArithExpr, minusArithExpr)
+                      funcExpr, powerArithExpr, multArithExpr, minusArithExpr, addArithExpr)
 
     # arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, parArithmExpr,
     #                   funcExpr, powerArithExpr, multArithExpr, addArithExpr, minusArithExpr)
