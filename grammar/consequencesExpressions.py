@@ -506,4 +506,5 @@ class PrintConsequence(object):
         self.toPrint = toPrint
 
     def eval_update(self, evaluation, *_):
-        print _evalArg(self.toPrint, evaluation)
+        for foo in self.toPrint:
+            print _evalArg(foo, evaluation)

@@ -98,7 +98,7 @@ class ConsequencesParser(lrparsing.Grammar):
                    + (arithmExpr, T.uvariable) + ')'
     removePolygonExpr = T.remove + T.shapePolygon + '(' + arithmExpr + ')'
 
-    printExpr = T.printToken + arithmExpr
+    printExpr = T.printToken + parameters
 
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
                     editSpriteExpr, addTextExpr, removeTextExpr, editTextExpr, addLineExpr, editLineExpr,
@@ -340,7 +340,7 @@ class ConsequencesParser(lrparsing.Grammar):
             return cls.buildArithmeticExpression(tree)
 
         def buildPrintExpr():
-            toPrint = cls.buildArithmeticExpression(tree[2])
+            toPrint = cls.buildExpression(tree[2])
             return PrintConsequence(toPrint)
 
         exprSymbols = {
@@ -592,5 +592,5 @@ class ConsequencesParser(lrparsing.Grammar):
 
 if __name__ == '__main__':
     print ConsequencesParser.pre_compile_grammar()
-    expr = 'A pFree(L>(2*I)>)'
+    expr = 'print 2,3,4'
     print ConsequencesParser.parse(expr)
