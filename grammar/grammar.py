@@ -80,7 +80,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
     arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, listExpr, linkedListExpr,
                       setExpr, parArithmExpr, getItemExpr, getSublistExpr, insertExpr, removeExpr,
-                      funcExpr, powerExpr, multExpr, addExpr, minusExpr)
+                      funcExpr, powerExpr, multExpr, minusExpr, addExpr)
 
     START = boolExpr
 
@@ -416,7 +416,11 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
 if __name__ == '__main__':
     print BooleanExpressionParser.pre_compile_grammar()
-    expr = 'X is [1,2,5,4,5,6] and randInt(I, len(X))'
+    expr = 'M is Y+2+X'
     expr = BooleanExpressionParser.parse(expr)
-    for evaluation in expr.eval(1, {Variable('Y'): 1}):
-        print evaluation
+    print expr
+    expr = 'M is (X-X0)**2/A + (Y-Y0)**2/B'
+    expr = BooleanExpressionParser.parse(expr)
+    print expr
+#    for evaluation in expr.eval(1, {Variable('Y'): 1}):
+#        print evaluation
