@@ -241,10 +241,10 @@ class Is(BBiOp):
         self.symbol = 'is'
 
     def eval(self, _, previousEvaluation):
-        if not self._a1 in previousEvaluation:
+        if self._a1 not in previousEvaluation:
             try:
                 value = self._a2.value(previousEvaluation)
-                if not value is None:
+                if value is not None:
                     neval = previousEvaluation.copy()
                     neval[self._a1] = value
                     yield neval
