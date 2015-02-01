@@ -13,6 +13,7 @@ class ViewsManagerWidget(QListWidget):
                  modeController=None):
         super(ViewsManagerWidget, self).__init__(parent)
         self.setMaximumWidth(200)
+        self.setMinimumWidth(200)
         self.reinit()
 
         self.mainWindow = mainWindow
