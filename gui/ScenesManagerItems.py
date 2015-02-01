@@ -1,17 +1,11 @@
-from PyQt4.QtCore import QStringList, QModelIndex, Qt, QString
-from PyQt4.QtGui import QListView, QStringListModel, QApplication, QInputDialog,\
-    QAbstractItemView, QMessageBox, QListWidget, QListWidgetItem
-from gui.EditorItem import ViewWidget
+from PyQt4.QtGui import QListWidget, QListWidgetItem
 
 __author__ = 'mouton'
 
 
-from PyQt4.QtCore import QStringList, QModelIndex, Qt
-from PyQt4.QtGui import QListView, QStringListModel, QApplication, QInputDialog,\
-    QAbstractItemView, QMessageBox
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QAbstractItemView, QMessageBox
 from gui.EditorItem import ViewWidget
-
-__author__ = 'mouton'
 
 
 class ViewsManagerWidget(QListWidget):

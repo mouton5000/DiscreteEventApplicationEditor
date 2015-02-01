@@ -20,7 +20,8 @@ class LabelItem(QGraphicsSimpleTextItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().mainWindow.stack.push(MoveLabelItemCommand(self.scene(), self, self._moveFromOffset, self._offset))
+            self.scene().mainWindow.stack.push(MoveLabelItemCommand(self.scene(), self, self._moveFromOffset,
+                                                                    self._offset))
             self._isMoving = False
             self._linkToParentItem.setVisible(False)
         self.ungrabMouse()

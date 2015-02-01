@@ -1,7 +1,5 @@
-from PyQt4 import QtCore
-from PyQt4.QtGui import QTabWidget, QTabBar, QWidget, QLineEdit
+from PyQt4.QtGui import QTabWidget, QTabBar
 from SettingsItems import SettingsWidget
-from gui.EditorItem import ViewWidget
 
 __author__ = 'mouton'
 

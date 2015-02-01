@@ -182,7 +182,8 @@ class MainWindow(QMainWindow):
         l = [sceneDict(scene) for scene in self.scenes()]
 
         setW = self.settingsWidget()
-        settingsDict = {"fps": int(setW.getFPS()), "maxTick" : int(setW.getMaxTick()), "width": int(setW.getWidth()), "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites()}
+        settingsDict = {"fps": int(setW.getFPS()), "maxTick": int(setW.getMaxTick()), "width": int(setW.getWidth()),
+                        "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites()}
 
         d = {"nodeId": nig.getNodeId(),
              "nextIds": list(nig.getNextIds()),
@@ -312,7 +313,6 @@ class MainWindow(QMainWindow):
             self._nodeDict.update({node: compileNode(node) for node in scene.nodes})
             for arc in chain.from_iterable(node.outputArcs for node in scene.nodes):
                 compileArc(arc)
-
 
         setW = self.settingsWidget()
         fps = setW.getFPS()

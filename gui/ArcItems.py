@@ -226,7 +226,7 @@ class ArcItem(QGraphicsPathItem):
         # par m2p parallèle au vecteur v2m2, définit ici à l'aide d'un projeté orthogonal
         m2pp = a2 + v2m2p.proj(a2p - a2)
 
-        w = (m1p - m1m).mag / 2 # eviron la demi largeur de l'arc
+        w = (m1p - m1m).mag / 2  # eviron la demi largeur de l'arc
         c1 = c - w * n  # point  de contrôle de la courbe de bézier du bord gauche de l'arc
         c2 = c + w * n  # point  de contrôle de la courbe de bézier du bord droit de l'arc
 
@@ -254,7 +254,6 @@ class CycleArcItem(ArcItem):
         self._delta = 0
         self._moveFromDelta = None
         super(CycleArcItem, self).__init__(node1, node1, parent, scene)
-        #self.drawPath(True)
 
     def initPath(self):
         self._delta = uniform(0, 2 * pi)
@@ -317,7 +316,7 @@ class CycleArcItem(ArcItem):
         gamma = atan(m1omag / NodeItem.NodeWidth)
 
         # delta est l'angle qui existe entre l'horizontale est la droite coupant orthogonalement l'arc en son milieu
-        u = vector(1, 0).rotate(self._delta) # vecteur normé orienté du centre du noeud vers le milieu de l'arc
+        u = vector(1, 0).rotate(self._delta)  # vecteur normé orienté du centre du noeud vers le milieu de l'arc
         # m1 est le point du cercle node1 au milieu du départ de l'arc
         v1m1norm = (u.rotate(-gamma))
         # m2 est la pointe de la flêche de l'arc
@@ -388,7 +387,6 @@ class CycleArcItem(ArcItem):
         while pathang2 < 0:
             pathang2 += 2 * pi
 
-
         # Tracé du chemin
         path = QPainterPath()
         path.moveTo(m1m.x, m1m.y)
@@ -406,5 +404,3 @@ class CycleArcItem(ArcItem):
 
         textCenter = o  # v1 + self._cl * u
         self._labelItem.setCenter(textCenter)
-        #if initLabel:
-        #    self._labelItem.setOffset(0)

@@ -1,7 +1,6 @@
-from database import Property, Event
-import game.gameWindow as gameWindow
-
 __author__ = 'mouton'
+
+from database import Property, Event
 
 
 def _evalArg(arg, evaluation):

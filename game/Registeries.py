@@ -3,7 +3,6 @@ __author__ = 'mouton'
 from pygame.sprite import Sprite
 import pygame
 from pygame import Color
-from database import UNDEFINED_PARAMETER
 
 
 class SpriteReg(Sprite):

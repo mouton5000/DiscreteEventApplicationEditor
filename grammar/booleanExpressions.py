@@ -108,7 +108,7 @@ class And(BBiOp):
 
     def eval(self, token, previousEvaluation):
         return chain.from_iterable(self._a2.eval(token, eval1) for eval1 in self._a1.eval(token, previousEvaluation)
-                                   if not eval1 is None)
+                                   if eval1 is not None)
 
 
 class Or(BBiOp):
@@ -221,7 +221,7 @@ class eLock(object):
 
             evaluation = previousEvaluation.copy()
             keys = self.eval_keys(previousEvaluation)
-            if not keys in evaluation or evaluation[keys] <= priority:
+            if keys not in evaluation or evaluation[keys] <= priority:
                 evaluation[keys] = priority
             yield evaluation
         except (ArithmeticError, TypeError, ValueError):
@@ -261,7 +261,7 @@ class Compare(BBiOp):
             v1 = self._a1.value(previousEvaluation)
             v2 = self._a2.value(previousEvaluation)
 
-            if not v1 is None and not v2 is None and self.comp(v1, v2):
+            if v1 is not None and v2 is not None and self.comp(v1, v2):
                 yield previousEvaluation
         except (ArithmeticError, TypeError, ValueError):
             pass
@@ -392,7 +392,7 @@ class NamedExpression(ParameterizedExpression):
             if not self.weakCompare(elem):
                 continue
             neval = self.unify(elem, previousEvaluation)
-            if not neval is None and dc.add(neval):
+            if neval is not None and dc.add(neval):
                 yield neval
 
     def __hash__(self):
@@ -445,7 +445,7 @@ class TokenExpression(ParameterizedExpression):
     def eval(self, token, previousEvaluation):
         if self.weakCompare(token):
             neval = self.unify(token, previousEvaluation)
-            if not neval is None:
+            if neval is not None:
                 yield neval
 
 

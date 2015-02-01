@@ -79,7 +79,6 @@ class Property(NamedExpression):
                     continue
                 prop[index] = newArg
 
-
     @property
     def container(self):
         return Property.properties

@@ -5,7 +5,6 @@ __author__ = 'mouton'
 
 from PyQt4 import QtCore
 from PyQt4.QtGui import QGraphicsEllipseItem, QBrush
-from PyQt4.QtCore import pyqtSlot
 from visual import vector
 from copy import copy
 from undoRedoActions import *
@@ -216,8 +215,6 @@ class ConnectedComponent():
 
         self.scene().mainWindow.stack.push(ChangeConnectedComponentSceneCommand(
             oldScene, self, newScene))
-
-
 
     def addNode(self, node):
         self.nodes.add(node)

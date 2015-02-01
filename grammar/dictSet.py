@@ -46,7 +46,7 @@ class _DictTree:
 
         for child in self._children:
             added = child.addDict(d)
-            if not added is None:
+            if added is not None:
                 return added
         self._appendRemaining(d)
         return True

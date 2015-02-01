@@ -152,7 +152,7 @@ class SceneWidget(QGraphicsScene):
     def mousePressEvent(self, event):
         super(SceneWidget, self).mousePressEvent(event)
         item = self.mouseGrabberItem()
-        if not item is None and not self._selected is None and self.isComponentMode() and item in self._selected:
+        if item is not None and self._selected is not None and self.isComponentMode() and item in self._selected:
             x, y = event.scenePos().x(), event.scenePos().y()
             self._selected.initMove(x, y)
 
@@ -247,7 +247,7 @@ class SceneWidget(QGraphicsScene):
         elif event.key() == QtCore.Qt.Key_C:
             self.setComponentMode()
         elif event.key() == QtCore.Qt.Key_Delete:
-            if self.isComponentMode() and not self._selected is None:
+            if self.isComponentMode() and self._selected is not None:
                 self._selected.remove()
             elif self._selected:
                 self.deleteSelected()

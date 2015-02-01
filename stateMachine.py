@@ -170,7 +170,7 @@ class Token:
             return value
 
         newArgs = (evalArg(unevaluatedArg, arg) for unevaluatedArg, arg in map(None, unevaluatedArgs, self))
-        self._args[:] = [arg for arg in newArgs if not arg is None]
+        self._args[:] = [arg for arg in newArgs if arg is not None]
 
     def moveTo(self, node):
         self._node = node
@@ -240,28 +240,3 @@ class Transition:
 
     def __repr__(self):
         return str(self.n1) + ' ' + str(self.n2)
-
-
-if __name__ == '__main__':
-    n1 = Node(1)
-    n2 = Node(2)
-    n3 = Node(3)
-
-    f1 = 'true'
-    Transition(n1, n2, f1, ['A pW(0,0)', 'A pW(0,1)', 'A pW(0,2)'])
-
-    f2 = 'pW(X,3)'
-    Transition(n2, n3, f2, ['A pW(X,1)', 'R pW(X,3)'])
-
-    f3 = 'pW(X,1)'
-    Transition(n2, n2, f3, ['A pW(X,3)', 'R pW(X,1)'])
-
-    f4 = 'pW(X,1)'
-    Transition(n3, n2, f4, ['A pW(X,3)', 'R pW(X,1)'])
-
-    sm = StateMachine()
-    sm.addActiveState(n1)
-
-    for i in xrange(10):
-        print sm._activeStates, Property.properties, Event.events
-        sm.tick()
