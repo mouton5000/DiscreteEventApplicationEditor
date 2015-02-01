@@ -32,7 +32,7 @@ class NodeItem(QGraphicsEllipseItem):
 
         self.setBrush(QBrush(QtCore.Qt.black))
 
-        self._labelItem = LabelItem(str(self.num),
+        self._labelItem = LabelItem(str(self.num), self,
                                        scene=self.scene())
         self._labelItem.setBrush(QBrush(QtCore.Qt.black))
         self._labelItem.setCenter(self._center)

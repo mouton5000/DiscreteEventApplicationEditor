@@ -46,7 +46,7 @@ class ArcItem(QGraphicsPathItem):
         self._formula = 'false'
         self._consequences = []
 
-        self._labelItem = LabelItem(str(len(node1.outputArcs) - 1) + ' : ' + self._label,
+        self._labelItem = LabelItem(str(len(node1.outputArcs) - 1) + ' : ' + self._label, self,
                                        scene=self.scene())
         self._labelItem.setBrush(QBrush(QtCore.Qt.black))
         self.drawPath(True)

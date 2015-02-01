@@ -1,3 +1,5 @@
+from gui.LabelItems import LabelItem
+
 __author__ = 'mouton'
 
 
@@ -173,6 +175,9 @@ class SceneWidget(QGraphicsScene):
             elif isinstance(item, NodeItem):
                 self.setSelected(item)
                 item.mouseReleaseEvent(event)
+            elif isinstance(item, LabelItem):
+                self.setSelected(item.labelOf)
+                item.mouseReleaseEvent(event)
             else:
                 item.mouseReleaseEvent(event)
         elif self.isArcMode():
@@ -184,12 +189,17 @@ class SceneWidget(QGraphicsScene):
                         self.addArc(self._selected, item)
                     else:
                         self.setSelected(item)
-                else:
+                elif isinstance(item, ArcItem):
                     self.setSelected(item)
+                elif isinstance(item, LabelItem):
+                    self.setSelected(item.labelOf)
                 item.mouseReleaseEvent(event)
         elif self.isSelectMode():
             if item:
-                self.setSelected(item)
+                if not isinstance(item, LabelItem):
+                    self.setSelected(item)
+                else:
+                    self.setSelected(item.labelOf)
                 item.mouseReleaseEvent(event)
         elif self.isComponentMode():
             if self._selected:

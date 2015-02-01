@@ -5,7 +5,7 @@ from undoRedoActions import MoveLabelItemCommand
 
 
 class LabelItem(QGraphicsSimpleTextItem):
-    def __init__(self, text, parent=None, scene=None):
+    def __init__(self, text, labelOf, parent=None, scene=None):
         super(LabelItem, self).__init__(text, parent, scene)
         self._offset = vector(0, 0)
         self._center = vector(0, 0)
@@ -14,6 +14,8 @@ class LabelItem(QGraphicsSimpleTextItem):
 
         self._linkToParentItem = self.scene().addLine(0, 0, 0, 0)
         self._linkToParentItem.setVisible(False)
+
+        self.labelOf = labelOf
 
     def mousePressEvent(self, event):
         event.accept()
