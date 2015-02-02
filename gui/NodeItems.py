@@ -49,6 +49,10 @@ class NodeItem(QGraphicsEllipseItem):
     def add(self):
         self.scene().nodes.append(self)
 
+    def reorganizeArcLabels(self):
+        for j, arc in enumerate(self.outputArcs):
+            arc.setLabelItemText(j, arc.getLabel())
+
     def mousePressEvent(self, event):
         event.accept()
 

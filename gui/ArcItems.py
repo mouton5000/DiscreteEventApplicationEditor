@@ -61,17 +61,16 @@ class ArcItem(QGraphicsPathItem):
         arcs = self.node1.outputArcs
         arcs.remove(self)
         arcs.insert(i, self)
-        for j, arc in enumerate(arcs):
-            arc._setLabelItemText(j, arc._label)
+        self.node1.reorganizeArcLabels()
 
     def getLabel(self):
         return self._label
 
     def setLabel(self, label):
         self._label = label
-        self._setLabelItemText(self.getIndex(), label)
+        self.setLabelItemText(self.getIndex(), label)
 
-    def _setLabelItemText(self, index, label):
+    def setLabelItemText(self, index, label):
         if label:
             self._labelItem.setText(str(index) + ' : ' + label)
         else:
@@ -163,6 +162,7 @@ class ArcItem(QGraphicsPathItem):
 
     def remove(self):
         self.node1.outputArcs.remove(self)
+        self.node1.reorganizeArcLabels()
         self.node2.inputArcs.remove(self)
         self.scene().removeItem(self._labelItem)
 
