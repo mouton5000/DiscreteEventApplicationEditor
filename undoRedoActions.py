@@ -163,3 +163,19 @@ class ChangeConnectedComponentSceneCommand(QUndoCommand):
         oldScene.setSelected(None)
         self._component._scene.parent().showTab()
         self._component._scene.setSelected(self._component)
+
+
+class ChangeInputOrOuputCommand(QUndoCommand):
+    def __init__(self, scene, arc, inputNotOuput, oldNode, newNode, parent=None):
+        super(ChangeInputOrOuputCommand, self).__init__(parent)
+        self._scene = scene
+        self._arc = arc
+        self._inputNotOuput = inputNotOuput
+        self._oldNode = oldNode
+        self._newNode = newNode
+
+    def undo(self):
+        self._arc.changeNode(self._inputNotOuput, self._oldNode)
+
+    def redo(self):
+        self._arc.changeNode(self._inputNotOuput, self._newNode)

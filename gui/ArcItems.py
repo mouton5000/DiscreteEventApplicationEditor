@@ -40,6 +40,9 @@ class ArcItem(QGraphicsPathItem):
         self._isMoving = False
         self._moveFromCl = None
 
+        self._separatingInput = None
+        self._separatingOutput = None
+
         self.scene().mainWindow.stack.push(AddItemCommand(self.scene(), self))
 
         self._label = 'false'
@@ -116,6 +119,19 @@ class ArcItem(QGraphicsPathItem):
             b = not b
         self._cl = cl
 
+    def changeNode(self, inputNotOutput, node):
+        if inputNotOutput:
+            self.node1.outputArcs.remove(self)
+            self.node1.reorganizeArcLabels()
+            self.node1 = node
+            self.node1.outputArcs.append(self)
+            self.setLabelItemText(len(self.node1.outputArcs) - 1, self.getLabel())
+        else:
+            self.node2.inputArcs.remove(self)
+            self.node2 = node
+            self.node2.inputArcs.append(self)
+        self.drawPath()
+
     def mousePressEvent(self, event):
         event.accept()
 
@@ -123,12 +139,39 @@ class ArcItem(QGraphicsPathItem):
         if self._isMoving:
             self.scene().mainWindow.stack.push(MoveArcCommand(self.scene(), self, self._moveFromCl, self._cl))
             self._isMoving = False
+        elif self._separatingInput is not None:
+            x, y = self._separatingInput.x, self._separatingInput.y
+            n1 = self.scene().getCloseNodeOf(x, y)
+            if n1 != self.node1 and n1 != self.node2:
+                if n1 is None:
+                    n1 = self.scene().addNode(self._separatingInput.x, self._separatingInput.y)
+                self.scene().mainWindow.stack.push(ChangeInputOrOuputCommand(self.scene(), self, True, self.node1, n1))
+                self._separatingInput = None
+            else:
+                self._separatingInput = None
+                self.drawPath()
+        elif self._separatingOutput is not None:
+            x, y = self._separatingOutput.x, self._separatingOutput.y
+            n2 = self.scene().getCloseNodeOf(x, y)
+            if n2 != self.node1 and n2 != self.node2:
+                if n2 is None:
+                    n2 = self.scene().addNode(self._separatingOutput.x, self._separatingOutput.y)
+                self.scene().mainWindow.stack.push(ChangeInputOrOuputCommand(self.scene(), self, False, self.node2, n2))
+                self._separatingOutput = None
+            else:
+                self._separatingOutput = None
+                self.drawPath()
         self.ungrabMouse()
 
     def mouseMoveEvent(self, event):
-        if not self.scene().isArcMode():
-            return
+        if self.scene().isArcMode():
+            self.moveArcEvent(event)
+        elif self.scene().isSeparateInputMode():
+            self.separateInputArcEvent(event)
+        elif self.scene().isSeparateOutputMode():
+            self.separateOutputArcEvent(event)
 
+    def moveArcEvent(self, event):
         if not self._isMoving:
             self._isMoving = True
             self._moveFromCl = self._cl
@@ -142,6 +185,24 @@ class ArcItem(QGraphicsPathItem):
         n = (u.rotate(pi / 2)).norm()
 
         self.setCl((2 * v).dot(n))
+
+    def separateInputArcEvent(self, event):
+        x, y = event.scenePos().x(), event.scenePos().y()
+        node = self.scene().getCloseNodeOf(x, y)
+        if node is None:
+            self._separatingInput = vector(x, y)
+        else:
+            self._separatingInput = node.getXY()
+        self.drawPath()
+
+    def separateOutputArcEvent(self, event):
+        x, y = event.scenePos().x(), event.scenePos().y()
+        node = self.scene().getCloseNodeOf(x, y)
+        if node is None:
+            self._separatingOutput = vector(x, y)
+        else:
+            self._separatingOutput = node.getXY()
+        self.drawPath()
 
     def getCl(self):
         return self._cl
@@ -185,8 +246,14 @@ class ArcItem(QGraphicsPathItem):
         # Il est conseille de prendre une feuille est un stylo pour dessiner en lisant les commentaires
         # de cette methode
 
-        v1 = self.node1.getXY()
-        v2 = self.node2.getXY()
+        if self._separatingInput is None:
+            v1 = self.node1.getXY()
+        else:
+            v1 = self._separatingInput
+        if self._separatingOutput is None:
+            v2 = self.node2.getXY()
+        else:
+            v2 = self._separatingOutput
 
         u = v2 - v1  # Vecteur reliant v1 à v2
         n = (u.rotate(pi / 2)).norm()  # Vecteur unitaire perpendiculaire à u
@@ -232,6 +299,10 @@ class ArcItem(QGraphicsPathItem):
 
         # Tracé de l'arc
         path = QPainterPath()
+        if self._separatingInput is not None:
+            path.moveTo(v1.x + NodeItem.NodeWidth, v1.y)
+            path.arcTo(v1.x - NodeItem.NodeWidth, v1.y - NodeItem.NodeWidth,
+                           2 * NodeItem.NodeWidth, 2 * NodeItem.NodeWidth, 0, 360)
         path.moveTo(m1m.x, m1m.y)
         path.quadTo(c1.x, c1.y, m2pp.x, m2pp.y)
         path.lineTo(m2mp.x, m2mp.y)
@@ -241,6 +312,10 @@ class ArcItem(QGraphicsPathItem):
         path.lineTo(a2p.x, a2p.y)
         path.lineTo(a2m.x, a2m.y)
         path.closeSubpath()
+        if self._separatingOutput is not None:
+            path.moveTo(v2.x + NodeItem.NodeWidth, v2.y)
+            path.arcTo(v2.x - NodeItem.NodeWidth, v2.y - NodeItem.NodeWidth,
+                           2 * NodeItem.NodeWidth, 2 * NodeItem.NodeWidth, 0, 360)
         self.setPath(path)
 
         textCenter = v1 + u / 2 + (0.5 * self._cl) * n  # position normale

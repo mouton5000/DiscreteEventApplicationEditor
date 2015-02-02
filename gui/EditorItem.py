@@ -142,6 +142,11 @@ class SceneWidget(QGraphicsScene):
         node.add()
         return node
 
+    def getCloseNodeOf(self, x, y):
+        for node in self.nodes:
+            if node.isCloseTo(x, y):
+                return node
+
     def addArc(self, n1, n2):
         if n1 == n2:
             arc = CycleArcItem(n1, scene=self)
@@ -193,6 +198,14 @@ class SceneWidget(QGraphicsScene):
                     self.setSelected(item)
                 elif isinstance(item, LabelItem):
                     self.setSelected(item.labelOf)
+                item.mouseReleaseEvent(event)
+        elif self.isSeparateInputMode() or self.isSeparateOutputMode():
+            if not item:
+                self.setSelected(None)
+            elif isinstance(item, ArcItem):
+                self.setSelected(item)
+                item.mouseReleaseEvent(event)
+            else:
                 item.mouseReleaseEvent(event)
         elif self.isSelectMode():
             if item:
@@ -248,10 +261,14 @@ class SceneWidget(QGraphicsScene):
         if event.key() == QtCore.Qt.Key_N:
             self.setNodeMode()
         elif event.key() == QtCore.Qt.Key_A:
-            if not self.isPathMode():
-                self.setPathMode()
-            else:
+            if self.isPathMode():
                 self.setStarMode()
+            elif self.isStarMode():
+                self.setSeparateInputMode()
+            elif self.isSeparateInputMode():
+                self.setSeparateOutputMode()
+            else:
+                self.setPathMode()
         elif event.key() == QtCore.Qt.Key_S:
             self.setSelectMode()
         elif event.key() == QtCore.Qt.Key_C:
@@ -291,6 +308,14 @@ class SceneWidget(QGraphicsScene):
         self.modeController.setComponentMode()
         self.setSelected(None)
 
+    def setSeparateInputMode(self):
+        self.modeController.setSeparateInputMode()
+        self.setSelected(None)
+
+    def setSeparateOutputMode(self):
+        self.modeController.setSeparateOutputMode()
+        self.setSelected(None)
+
     def isNodeMode(self):
         return self.modeController.isNodeMode()
 
@@ -308,6 +333,12 @@ class SceneWidget(QGraphicsScene):
 
     def isComponentMode(self):
         return self.modeController.isComponentMode()
+
+    def isSeparateInputMode(self):
+        return self.modeController.isSeparateInputMode()
+
+    def isSeparateOutputMode(self):
+        return self.modeController.isSeparateOutputMode()
 
     def deleteSelected(self):
         self.mainWindow.stack.push(DeleteItemCommand(self, self._selected))
@@ -355,6 +386,8 @@ class ModeController():
     StarMode = 2
     SelectMode = 3
     ComponentMode = 4
+    SeparateInputMode = 5
+    SeparateOutputMode = 6
 
     def __init__(self, mainWindow=None):
         self._mode = ModeController.NodeMode
@@ -380,6 +413,14 @@ class ModeController():
         self.setMode(ModeController.ComponentMode)
         self.mainWindow.statusBar().showMessage('Component mode')
 
+    def setSeparateInputMode(self):
+        self.setMode(ModeController.SeparateInputMode)
+        self.mainWindow.statusBar().showMessage('Separate input mode')
+
+    def setSeparateOutputMode(self):
+        self.setMode(ModeController.SeparateOutputMode)
+        self.mainWindow.statusBar().showMessage('Separate output mode')
+
     def setMode(self, mode):
         self._mode = mode
 
@@ -394,6 +435,12 @@ class ModeController():
 
     def isStarMode(self):
         return self._mode == ModeController.StarMode
+
+    def isSeparateInputMode(self):
+        return self._mode == ModeController.SeparateInputMode
+
+    def isSeparateOutputMode(self):
+        return self._mode == ModeController.SeparateOutputMode
 
     def isSelectMode(self):
         return self._mode == ModeController.SelectMode

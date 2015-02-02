@@ -145,6 +145,9 @@ class NodeItem(QGraphicsEllipseItem):
     def getXY(self):
         return self._center
 
+    def isCloseTo(self, x, y):
+        return (self._center - vector(x, y)).mag < NodeItem.NodeWidth
+
     def isPredecessorOf(self, node):
         for a in self.outputArcs:
             if a.node2 == node:
