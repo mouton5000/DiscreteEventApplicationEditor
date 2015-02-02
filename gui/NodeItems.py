@@ -212,7 +212,6 @@ class ConnectedComponent():
             return
         oldScene = self._scene
         scenes = oldScene.parent().mainWindow.scenes()
-        print sceneIndex
         newScene = next(itertools.islice(scenes, sceneIndex, sceneIndex + 1))
         if oldScene == newScene:
             return
