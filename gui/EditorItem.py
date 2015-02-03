@@ -137,6 +137,7 @@ class SceneWidget(QGraphicsScene):
         return nodeItem
 
     def addNodeWithoutStack(self, nodeItem):
+        # Should not be called by any instance but a QUndoRedoCommand instance
         num = self.getNextNodeId()
         nodeItem.num = num
         self.nodes.append(nodeItem)
@@ -153,6 +154,7 @@ class SceneWidget(QGraphicsScene):
         self.mainWindow.stack.push(RemoveNodeItemCommand(self, nodeItem))
 
     def removeNodeWithoutStack(self, nodeItem):
+        # Should not be called by any instance but a QUndoRedoCommand instance
         self.nodes.remove(nodeItem)
         self.removeNodeIndex(nodeItem.num)
         for a in copy(nodeItem.inputArcs):
@@ -180,6 +182,7 @@ class SceneWidget(QGraphicsScene):
         return arcItem
 
     def addArcWithoutStack(self, arcItem):
+        # Should not be called by any instance but a QUndoRedoCommand instance
         if arcItem not in self.items():
             self.addItem(arcItem)
         arcItem.node1.outputArcs.append(arcItem)
@@ -195,6 +198,7 @@ class SceneWidget(QGraphicsScene):
         self.mainWindow.stack.push(RemoveArcItemCommand(self, arcItem))
 
     def removeArcWithoutStack(self, arcItem):
+        # Should not be called by any instance but a QUndoRedoCommand instance
         arcItem.node1.outputArcs.remove(arcItem)
         arcItem.node1.reorganizeArcLabels()
         arcItem.node2.inputArcs.remove(arcItem)
@@ -205,78 +209,6 @@ class SceneWidget(QGraphicsScene):
     def removeConnectedComponent(self, connectedComponent):
         for node in connectedComponent.nodes:
             self.removeNode(node)
-
-    def mousePressEvent(self, event):
-        super(SceneWidget, self).mousePressEvent(event)
-        item = self.mouseGrabberItem()
-        if item is not None and self._selected is not None and self.isComponentMode() and item in self._selected:
-            x, y = event.scenePos().x(), event.scenePos().y()
-            self._selected.initMove(x, y)
-
-    def mouseMoveEvent(self, event):
-        item = self.mouseGrabberItem()
-        if item and self._selected and self.isComponentMode() and item in self._selected:
-            x, y = event.scenePos().x(), event.scenePos().y()
-            self._selected.move(x, y)
-        else:
-            super(SceneWidget, self).mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        item = self.mouseGrabberItem()
-        if self.isNodeMode():
-            if not item:
-                x, y = event.scenePos().x(), event.scenePos().y()
-                self.addNode(x, y)
-            elif isinstance(item, NodeItem):
-                self.setSelected(item)
-                item.mouseReleaseEvent(event)
-            elif isinstance(item, LabelItem):
-                self.setSelected(item.attachedItem())
-                item.mouseReleaseEvent(event)
-            else:
-                item.mouseReleaseEvent(event)
-        elif self.isArcMode():
-            if not item:
-                self.setSelected(None)
-            else:
-                if isinstance(item, NodeItem):
-                    if isinstance(self._selected, NodeItem):
-                        self.addArc(self._selected, item)
-                    else:
-                        self.setSelected(item)
-                elif isinstance(item, ArcItem):
-                    self.setSelected(item)
-                elif isinstance(item, LabelItem):
-                    self.setSelected(item.attachedItem())
-                item.mouseReleaseEvent(event)
-        elif self.isSeparateInputMode() or self.isSeparateOutputMode():
-            if not item:
-                self.setSelected(None)
-            elif isinstance(item, ArcItem):
-                self.setSelected(item)
-                item.mouseReleaseEvent(event)
-            else:
-                item.mouseReleaseEvent(event)
-        elif self.isSelectMode():
-            if item:
-                if not isinstance(item, LabelItem):
-                    self.setSelected(item)
-                else:
-                    self.setSelected(item.attachedItem())
-                item.mouseReleaseEvent(event)
-        elif self.isComponentMode():
-            if self._selected:
-                x, y = event.scenePos().x(), event.scenePos().y()
-                self._selected.endMove(x, y)
-                if item:
-                    item.mouseReleaseEvent(event)
-            else:
-                if item:
-                    try:
-                        self.setSelected(item.getConnectedComponent())
-                    except AttributeError:
-                        pass
-                    item.mouseReleaseEvent(event)
 
     def setSelected(self, item):
         if self._selected == item:
@@ -296,6 +228,17 @@ class SceneWidget(QGraphicsScene):
         else:
             self.parent().propertiesEditor.setNoItem()
 
+    def deleteSelected(self):
+        if self._selected is None:
+            return
+        if isinstance(self._selected, NodeItem):
+            self.removeNode(self._selected)
+        elif isinstance(self._selected, ArcItem):
+            self.removeArc(self._selected)
+        elif isinstance(self._selected, ConnectedComponent):
+            self.removeConnectedComponent(self._selected)
+        self.setSelected(None)
+
     def reinitSelectedProperties(self):
         if self._selected:
             if isinstance(self._selected, ArcItem):
@@ -306,6 +249,93 @@ class SceneWidget(QGraphicsScene):
                 self.parent().propertiesEditor.setConnectedComponentItem().setSelectedConnectedComponent(self._selected)
         else:
             self.parent().propertiesEditor.setNoItem()
+
+    def mousePressEvent(self, event):
+        super(SceneWidget, self).mousePressEvent(event)
+        item = self.mouseGrabberItem()
+        if item is not None and self._selected is not None and self.isComponentMode() and item in self._selected:
+            x, y = event.scenePos().x(), event.scenePos().y()
+            self._selected.initMove(x, y)
+
+    def mouseMoveEvent(self, event):
+        item = self.mouseGrabberItem()
+        if item and self._selected and self.isComponentMode() and item in self._selected:
+            x, y = event.scenePos().x(), event.scenePos().y()
+            self._selected.move(x, y)
+        else:
+            super(SceneWidget, self).mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        mouseGrabberItem = self.mouseGrabberItem()
+        if self.isNodeMode():
+            self.mouseReleaseEventNodeMode(event, mouseGrabberItem)
+        elif self.isArcMode():
+            self.mouseReleaseEventArcMode(event, mouseGrabberItem)
+        elif self.isSeparateInputMode() or self.isSeparateOutputMode():
+            self.mouseReleaseEventSeparateMode(event, mouseGrabberItem)
+        elif self.isSelectMode():
+            self.mouseReleaseEventSelectMode(event, mouseGrabberItem)
+        elif self.isComponentMode():
+            self.mouseReleaseEventConnectedComponentMode(event, mouseGrabberItem)
+
+    def mouseReleaseEventNodeMode(self, event, mouseGrabberItem):
+        if not mouseGrabberItem:
+            x, y = event.scenePos().x(), event.scenePos().y()
+            self.addNode(x, y)
+        elif isinstance(mouseGrabberItem, NodeItem):
+            self.setSelected(mouseGrabberItem)
+            mouseGrabberItem.mouseReleaseEvent(event)
+        elif isinstance(mouseGrabberItem, LabelItem):
+            self.setSelected(mouseGrabberItem.attachedItem())
+            mouseGrabberItem.mouseReleaseEvent(event)
+        else:
+            mouseGrabberItem.mouseReleaseEvent(event)
+
+    def mouseReleaseEventArcMode(self, event, mouseGrabberItem):
+        if not mouseGrabberItem:
+                self.setSelected(None)
+        else:
+            if isinstance(mouseGrabberItem, NodeItem):
+                if isinstance(self._selected, NodeItem):
+                    self.addArc(self._selected, mouseGrabberItem)
+                else:
+                    self.setSelected(mouseGrabberItem)
+            elif isinstance(mouseGrabberItem, ArcItem):
+                self.setSelected(mouseGrabberItem)
+            elif isinstance(mouseGrabberItem, LabelItem):
+                self.setSelected(mouseGrabberItem.attachedItem())
+            mouseGrabberItem.mouseReleaseEvent(event)
+
+    def mouseReleaseEventSeparateMode(self, event, mouseGrabberItem):
+        if not mouseGrabberItem:
+            self.setSelected(None)
+        elif isinstance(mouseGrabberItem, ArcItem):
+            self.setSelected(mouseGrabberItem)
+            mouseGrabberItem.mouseReleaseEvent(event)
+        else:
+            mouseGrabberItem.mouseReleaseEvent(event)
+
+    def mouseReleaseEventSelectMode(self, event, mouseGrabberItem):
+        if mouseGrabberItem:
+            if not isinstance(mouseGrabberItem, LabelItem):
+                self.setSelected(mouseGrabberItem)
+            else:
+                self.setSelected(mouseGrabberItem.attachedItem())
+            mouseGrabberItem.mouseReleaseEvent(event)
+
+    def mouseReleaseEventConnectedComponentMode(self, event, mouseGrabberItem):
+        if self._selected:
+            x, y = event.scenePos().x(), event.scenePos().y()
+            self._selected.endMove(x, y)
+            if mouseGrabberItem:
+                mouseGrabberItem.mouseReleaseEvent(event)
+        else:
+            if mouseGrabberItem:
+                try:
+                    self.setSelected(mouseGrabberItem.getConnectedComponent())
+                except AttributeError:
+                    pass
+                mouseGrabberItem.mouseReleaseEvent(event)
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_N:
@@ -386,17 +416,6 @@ class SceneWidget(QGraphicsScene):
 
     def isSeparateOutputMode(self):
         return self.modeController.isSeparateOutputMode()
-
-    def deleteSelected(self):
-        if self._selected is None:
-            return
-        if isinstance(self._selected, NodeItem):
-            self.removeNode(self._selected)
-        elif isinstance(self._selected, ArcItem):
-            self.removeArc(self._selected)
-        elif isinstance(self._selected, ConnectedComponent):
-            self.removeConnectedComponent(self._selected)
-        self.setSelected(None)
 
 
 class NodesIdsGenerator():
