@@ -144,26 +144,10 @@ class ChangeConnectedComponentSceneCommand(QUndoCommand):
         self._component = component
 
     def undo(self):
-        self.changeScene(self._newScene, self._oldScene)
+        self._newScene.changeConnectedComponentSceneWithoutStack(self._component, self._oldScene)
 
     def redo(self):
-        self.changeScene(self._oldScene, self._newScene)
-
-    def changeScene(self, oldScene, newScene):
-        self._component._scene = newScene
-        for node in self._component.nodes:
-            oldScene.nodes.remove(node)
-            oldScene.removeItem(node._labelItem)
-            newScene.addItem(node)
-            newScene.addItem(node._labelItem)
-            for a in node.outputArcs:
-                oldScene.removeItem(a)
-                oldScene.removeItem(a._labelItem)
-                newScene.addItem(a)
-                newScene.addItem(a._labelItem)
-        oldScene.setSelected(None)
-        self._component._scene.parent().showTab()
-        self._component._scene.setSelected(self._component)
+        self._oldScene.changeConnectedComponentSceneWithoutStack(self._component, self._newScene)
 
 
 class ChangeInputOrOuputCommand(QUndoCommand):

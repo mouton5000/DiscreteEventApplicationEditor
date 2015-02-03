@@ -409,6 +409,6 @@ class ConnectedComponentParamEditorWidget(QWidget):
         self.initSceneQCB()
 
     def changeScene(self, sceneIndex):
-        self._selectedConnectedComponent.setScene(sceneIndex)
         self._sceneQCB.clear()
-        self._selectedConnectedComponent = None
+        self._selectedConnectedComponent.scene().changeConnectedComponentSceneByIndex(
+            self._selectedConnectedComponent, sceneIndex)

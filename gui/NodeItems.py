@@ -200,17 +200,8 @@ class ConnectedComponent():
     def scene(self):
         return self._scene
 
-    def setScene(self, sceneIndex):
-        if sceneIndex == -1:
-            return
-        oldScene = self._scene
-        scenes = oldScene.parent().mainWindow.scenes()
-        newScene = next(itertools.islice(scenes, sceneIndex, sceneIndex + 1))
-        if oldScene == newScene:
-            return
-
-        self.scene().mainWindow.stack.push(ChangeConnectedComponentSceneCommand(
-            oldScene, self, newScene))
+    def setScene(self, scene):
+        self._scene = scene
 
     def addNode(self, node):
         self.nodes.add(node)

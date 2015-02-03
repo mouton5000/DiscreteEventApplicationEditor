@@ -1,4 +1,5 @@
 from copy import copy
+import itertools
 from gui.LabelItems import LabelItem
 
 __author__ = 'mouton'
@@ -209,6 +210,36 @@ class SceneWidget(QGraphicsScene):
     def removeConnectedComponent(self, connectedComponent):
         for node in connectedComponent.nodes:
             self.removeNode(node)
+
+    def changeConnectedComponentSceneByIndex(self, connectedComponent, newSceneIndex):
+        if newSceneIndex == -1:
+            return
+        scenes = self.parent().mainWindow.scenes()
+        newScene = next(itertools.islice(scenes, newSceneIndex, newSceneIndex + 1))
+        if self == newScene:
+            return
+        self.changeConnectedComponentScene(connectedComponent, newScene)
+
+    def changeConnectedComponentScene(self, connectedComponent, newScene):
+        self.mainWindow.stack.push(ChangeConnectedComponentSceneCommand(self, connectedComponent, newScene))
+
+    def changeConnectedComponentSceneWithoutStack(self, connectedComponent, newScene):
+        connectedComponent.setScene(newScene)
+        for node in connectedComponent.nodes:
+            self.nodes.remove(node)
+            self.removeItem(node.getLabelItem())
+            newScene.nodes.append(node)
+            newScene.addItem(node)
+            newScene.addItem(node.getLabelItem())
+            for a in node.outputArcs:
+                self.removeItem(a)
+                self.removeItem(a.getLabelItem())
+                newScene.addItem(a)
+                newScene.addItem(a.getLabelItem())
+        self.setSelected(None)
+        newScene.parent().showTab()
+        newScene.setComponentMode()
+        newScene.setSelected(connectedComponent)
 
     def setSelected(self, item):
         if self._selected == item:
