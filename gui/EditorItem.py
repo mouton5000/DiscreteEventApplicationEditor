@@ -213,13 +213,13 @@ class SceneWidget(QGraphicsScene):
     def setSelected(self, item):
         if self._selected == item:
             return
-        if self._selected:
+        if self._selected is not None:
             try:
                 self._selected.unselect()
             except AttributeError:
                 pass
         self._selected = item
-        if item:
+        if item is not None:
             try:
                 item.select()
                 self.reinitSelectedProperties()
@@ -240,7 +240,7 @@ class SceneWidget(QGraphicsScene):
         self.setSelected(None)
 
     def reinitSelectedProperties(self):
-        if self._selected:
+        if self._selected is not None:
             if isinstance(self._selected, ArcItem):
                 self.parent().propertiesEditor.setArcItem().setSelectedArc(self._selected)
             elif isinstance(self._selected, NodeItem):
@@ -253,15 +253,19 @@ class SceneWidget(QGraphicsScene):
     def mousePressEvent(self, event):
         super(SceneWidget, self).mousePressEvent(event)
         item = self.mouseGrabberItem()
-        if item is not None and self._selected is not None and self.isComponentMode() and item in self._selected:
-            x, y = event.scenePos().x(), event.scenePos().y()
-            self._selected.initMove(x, y)
+        if self.isComponentMode():
+            # selected is a connected component if exists
+            if item is not None and self._selected is not None and item in self._selected:
+                x, y = event.scenePos().x(), event.scenePos().y()
+                self._selected.initMove(x, y)
 
     def mouseMoveEvent(self, event):
         item = self.mouseGrabberItem()
-        if item and self._selected and self.isComponentMode() and item in self._selected:
-            x, y = event.scenePos().x(), event.scenePos().y()
-            self._selected.move(x, y)
+        if self.isComponentMode():
+            # selected is a connected component if exists
+            if item is not None and self._selected is not None and item in self._selected:
+                x, y = event.scenePos().x(), event.scenePos().y()
+                self._selected.move(x, y)
         else:
             super(SceneWidget, self).mouseMoveEvent(event)
 
@@ -279,7 +283,7 @@ class SceneWidget(QGraphicsScene):
             self.mouseReleaseEventConnectedComponentMode(event, mouseGrabberItem)
 
     def mouseReleaseEventNodeMode(self, event, mouseGrabberItem):
-        if not mouseGrabberItem:
+        if mouseGrabberItem is None:
             x, y = event.scenePos().x(), event.scenePos().y()
             self.addNode(x, y)
         elif isinstance(mouseGrabberItem, NodeItem):
@@ -292,7 +296,7 @@ class SceneWidget(QGraphicsScene):
             mouseGrabberItem.mouseReleaseEvent(event)
 
     def mouseReleaseEventArcMode(self, event, mouseGrabberItem):
-        if not mouseGrabberItem:
+        if mouseGrabberItem is None:
                 self.setSelected(None)
         else:
             if isinstance(mouseGrabberItem, NodeItem):
@@ -307,7 +311,7 @@ class SceneWidget(QGraphicsScene):
             mouseGrabberItem.mouseReleaseEvent(event)
 
     def mouseReleaseEventSeparateMode(self, event, mouseGrabberItem):
-        if not mouseGrabberItem:
+        if mouseGrabberItem is None:
             self.setSelected(None)
         elif isinstance(mouseGrabberItem, ArcItem):
             self.setSelected(mouseGrabberItem)
@@ -316,7 +320,7 @@ class SceneWidget(QGraphicsScene):
             mouseGrabberItem.mouseReleaseEvent(event)
 
     def mouseReleaseEventSelectMode(self, event, mouseGrabberItem):
-        if mouseGrabberItem:
+        if mouseGrabberItem is not None:
             if not isinstance(mouseGrabberItem, LabelItem):
                 self.setSelected(mouseGrabberItem)
             else:
@@ -324,17 +328,26 @@ class SceneWidget(QGraphicsScene):
             mouseGrabberItem.mouseReleaseEvent(event)
 
     def mouseReleaseEventConnectedComponentMode(self, event, mouseGrabberItem):
-        if self._selected:
+
+        def _selectConnectedComponent():
+            try:
+                self.setSelected(mouseGrabberItem.getConnectedComponent())
+            except AttributeError:
+                pass
+
+        if self._selected is not None:
+            # selected is a connected component
             x, y = event.scenePos().x(), event.scenePos().y()
             self._selected.endMove(x, y)
-            if mouseGrabberItem:
+            if mouseGrabberItem is not None:
+                if mouseGrabberItem not in self._selected:
+                    _selectConnectedComponent()
                 mouseGrabberItem.mouseReleaseEvent(event)
+            else:
+                self.setSelected(None)
         else:
-            if mouseGrabberItem:
-                try:
-                    self.setSelected(mouseGrabberItem.getConnectedComponent())
-                except AttributeError:
-                    pass
+            if mouseGrabberItem is not None:
+                _selectConnectedComponent()
                 mouseGrabberItem.mouseReleaseEvent(event)
 
     def keyPressEvent(self, event):
