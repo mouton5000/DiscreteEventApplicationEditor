@@ -1,47 +1,48 @@
 from PyQt4.QtGui import QUndoCommand
 
 
-class AddItemCommand(QUndoCommand):
-    def __init__(self, scene, item, firstCall=True, parent=None):
-        super(AddItemCommand, self).__init__(parent)
+class AddNodeItemCommand(QUndoCommand):
+    def __init__(self, scene, nodeItem, parent=None):
+        super(AddNodeItemCommand, self).__init__(parent)
         self._scene = scene
-        self._item = item
-        self._firstCall = firstCall
+        self._nodeItem = nodeItem
 
     def undo(self):
-        self._scene.deleteItem(self._item)
-        self._scene.parent().showTab()
+        self._scene.removeNodeWithoutStack(self._nodeItem)
 
     def redo(self):
-        # The item cannot be inserted twice. We prevent the stack from calling redo automatically
-        if self._firstCall:
-            self._firstCall = not self._firstCall
-            return
-
-        self._scene.addItem(self._item)
-        self._scene.parent().showTab()
-
-        try:
-            self._item.num = self._scene.getNextNodeId()
-        except AttributeError:
-            pass
-
-        try:
-            self._item.node1.outputArcs.append(self._item)
-            self._item.node2.inputArcs.append(self._item)
-        except AttributeError:
-            pass
-
-        try:
-            self._scene.addItem(self._item._labelItem)
-        except AttributeError:
-            pass
+        self._scene.addNodeWithoutStack(self._nodeItem)
 
 
-class DeleteItemCommand(QUndoCommand):
-    def __init__(self, scene, item, parent=None):
-        super(DeleteItemCommand, self).__init__(parent)
-        self._opposite = AddItemCommand(scene, item, False, parent)
+class RemoveNodeItemCommand(QUndoCommand):
+    def __init__(self, scene, nodeItem, parent=None):
+        super(RemoveNodeItemCommand, self).__init__(parent)
+        self._opposite = AddNodeItemCommand(scene, nodeItem, parent)
+
+    def undo(self):
+        self._opposite.redo()
+
+    def redo(self):
+        self._opposite.undo()
+
+
+class AddArcItemCommand(QUndoCommand):
+    def __init__(self, scene, arcItem, parent=None):
+        super(AddArcItemCommand, self).__init__(parent)
+        self._scene = scene
+        self._arcItem = arcItem
+
+    def undo(self):
+        self._scene.removeArcWithoutStack(self._arcItem)
+
+    def redo(self):
+        self._scene.addArcWithoutStack(self._arcItem)
+
+
+class RemoveArcItemCommand(QUndoCommand):
+    def __init__(self, scene, arcItem, parent=None):
+        super(RemoveArcItemCommand, self).__init__(parent)
+        self._opposite = AddArcItemCommand(scene, arcItem, parent)
 
     def undo(self):
         self._opposite.redo()

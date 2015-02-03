@@ -1,3 +1,4 @@
+from copy import copy
 from gui.LabelItems import LabelItem
 
 __author__ = 'mouton'
@@ -117,13 +118,6 @@ class SceneWidget(QGraphicsScene):
         self._name = name
         self.mainWindow.centralWidget().tabItem().setTabbedViewText(self.parent(), name)
 
-    def addItem(self, item):
-        super(SceneWidget, self).addItem(item)
-        try:
-            item.add()
-        except AttributeError:
-            pass
-
     def clear(self):
         super(SceneWidget, self).clear()
         self.init()
@@ -135,12 +129,40 @@ class SceneWidget(QGraphicsScene):
         self.nodesIdsGenerator.removeNodeIndex(index)
 
     def addNode(self, x, y):
+        nodeItem = NodeItem(x, y, scene=self)
+        return self.addNodeItem(nodeItem)
+
+    def addNodeItem(self, nodeItem):
+        self.mainWindow.stack.push(AddNodeItemCommand(self, nodeItem))
+        return nodeItem
+
+    def addNodeWithoutStack(self, nodeItem):
         num = self.getNextNodeId()
-        node = NodeItem(x, y, num, scene=self)
-        self.setSelected(node)
-        # Apparently, addItem is not called when an item is created
-        node.add()
-        return node
+        nodeItem.num = num
+        self.nodes.append(nodeItem)
+        if nodeItem not in self.items():
+            self.addItem(nodeItem)
+        self.setSelected(nodeItem)
+        labelItem = nodeItem.getLabelItem()
+        if labelItem not in self.items():
+            self.addItem(labelItem)
+        self.parent().showTab()
+        return nodeItem
+
+    def removeNode(self, nodeItem):
+        self.mainWindow.stack.push(RemoveNodeItemCommand(self, nodeItem))
+
+    def removeNodeWithoutStack(self, nodeItem):
+        self.nodes.remove(nodeItem)
+        self.removeNodeIndex(nodeItem.num)
+        for a in copy(nodeItem.inputArcs):
+            self.removeArc(a)
+        for a in copy(nodeItem.outputArcs):
+            self.removeArc(a)
+
+        self.removeItem(nodeItem.getLabelItem())
+        self.removeItem(nodeItem)
+        self.parent().showTab()
 
     def getCloseNodeOf(self, x, y):
         for node in self.nodes:
@@ -149,12 +171,40 @@ class SceneWidget(QGraphicsScene):
 
     def addArc(self, n1, n2):
         if n1 == n2:
-            arc = CycleArcItem(n1, scene=self)
+            arcItem = CycleArcItem(n1, scene=self)
         else:
-            arc = ArcItem(n1, n2, scene=self)
+            arcItem = ArcItem(n1, n2, scene=self)
+        self.mainWindow.stack.push(AddArcItemCommand(self, arcItem))
         if self.isPathMode():
             self.setSelected(n2)
-        return arc
+        return arcItem
+
+    def addArcWithoutStack(self, arcItem):
+        if arcItem not in self.items():
+            self.addItem(arcItem)
+        arcItem.node1.outputArcs.append(arcItem)
+        arcItem.node2.inputArcs.append(arcItem)
+        self.setSelected(arcItem)
+        labelItem = arcItem.getLabelItem()
+        if labelItem not in self.items():
+            self.addItem(labelItem)
+        self.parent().showTab()
+        arcItem.drawPath()
+
+    def removeArc(self, arcItem):
+        self.mainWindow.stack.push(RemoveArcItemCommand(self, arcItem))
+
+    def removeArcWithoutStack(self, arcItem):
+        arcItem.node1.outputArcs.remove(arcItem)
+        arcItem.node1.reorganizeArcLabels()
+        arcItem.node2.inputArcs.remove(arcItem)
+        self.removeItem(arcItem.getLabelItem())
+        self.removeItem(arcItem)
+        self.parent().showTab()
+
+    def removeConnectedComponent(self, connectedComponent):
+        for node in connectedComponent.nodes:
+            self.removeNode(node)
 
     def mousePressEvent(self, event):
         super(SceneWidget, self).mousePressEvent(event)
@@ -181,7 +231,7 @@ class SceneWidget(QGraphicsScene):
                 self.setSelected(item)
                 item.mouseReleaseEvent(event)
             elif isinstance(item, LabelItem):
-                self.setSelected(item.labelOf)
+                self.setSelected(item.attachedItem())
                 item.mouseReleaseEvent(event)
             else:
                 item.mouseReleaseEvent(event)
@@ -197,7 +247,7 @@ class SceneWidget(QGraphicsScene):
                 elif isinstance(item, ArcItem):
                     self.setSelected(item)
                 elif isinstance(item, LabelItem):
-                    self.setSelected(item.labelOf)
+                    self.setSelected(item.attachedItem())
                 item.mouseReleaseEvent(event)
         elif self.isSeparateInputMode() or self.isSeparateOutputMode():
             if not item:
@@ -212,7 +262,7 @@ class SceneWidget(QGraphicsScene):
                 if not isinstance(item, LabelItem):
                     self.setSelected(item)
                 else:
-                    self.setSelected(item.labelOf)
+                    self.setSelected(item.attachedItem())
                 item.mouseReleaseEvent(event)
         elif self.isComponentMode():
             if self._selected:
@@ -274,10 +324,7 @@ class SceneWidget(QGraphicsScene):
         elif event.key() == QtCore.Qt.Key_C:
             self.setComponentMode()
         elif event.key() == QtCore.Qt.Key_Delete:
-            if self.isComponentMode() and self._selected is not None:
-                self._selected.remove()
-            elif self._selected:
-                self.deleteSelected()
+            self.deleteSelected()
         else:
             item = self.mouseGrabberItem()
             try:
@@ -341,12 +388,15 @@ class SceneWidget(QGraphicsScene):
         return self.modeController.isSeparateOutputMode()
 
     def deleteSelected(self):
-        self.mainWindow.stack.push(DeleteItemCommand(self, self._selected))
+        if self._selected is None:
+            return
+        if isinstance(self._selected, NodeItem):
+            self.removeNode(self._selected)
+        elif isinstance(self._selected, ArcItem):
+            self.removeArc(self._selected)
+        elif isinstance(self._selected, ConnectedComponent):
+            self.removeConnectedComponent(self._selected)
         self.setSelected(None)
-
-    def deleteItem(self, item):
-        item.remove()
-        self.removeItem(item)
 
 
 class NodesIdsGenerator():

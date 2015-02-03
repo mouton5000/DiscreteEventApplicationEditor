@@ -34,25 +34,17 @@ class ArcItem(QGraphicsPathItem):
         self._cl = 0
         self.initPath()
 
-        node1.outputArcs.append(self)
-        node2.inputArcs.append(self)
-
         self._isMoving = False
         self._moveFromCl = None
 
         self._separatingInput = None
         self._separatingOutput = None
 
-        self.scene().mainWindow.stack.push(AddItemCommand(self.scene(), self))
-
         self._label = 'false'
         self._formula = 'false'
         self._consequences = []
 
-        self._labelItem = LabelItem(str(len(node1.outputArcs) - 1) + ' : ' + self._label, self,
-                                       scene=self.scene())
-        self._labelItem.setBrush(QBrush(QtCore.Qt.black))
-        self.drawPath(True)
+        self._labelItem = None
 
     def getIndex(self):
         return self.node1.outputArcs.index(self)
@@ -72,6 +64,17 @@ class ArcItem(QGraphicsPathItem):
     def setLabel(self, label):
         self._label = label
         self.setLabelItemText(self.getIndex(), label)
+
+    def getLabelItem(self):
+        if self._labelItem is None:
+            self.setLabelItem(LabelItem(scene=self.scene()))
+        return self._labelItem
+
+    def setLabelItem(self, labelItem):
+        self._labelItem = labelItem
+        self._labelItem.setText(str(len(self.node1.outputArcs) - 1) + ' : ' + self._label)
+        self._labelItem.setBrush(QBrush(QtCore.Qt.black))
+        self._labelItem.setAttachedItem(self)
 
     def setLabelItemText(self, index, label):
         if label:
@@ -99,9 +102,6 @@ class ArcItem(QGraphicsPathItem):
                 self._consequences = consequences.split('\n')  # consequences is a string
         except AttributeError:
             self._consequences = consequences  # consequences is a list
-
-    def getLabelItem(self):
-        return self._labelItem
 
     def initPath(self):
         cls = []
@@ -236,7 +236,7 @@ class ArcItem(QGraphicsPathItem):
     def __repr__(self):
         return str(self.node1) + ' ' + str(self.node2)
 
-    def drawPath(self, initLabel=False):
+    def drawPath(self):
         """
         Trace d'un arc reliant les noeuds node1 et node2 dans le plan.
         Attention, puisque dans le plan de l'interface, l'axe des ordonnees est invere,
@@ -319,9 +319,9 @@ class ArcItem(QGraphicsPathItem):
         self.setPath(path)
 
         textCenter = v1 + u / 2 + (0.5 * self._cl) * n  # position normale
-        self._labelItem.setCenter(textCenter)
-        if initLabel:
-            self._labelItem.setOffset(10 * w * n)  # position du texte déplacé
+        labelItem = self.getLabelItem()
+        labelItem.setCenter(textCenter)
+        labelItem.setOffset(10 * w * n)  # position du texte déplacé
 
 
 class CycleArcItem(ArcItem):
@@ -371,7 +371,7 @@ class CycleArcItem(ArcItem):
             delta *= -1
         self.setClAndDelta(cl, delta)
 
-    def drawPath(self, initLabel=False):
+    def drawPath(self):
         """
         Tracé d'un arc reliant le noeud node1 à lui même dans le plan.
         Attention, puisque dans le plan de l'interface, l'axe des ordonnées est inveré,
@@ -478,4 +478,5 @@ class CycleArcItem(ArcItem):
         self.setPath(path)
 
         textCenter = o  # v1 + self._cl * u
-        self._labelItem.setCenter(textCenter)
+        labelItem = self.getLabelItem()
+        labelItem.setCenter(textCenter)

@@ -14,11 +14,11 @@ from gui.LabelItems import LabelItem
 class NodeItem(QGraphicsEllipseItem):
     NodeWidth = 20
 
-    def __init__(self, x, y, num, parent=None, scene=None):
+    def __init__(self, x, y, parent=None, scene=None):
         super(NodeItem, self).__init__(x - NodeItem.NodeWidth, y - NodeItem.NodeWidth, NodeItem.NodeWidth * 2,
                                        NodeItem.NodeWidth * 2, parent, scene)
 
-        self._num = num
+        self._num = None
         self.outputArcs = []
         self.inputArcs = []
         self._label = ''
@@ -28,15 +28,9 @@ class NodeItem(QGraphicsEllipseItem):
         self._isMoving = False
         self._moveFrom = None
 
-        self.scene().mainWindow.stack.push(AddItemCommand(self.scene(), self))
-
         self.setBrush(QBrush(QtCore.Qt.black))
 
-        self._labelItem = LabelItem(str(self.num), self,
-                                       scene=self.scene())
-        self._labelItem.setBrush(QBrush(QtCore.Qt.black))
-        self._labelItem.setCenter(self._center)
-        self._labelItem.setOffset(vector(0, NodeItem.NodeWidth * 2))
+        self._labelItem = None
 
     @property
     def num(self):
@@ -46,8 +40,18 @@ class NodeItem(QGraphicsEllipseItem):
     def num(self, value):
         self._num = value
 
-    def add(self):
-        self.scene().nodes.append(self)
+    def getLabelItem(self):
+        if self._labelItem is None:
+            self.setLabelItem(LabelItem(scene=self.scene()))
+        return self._labelItem
+
+    def setLabelItem(self, labelItem):
+        self._labelItem = labelItem
+        self._labelItem.setText(str(self.num))
+        self._labelItem.setBrush(QBrush(QtCore.Qt.black))
+        self._labelItem.setCenter(self.getXY())
+        self._labelItem.setOffset(vector(0, NodeItem.NodeWidth * 2))
+        labelItem.setAttachedItem(self)
 
     def reorganizeArcLabels(self):
         for j, arc in enumerate(self.outputArcs):
@@ -92,9 +96,6 @@ class NodeItem(QGraphicsEllipseItem):
             self._labelItem.setText(str(self.num) + ' : ' + label)
         else:
             self._labelItem.setText(str(self.num))
-
-    def getLabelItem(self):
-        return self._labelItem
 
     def getTokens(self):
         return self._tokens
@@ -159,17 +160,6 @@ class NodeItem(QGraphicsEllipseItem):
             if a.node1 == node:
                 return True
         return False
-
-    def remove(self):
-        self.scene().nodes.remove(self)
-        self.scene().removeNodeIndex(self.num)
-
-        for a in copy(self.inputArcs):
-            self.scene().mainWindow.stack.push(DeleteItemCommand(self.scene(), a))
-        for a in copy(self.outputArcs):
-            self.scene().mainWindow.stack.push(DeleteItemCommand(self.scene(), a))
-
-        self.scene().removeItem(self._labelItem)
 
     def getConnectedComponent(self):
         coComp = ConnectedComponent(self.scene())
@@ -272,11 +262,6 @@ class ConnectedComponent():
             self._isMoving = False
         else:
             self._moveFrom = None
-
-    def remove(self):
-        for node in self.nodes:
-            self.scene().mainWindow.stack.push(DeleteItemCommand(self.scene(), node))
-        self.scene().setSelected(None)
 
     def __str__(self):
         return str(self.nodes) + ' ' + str(self.arcs)
