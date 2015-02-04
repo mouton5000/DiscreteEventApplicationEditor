@@ -32,10 +32,16 @@ class ArcItem(QGraphicsPathItem):
         self.setBrush(QBrush(QtCore.Qt.black))
 
         self._cl = 0
-        self.initPath()
+        self._cycleCl = 100
+        self._delta = uniform(0, 2 * pi)
+
+        if not self.isCycle():
+            self.initPath()
 
         self._isMoving = False
         self._moveFromCl = None
+        self._moveFromCycleCl = None
+        self._moveFromDelta = None
 
         self._separatingInput = None
         self._separatingOutput = None
@@ -103,6 +109,27 @@ class ArcItem(QGraphicsPathItem):
         except AttributeError:
             self._consequences = consequences  # consequences is a list
 
+    def getCl(self):
+        return self._cl
+
+    def setCl(self, cl):
+        self._cl = cl
+
+    def getCycleCl(self):
+        return self._cycleCl
+
+    def setCycleCl(self, cycleCl):
+        self._cycleCl = cycleCl
+
+    def getDelta(self):
+        return self._delta
+
+    def setDelta(self, delta):
+        self._delta = delta
+
+    def isCycle(self):
+        return self.node1 == self.node2
+
     def initPath(self):
         cls = []
         for a in self.node1.outputArcs:
@@ -119,59 +146,124 @@ class ArcItem(QGraphicsPathItem):
             b = not b
         self._cl = cl
 
-    def changeNode(self, inputNotOutput, node):
-        if inputNotOutput:
-            self.node1.outputArcs.remove(self)
-            self.node1.reorganizeArcLabels()
-            self.node1 = node
-            self.node1.outputArcs.append(self)
-            self.setLabelItemText(len(self.node1.outputArcs) - 1, self.getLabel())
-        else:
-            self.node2.inputArcs.remove(self)
-            self.node2 = node
-            self.node2.inputArcs.append(self)
-        self.drawPath()
-
     def mousePressEvent(self, event):
         event.accept()
 
     def mouseReleaseEvent(self, event):
+        if self.scene().isArcMode():
+            if self.isCycle():
+                self.cycleMouseReleaseEvent()
+            else:
+                self.classicMouseReleaseEvent()
+        elif self.scene().isSeparateInputMode():
+            self.separateInputMouseReleaseEvent()
+        elif self.scene().isSeparateOutputMode():
+            self.separateOutputMouseReleaseEvent()
+        self.ungrabMouse()
+
+    def cycleMouseReleaseEvent(self):
         if self._isMoving:
-            self.scene().mainWindow.stack.push(MoveArcCommand(self.scene(), self, self._moveFromCl, self._cl))
+            self.commitMove()
             self._isMoving = False
-        elif self._separatingInput is not None:
+
+    def classicMouseReleaseEvent(self):
+        if self._isMoving:
+            self.commitMove()
+            self._isMoving = False
+
+    def commitMove(self):
+        self.scene().mainWindow.stack.push(
+            MoveArcCommand(self.scene(), self,
+                           self._moveFromCl, self._cl,
+                           self._moveFromCycleCl, self._cycleCl,
+                           self._moveFromDelta, self._delta))
+
+    def moveWithoutStack(self, cl, cycleCl, delta):
+        self.setCl(cl)
+        self.setCycleCl(cycleCl)
+        self.setDelta(delta)
+        self.drawPath()
+        self.scene().parent().showTab()
+
+    def separateInputMouseReleaseEvent(self):
+        if self._separatingInput is not None:
             x, y = self._separatingInput.x, self._separatingInput.y
             n1 = self.scene().getCloseNodeOf(x, y)
-            if n1 != self.node1 and n1 != self.node2:
+            if n1 != self.node1:
                 if n1 is None:
                     n1 = self.scene().addNode(self._separatingInput.x, self._separatingInput.y)
-                self.scene().mainWindow.stack.push(ChangeInputOrOuputCommand(self.scene(), self, True, self.node1, n1))
+                self.commitChangeInput(n1)
                 self._separatingInput = None
             else:
                 self._separatingInput = None
-                self.drawPath()
-        elif self._separatingOutput is not None:
+
+    def separateOutputMouseReleaseEvent(self):
+        if self._separatingOutput is not None:
             x, y = self._separatingOutput.x, self._separatingOutput.y
             n2 = self.scene().getCloseNodeOf(x, y)
-            if n2 != self.node1 and n2 != self.node2:
+            if n2 != self.node2:
                 if n2 is None:
                     n2 = self.scene().addNode(self._separatingOutput.x, self._separatingOutput.y)
-                self.scene().mainWindow.stack.push(ChangeInputOrOuputCommand(self.scene(), self, False, self.node2, n2))
+                self.commitChangeOutput(n2)
                 self._separatingOutput = None
             else:
                 self._separatingOutput = None
                 self.drawPath()
-        self.ungrabMouse()
+
+    def commitChangeInput(self, n1):
+        self.scene().mainWindow.stack.push(ChangeInputOrOuputCommand(self.scene(), self, True, self.node1, n1))
+
+    def changeInputWithoutStack(self, node):
+        self.node1.outputArcs.remove(self)
+        self.node1.reorganizeArcLabels()
+        self.node1 = node
+        self.node1.outputArcs.append(self)
+        self.setLabelItemText(len(self.node1.outputArcs) - 1, self.getLabel())
+        self.drawPath()
+
+    def commitChangeOutput(self, n2):
+        self.scene().mainWindow.stack.push(ChangeInputOrOuputCommand(self.scene(), self, False, self.node2, n2))
+
+    def changeOutputWithoutStack(self, node):
+        self.node2.inputArcs.remove(self)
+        self.node2 = node
+        self.node2.inputArcs.append(self)
+        self.drawPath()
 
     def mouseMoveEvent(self, event):
         if self.scene().isArcMode():
-            self.moveArcEvent(event)
+            if self.isCycle():
+                self.cycleMouseMoveEvent(event)
+            else:
+                self.classicMouseMoveEvent(event)
         elif self.scene().isSeparateInputMode():
-            self.separateInputArcEvent(event)
+            self.separateInputMouseMoveEvent(event)
         elif self.scene().isSeparateOutputMode():
-            self.separateOutputArcEvent(event)
+            self.separateOutputMouseMoveEvent(event)
 
-    def moveArcEvent(self, event):
+    def cycleMouseMoveEvent(self, event):
+        if not self._isMoving:
+            self._isMoving = True
+            self._moveFromCycleCl = self._cycleCl
+            self._moveFromDelta = self._delta
+
+        x = event.scenePos().x()
+        y = event.scenePos().y()
+        v1 = self.node1.getXY()
+        v = vector(x, y) - v1
+        cycleCl = v.mag
+        if cycleCl < 50:
+            cycleCl = 50
+
+        sindelta = vector(0, 1).dot(v) / cycleCl
+        delta = vector(1, 0).diff_angle(v)
+        if sindelta < 0:
+            delta *= -1
+        self.setCycleCl(cycleCl)
+        self.setDelta(delta)
+        self.drawPath()
+
+    def classicMouseMoveEvent(self, event):
         if not self._isMoving:
             self._isMoving = True
             self._moveFromCl = self._cl
@@ -185,8 +277,9 @@ class ArcItem(QGraphicsPathItem):
         n = (u.rotate(pi / 2)).norm()
 
         self.setCl((2 * v).dot(n))
+        self.drawPath()
 
-    def separateInputArcEvent(self, event):
+    def separateInputMouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
         node = self.scene().getCloseNodeOf(x, y)
         if node is None:
@@ -195,20 +288,13 @@ class ArcItem(QGraphicsPathItem):
             self._separatingInput = node.getXY()
         self.drawPath()
 
-    def separateOutputArcEvent(self, event):
+    def separateOutputMouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
         node = self.scene().getCloseNodeOf(x, y)
         if node is None:
             self._separatingOutput = vector(x, y)
         else:
             self._separatingOutput = node.getXY()
-        self.drawPath()
-
-    def getCl(self):
-        return self._cl
-
-    def setCl(self, cl):
-        self._cl = cl
         self.drawPath()
 
     def select(self):
@@ -237,6 +323,25 @@ class ArcItem(QGraphicsPathItem):
         return str(self.node1) + ' ' + str(self.node2)
 
     def drawPath(self):
+
+        sepInput = self._separatingInput is not None
+        sepOutput = self._separatingOutput is not None
+
+        if sepInput:
+            v1 = self._separatingInput
+        else:
+            v1 = self.node1.getXY()
+        if sepOutput:
+            v2 = self._separatingOutput
+        else:
+            v2 = self.node2.getXY()
+
+        if (v2 - v1).mag < NodeItem.NodeWidth:
+            self.drawCyclePath(v1, sepInput, v2, sepOutput, self._delta, self._cycleCl)
+        else:
+            self.drawClassicPath(v1, sepInput, v2, sepOutput, self._cl)
+
+    def drawClassicPath(self, v1, sepInput, v2, sepOutput, cl):
         """
         Trace d'un arc reliant les noeuds node1 et node2 dans le plan.
         Attention, puisque dans le plan de l'interface, l'axe des ordonnees est invere,
@@ -246,21 +351,12 @@ class ArcItem(QGraphicsPathItem):
         # Il est conseille de prendre une feuille est un stylo pour dessiner en lisant les commentaires
         # de cette methode
 
-        if self._separatingInput is None:
-            v1 = self.node1.getXY()
-        else:
-            v1 = self._separatingInput
-        if self._separatingOutput is None:
-            v2 = self.node2.getXY()
-        else:
-            v2 = self._separatingOutput
-
         u = v2 - v1  # Vecteur reliant v1 à v2
         n = (u.rotate(pi / 2)).norm()  # Vecteur unitaire perpendiculaire à u
 
         # Point sur la mediatrice de [v1,v2] situe a une distance cl
         # Il servira (presque) de point de controle pour les courbes de Beziers traçant les deux bords de l'arc.
-        c = v1 + u / 2 + self._cl * n
+        c = v1 + u / 2 + cl * n
 
         v1m1norm = (c - v1).norm()  # Vecteur unitaire de la droite (v1,c), de v1 vers c
         v2m2norm = (c - v2).norm()  # Vecteur unitaire de la droite (v2,c), de v2 vers c
@@ -299,7 +395,7 @@ class ArcItem(QGraphicsPathItem):
 
         # Tracé de l'arc
         path = QPainterPath()
-        if self._separatingInput is not None:
+        if sepInput:
             path.moveTo(v1.x + NodeItem.NodeWidth, v1.y)
             path.arcTo(v1.x - NodeItem.NodeWidth, v1.y - NodeItem.NodeWidth,
                            2 * NodeItem.NodeWidth, 2 * NodeItem.NodeWidth, 0, 360)
@@ -312,66 +408,18 @@ class ArcItem(QGraphicsPathItem):
         path.lineTo(a2p.x, a2p.y)
         path.lineTo(a2m.x, a2m.y)
         path.closeSubpath()
-        if self._separatingOutput is not None:
+        if sepOutput:
             path.moveTo(v2.x + NodeItem.NodeWidth, v2.y)
             path.arcTo(v2.x - NodeItem.NodeWidth, v2.y - NodeItem.NodeWidth,
                            2 * NodeItem.NodeWidth, 2 * NodeItem.NodeWidth, 0, 360)
         self.setPath(path)
 
-        textCenter = v1 + u / 2 + (0.5 * self._cl) * n  # position normale
+        textCenter = v1 + u / 2 + (0.5 * cl) * n  # position normale
         labelItem = self.getLabelItem()
         labelItem.setCenter(textCenter)
         labelItem.setOffset(10 * w * n)  # position du texte déplacé
 
-
-class CycleArcItem(ArcItem):
-    def __init__(self, node1, parent=None, scene=None):
-        self._delta = 0
-        self._moveFromDelta = None
-        super(CycleArcItem, self).__init__(node1, node1, parent, scene)
-
-    def initPath(self):
-        self._delta = uniform(0, 2 * pi)
-        self._cl = 100
-
-    def getDelta(self):
-        return self._delta
-
-    def setClAndDelta(self, cl, delta):
-        self._delta = delta
-        self.setCl(cl)
-
-    def mouseReleaseEvent(self, event):
-        if self._isMoving:
-            self.scene().mainWindow.stack.push(MoveArcCommand(self.scene(), self, self._moveFromCl, self._cl,
-                                                                     self._moveFromDelta, self._delta))
-            self._isMoving = False
-        self.ungrabMouse()
-
-    def mouseMoveEvent(self, event):
-        if not self.scene().isArcMode():
-            return
-
-        if not self._isMoving:
-            self._isMoving = True
-            self._moveFromCl = self._cl
-            self._moveFromDelta = self._delta
-
-        x = event.scenePos().x()
-        y = event.scenePos().y()
-        v1 = self.node1.getXY()
-        v = vector(x, y) - v1
-        cl = v.mag
-        if cl < 50:
-            cl = 50
-
-        sindelta = vector(0, 1).dot(v) / cl
-        delta = vector(1, 0).diff_angle(v)
-        if sindelta < 0:
-            delta *= -1
-        self.setClAndDelta(cl, delta)
-
-    def drawPath(self):
+    def drawCyclePath(self, v1, sepInput, v2, sepOutput, delta, cl):
         """
         Tracé d'un arc reliant le noeud node1 à lui même dans le plan.
         Attention, puisque dans le plan de l'interface, l'axe des ordonnées est inveré,
@@ -381,17 +429,15 @@ class CycleArcItem(ArcItem):
         # Il est conseillé de prendre une feuille est un stylo pour dessiner en lisant les commentaires
         # de cette méthode
 
-        v1 = v2 = self.node1.getXY()
-
         # m1 et o sont des points définis plus loin, mais on peut calculer et on a besoin de calculer leur distance
         # dès maintenant
-        m1omag = float(self._cl ** 2 - NodeItem.NodeWidth ** 2) / (2 * self._cl)
+        m1omag = float(cl ** 2 - NodeItem.NodeWidth ** 2) / (2 * cl)
 
         # demi angle entre les tangentes de l'arc à ses deux extrêmités (entre l'arrivée et le départ).
         gamma = atan(m1omag / NodeItem.NodeWidth)
 
         # delta est l'angle qui existe entre l'horizontale est la droite coupant orthogonalement l'arc en son milieu
-        u = vector(1, 0).rotate(self._delta)  # vecteur normé orienté du centre du noeud vers le milieu de l'arc
+        u = vector(1, 0).rotate(delta)  # vecteur normé orienté du centre du noeud vers le milieu de l'arc
         # m1 est le point du cercle node1 au milieu du départ de l'arc
         v1m1norm = (u.rotate(-gamma))
         # m2 est la pointe de la flêche de l'arc
@@ -477,6 +523,6 @@ class CycleArcItem(ArcItem):
         path.closeSubpath()
         self.setPath(path)
 
-        textCenter = o  # v1 + self._cl * u
+        textCenter = o  # v1 + cl * u
         labelItem = self.getLabelItem()
         labelItem.setCenter(textCenter)

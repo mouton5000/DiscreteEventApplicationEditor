@@ -69,29 +69,22 @@ class MoveNodeCommand(QUndoCommand):
 
 
 class MoveArcCommand(QUndoCommand):
-    def __init__(self, scene, arc, prevCl, newCl, prevDelta=None, newDelta=None, parent=None):
+    def __init__(self, scene, arc, prevCl, newCl, prevCycleCl, newCycleCl, prevDelta=None, newDelta=None, parent=None):
         super(MoveArcCommand, self).__init__(parent)
         self._scene = scene
         self._arc = arc
         self._prevCl = prevCl
         self._newCl = newCl
-        if prevDelta and newDelta:
-            self._prevDelta = prevDelta
-            self._newDelta = newDelta
+        self._prevCycleCl = prevCycleCl
+        self._newCycleCl = newCycleCl
+        self._prevDelta = prevDelta
+        self._newDelta = newDelta
 
     def undo(self):
-        try:
-            self._arc.setClAndDelta(self._prevCl, self._prevDelta)
-        except AttributeError:
-            self._arc.setCl(self._prevCl)
-        self._scene.parent().showTab()
+        self._arc.moveWithoutStack(self._prevCl, self._prevCycleCl, self._prevDelta)
 
     def redo(self):
-        try:
-            self._arc.setClAndDelta(self._newCl, self._newDelta)
-        except AttributeError:
-            self._arc.setCl(self._newCl)
-        self._scene.parent().showTab()
+        self._arc.moveWithoutStack(self._newCl, self._newCycleCl, self._newDelta)
 
 
 class MoveLabelItemCommand(QUndoCommand):
@@ -160,7 +153,13 @@ class ChangeInputOrOuputCommand(QUndoCommand):
         self._newNode = newNode
 
     def undo(self):
-        self._arc.changeNode(self._inputNotOuput, self._oldNode)
+        if self._inputNotOuput:
+            self._arc.changeInputWithoutStack(self._oldNode)
+        else:
+            self._arc.changeOutputWithoutStack(self._oldNode)
 
     def redo(self):
-        self._arc.changeNode(self._inputNotOuput, self._newNode)
+        if self._inputNotOuput:
+            self._arc.changeInputWithoutStack(self._newNode)
+        else:
+            self._arc.changeOutputWithoutStack(self._newNode)

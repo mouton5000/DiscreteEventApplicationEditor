@@ -160,10 +160,8 @@ class MainWindow(QMainWindow):
             d['n1'] = nodes.index(arc.node1)
             d['n2'] = nodes.index(arc.node2)
             d['cl'] = arc.getCl()
-            try:
-                d['delta'] = arc.getDelta()
-            except AttributeError:
-                pass
+            d['cycleCl'] = arc.getCycleCl()
+            d['delta'] = arc.getDelta()
             d['label'] = arc.getLabel()
             d['formula'] = arc.getFormula()
             d['consequences'] = arc.getConsequences()
@@ -230,15 +228,15 @@ class MainWindow(QMainWindow):
             n1 = nodes[arc['n1']]
             n2 = nodes[arc['n2']]
             a = scene.addArc(n1, n2)
-            if n1 == n2:
-                a.setClAndDelta(arc['cl'], arc['delta'])
-            else:
-                a.setCl(arc['cl'])
+            a.setCl(arc['cl'])
+            a.setCycleCl(arc['cycleCl'])
+            a.setDelta(arc['delta'])
             a.setLabel(arc['label'])
             a.setFormula(arc['formula'])
             a.setConsequences(arc['consequences'])
             lioff = arc['labelItemOffset']
             a.getLabelItem().setOffset(vector(lioff[0], lioff[1]))
+            a.drawPath()
 
         class LoadingWith():
             def __init__(self, mainWindow):
@@ -273,6 +271,8 @@ class MainWindow(QMainWindow):
             setW.setWidth(settingsDict['width'])
             setW.setHeight(settingsDict['height'])
             setW.setSprites(settingsDict['spritesRegistery'])
+
+            self.stack.clear()
 
     def setCurrentFile(self, currentFile):
         self._currentFile = currentFile

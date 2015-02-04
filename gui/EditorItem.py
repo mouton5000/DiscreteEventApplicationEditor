@@ -10,7 +10,7 @@ from PyQt4.QtCore import QRectF
 from PyQt4.QtGui import QGraphicsView, QGraphicsScene
 from undoRedoActions import *
 from NodeItems import NodeItem, ConnectedComponent
-from ArcItems import ArcItem, CycleArcItem
+from ArcItems import ArcItem
 from collections import deque
 
 
@@ -173,10 +173,7 @@ class SceneWidget(QGraphicsScene):
                 return node
 
     def addArc(self, n1, n2):
-        if n1 == n2:
-            arcItem = CycleArcItem(n1, scene=self)
-        else:
-            arcItem = ArcItem(n1, n2, scene=self)
+        arcItem = ArcItem(n1, n2, scene=self)
         self.mainWindow.stack.push(AddArcItemCommand(self, arcItem))
         if self.isPathMode():
             self.setSelected(n2)
@@ -345,8 +342,8 @@ class SceneWidget(QGraphicsScene):
         if mouseGrabberItem is None:
             self.setSelected(None)
         elif isinstance(mouseGrabberItem, ArcItem):
-            self.setSelected(mouseGrabberItem)
             mouseGrabberItem.mouseReleaseEvent(event)
+            self.setSelected(mouseGrabberItem)
         else:
             mouseGrabberItem.mouseReleaseEvent(event)
 
