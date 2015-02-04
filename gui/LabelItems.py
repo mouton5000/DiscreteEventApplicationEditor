@@ -20,11 +20,18 @@ class LabelItem(QGraphicsSimpleTextItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().mainWindow.stack.push(MoveLabelItemCommand(self.scene(), self, self._moveFromOffset,
-                                                                    self._offset))
+            self.commitMove()
             self._isMoving = False
             self._linkToParentItem.setVisible(False)
         self.ungrabMouse()
+
+    def commitMove(self):
+        self.scene().mainWindow.stack.push(
+            MoveLabelItemCommand(self.scene(), self, self._moveFromOffset, self._offset))
+
+    def moveWithoutStack(self, offset):
+        self.setOffset(offset)
+        self.scene().parent().showTab()
 
     def mouseMoveEvent(self, event):
         if not self._isMoving:

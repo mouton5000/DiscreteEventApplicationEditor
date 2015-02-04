@@ -94,12 +94,10 @@ class MoveLabelItemCommand(QUndoCommand):
         self._newOffset = newOffset
 
     def undo(self):
-        self._labelItem.setOffset(self._prevOffset)
-        self._scene.parent().showTab()
+        self._labelItem.moveWithoutStack(self._prevOffset)
 
     def redo(self):
-        self._labelItem.setOffset(self._newOffset)
-        self._scene.parent().showTab()
+        self._labelItem.moveWithoutStack(self._newOffset)
 
 
 class MoveConnectedComponentCommand(QUndoCommand):
