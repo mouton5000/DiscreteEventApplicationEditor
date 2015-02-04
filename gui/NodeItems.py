@@ -62,11 +62,18 @@ class NodeItem(QGraphicsEllipseItem):
 
     def mouseReleaseEvent(self, event):
         if self._isMoving:
-            self.scene().mainWindow.stack.push(MoveNodeCommand(self.scene(), self, self._moveFrom, self._center))
+            self.commitMove()
             self._moveFromX = None
             self._moveFromY = None
             self._isMoving = False
         self.ungrabMouse()
+
+    def commitMove(self):
+        self.scene().mainWindow.stack.push(MoveNodeCommand(self.scene(), self, self._moveFrom, self._center))
+
+    def moveWithoutStack(self, center):
+        self.setXY(center.x, center.y)
+        self.scene().parent().showTab()
 
     def select(self):
         br = self.brush()
@@ -193,6 +200,9 @@ class ConnectedComponent():
         self.px = None
         self.py = None
 
+        self._x = 0
+        self._y = 0
+
         self._isMoving = False
         self._moveFrom = None
         self._scene = scene
@@ -224,8 +234,8 @@ class ConnectedComponent():
         for arc in self.arcs:
             arc.unselect()
 
-    def initMove(self, x, y):
-        self._moveFrom = vector(x, y)
+    def initMove(self):
+        self._moveFrom = vector(self._x, self._y)
         self.px = None
         self.py = None
 
@@ -245,14 +255,24 @@ class ConnectedComponent():
             node.setDXDY(dx, dy, False)
         for arc in self.arcs:
             arc.drawPath()
+        self._x += dx
+        self._y += dy
 
-    def endMove(self, x, y):
+    def endMove(self):
         if self._isMoving:
-            self.scene().mainWindow.stack.push(MoveConnectedComponentCommand(self.scene(), self, self._moveFrom,
-                                                                                    vector(x, y)))
+            self.commitMove()
             self._isMoving = False
         else:
             self._moveFrom = None
+
+    def commitMove(self):
+        self.scene().mainWindow.stack.push(
+            MoveConnectedComponentCommand(self.scene(), self, self._moveFrom, vector(self._x, self._y)))
+
+    def moveWithoutStack(self, center):
+        dx, dy = center.x - self._x, center.y - self._y
+        self.setDXDY(dx, dy)
+        self.scene().parent().showTab()
 
     def __str__(self):
         return str(self.nodes) + ' ' + str(self.arcs)

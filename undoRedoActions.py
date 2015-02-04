@@ -60,12 +60,10 @@ class MoveNodeCommand(QUndoCommand):
         self._newPos = newPos
 
     def undo(self):
-        self._node.setXY(self._prevPos.x, self._prevPos.y)
-        self._scene.parent().showTab()
+        self._node.moveWithoutStack(self._prevPos)
 
     def redo(self):
-        self._node.setXY(self._newPos.x, self._newPos.y)
-        self._scene.parent().showTab()
+        self._node.moveWithoutStack(self._newPos)
 
 
 class MoveArcCommand(QUndoCommand):
@@ -105,28 +103,20 @@ class MoveLabelItemCommand(QUndoCommand):
 
 
 class MoveConnectedComponentCommand(QUndoCommand):
-    def __init__(self, scene, component, prevPos, newPos, parent=None):
+    def __init__(self, scene, component, prevCenter, newCenter, parent=None):
         super(MoveConnectedComponentCommand, self).__init__(parent)
         self._scene = scene
         self._component = component
-        self._prevPos = prevPos
-        self._newPos = newPos
-        self._firstCall = True
+        self._prevCenter = prevCenter
+        self._newCenter = newCenter
 
     def undo(self):
-        dvect = self._prevPos - self._newPos
-        dx, dy = dvect.x, dvect.y
-        self._component.setDXDY(dx, dy)
-        self._scene.parent().showTab()
+        print self._prevCenter
+        self._component.moveWithoutStack(self._prevCenter)
 
     def redo(self):
-        if self._firstCall:
-            self._firstCall = not self._firstCall
-            return
-        dvect = self._newPos - self._prevPos
-        dx, dy = dvect.x, dvect.y
-        self._component.setDXDY(dx, dy)
-        self._scene.parent().showTab()
+        print self._newCenter
+        self._component.moveWithoutStack(self._newCenter)
 
 
 class ChangeConnectedComponentSceneCommand(QUndoCommand):
