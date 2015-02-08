@@ -120,7 +120,7 @@ class NodeItem(QGraphicsEllipseItem):
         self._tokens.pop(index)
 
     def mouseMoveEvent(self, event):
-        if self.scene().isNodeMode():
+        if self.scene().isNodeMode() or self.scene().isMergeNodeMode():
             if not self._isMoving:
                 self._isMoving = True
                 self._moveFrom = self._center

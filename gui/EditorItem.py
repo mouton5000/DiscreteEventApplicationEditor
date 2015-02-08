@@ -240,6 +240,27 @@ class SceneWidget(QGraphicsScene):
         newScene.setComponentMode()
         newScene.setSelected(connectedComponent)
 
+    def mergeNodes(self, fromNode, toNode):
+        self.mainWindow.stack.push(MergeNodesCommand(self, fromNode, toNode))
+
+    def mergeNodesWithoutStack(self, fromNode, toNode, inputArcsOfFromNode, outputArcsOfFromNode):
+        for arc in inputArcsOfFromNode:
+            arc.changeOutputWithoutStack(toNode)
+        for arc in outputArcsOfFromNode:
+            arc.changeInputWithoutStack(toNode)
+        self.removeNodeWithoutStack(fromNode)
+        self.setSelected(toNode)
+        self.parent().showTab()
+
+    def unmergeNodesWithoutStack(self, fromNode, inputArcsOfFromNode, outputArcsOfFromNode):
+        self.addNodeWithoutStack(fromNode)
+        for arc in inputArcsOfFromNode:
+            arc.changeOutputWithoutStack(fromNode)
+        for arc in outputArcsOfFromNode:
+            arc.changeInputWithoutStack(fromNode)
+        self.setSelected(fromNode)
+        self.parent().showTab()
+
     def setSelected(self, item):
         if self._selected == item:
             return
@@ -302,6 +323,8 @@ class SceneWidget(QGraphicsScene):
         mouseGrabberItem = self.mouseGrabberItem()
         if self.isNodeMode():
             self.mouseReleaseEventNodeMode(event, mouseGrabberItem)
+        elif self.isMergeNodeMode():
+            self.mouseReleaseEventMergeNodeMode(event, mouseGrabberItem)
         elif self.isArcMode():
             self.mouseReleaseEventArcMode(event, mouseGrabberItem)
         elif self.isSeparateInputMode() or self.isSeparateOutputMode():
@@ -322,6 +345,16 @@ class SceneWidget(QGraphicsScene):
             self.setSelected(mouseGrabberItem.attachedItem())
             mouseGrabberItem.mouseReleaseEvent(event)
         else:
+            mouseGrabberItem.mouseReleaseEvent(event)
+
+    def mouseReleaseEventMergeNodeMode(self, event, mouseGrabberItem):
+        if mouseGrabberItem is None or not isinstance(mouseGrabberItem, NodeItem):
+            self.setSelected(None)
+        else:
+            if self._selected is not None and self._selected != mouseGrabberItem:
+                self.mergeNodes(self._selected, mouseGrabberItem)
+            else:
+                self.setSelected(mouseGrabberItem)
             mouseGrabberItem.mouseReleaseEvent(event)
 
     def mouseReleaseEventArcMode(self, event, mouseGrabberItem):
@@ -379,15 +412,18 @@ class SceneWidget(QGraphicsScene):
                 mouseGrabberItem.mouseReleaseEvent(event)
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_N:
+        if event.key() == QtCore.Qt.Key_N and event.modifiers() == QtCore.Qt.ShiftModifier:
+            self.setMergeNodeMode()
+        elif event.key() == QtCore.Qt.Key_N:
             self.setNodeMode()
+        elif event.key() == QtCore.Qt.Key_A and event.modifiers() == QtCore.Qt.ShiftModifier:
+            if self.isSeparateInputMode():
+                self.setSeparateOutputMode()
+            else:
+                self.setSeparateInputMode()
         elif event.key() == QtCore.Qt.Key_A:
             if self.isPathMode():
                 self.setStarMode()
-            elif self.isStarMode():
-                self.setSeparateInputMode()
-            elif self.isSeparateInputMode():
-                self.setSeparateOutputMode()
             else:
                 self.setPathMode()
         elif event.key() == QtCore.Qt.Key_S:
@@ -405,7 +441,12 @@ class SceneWidget(QGraphicsScene):
 
     def setNodeMode(self):
         self.modeController.setNodeMode()
-        if isinstance(self._selected, ArcItem) or isinstance(self._selected, ConnectedComponent):
+        if not isinstance(self._selected, NodeItem):
+            self.setSelected(None)
+
+    def setMergeNodeMode(self):
+        self.modeController.setMergeNodeMode()
+        if not isinstance(self._selected, NodeItem):
             self.setSelected(None)
 
     def setPathMode(self):
@@ -436,6 +477,9 @@ class SceneWidget(QGraphicsScene):
 
     def isNodeMode(self):
         return self.modeController.isNodeMode()
+
+    def isMergeNodeMode(self):
+        return self.modeController.isMergeNodeMode()
 
     def isArcMode(self):
         return self.modeController.isArcMode()
@@ -498,6 +542,7 @@ class ModeController():
     ComponentMode = 4
     SeparateInputMode = 5
     SeparateOutputMode = 6
+    MergeNodeMode = 7
 
     def __init__(self, mainWindow=None):
         self._mode = ModeController.NodeMode
@@ -506,6 +551,10 @@ class ModeController():
     def setNodeMode(self):
         self.setMode(ModeController.NodeMode)
         self.mainWindow.statusBar().showMessage('Node mode')
+
+    def setMergeNodeMode(self):
+        self.setMode(ModeController.MergeNodeMode)
+        self.mainWindow.statusBar().showMessage('Merge node mode')
 
     def setPathMode(self):
         self.setMode(ModeController.PathMode)
@@ -536,6 +585,9 @@ class ModeController():
 
     def isNodeMode(self):
         return self._mode == ModeController.NodeMode
+
+    def isMergeNodeMode(self):
+        return self._mode == ModeController.MergeNodeMode
 
     def isArcMode(self):
         return self.isPathMode() or self.isStarMode()
