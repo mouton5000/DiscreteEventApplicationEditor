@@ -232,10 +232,6 @@ class SceneWidget(QGraphicsScene):
         self.removeItem(arcItem)
         self.parent().showTab()
 
-    def removeConnectedComponent(self, connectedComponent):
-        for node in connectedComponent.nodes:
-            self.removeNode(node)
-
     def changeConnectedComponentSceneByIndex(self, connectedComponent, newSceneIndex):
         if newSceneIndex == -1:
             return
@@ -266,6 +262,9 @@ class SceneWidget(QGraphicsScene):
         newScene.setComponentMode()
         newScene.setSelected(connectedComponent)
 
+    def removeConnectedComponent(self, connectedComponent):
+        self.mainWindow.stack.push(RemoveConnectedComponentCommand(self, connectedComponent))
+
     def removeConnectedComponentWithoutStack(self, connectedComponent):
         for arc in connectedComponent.arcs:
             self.removeArcWithoutStack(arc)
@@ -277,6 +276,14 @@ class SceneWidget(QGraphicsScene):
             self.removeNodeWithoutStack(node, [])
         self.parent().showTab()
         self.setSelected(None)
+
+    def addConnectedComponentWithoutStack(self, connectedComponent):
+        for node in connectedComponent.nodes:
+            self.addNodeWithoutStack(node)
+        for arc in connectedComponent.arcs:
+            self.addArcWithoutStack(arc)
+        self.setSelected(connectedComponent)
+        self.parent().showTab()
 
     def copyConnectedComponent(self, connectedComponent, x, y):
         self.mainWindow.stack.push(CopyConnectedComponentCommand(self, connectedComponent, x, y))

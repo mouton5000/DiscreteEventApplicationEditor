@@ -8,7 +8,7 @@ class AddNodeItemCommand(QUndoCommand):
         self._nodeItem = nodeItem
 
     def undo(self):
-        self._scene.removeNodeWithoutStack(self._nodeItem)
+        self._scene.removeNodeWithoutStack(self._nodeItem, [])
 
     def redo(self):
         self._scene.addNodeWithoutStack(self._nodeItem)
@@ -172,6 +172,19 @@ class MoveConnectedComponentCommand(QUndoCommand):
     def redo(self):
         print self._newCenter
         self._component.moveWithoutStack(self._newCenter)
+
+
+class RemoveConnectedComponentCommand(QUndoCommand):
+    def __init__(self, scene, component, parent=None):
+        super(RemoveConnectedComponentCommand, self).__init__(parent)
+        self._scene = scene
+        self._component = component
+
+    def undo(self):
+        self._scene.addConnectedComponentWithoutStack(self._component)
+
+    def redo(self):
+        self._scene.removeConnectedComponentWithoutStack(self._component)
 
 
 class CopyConnectedComponentCommand(QUndoCommand):
