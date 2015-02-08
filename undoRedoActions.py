@@ -172,3 +172,20 @@ class MoveConnectedComponentCommand(QUndoCommand):
     def redo(self):
         print self._newCenter
         self._component.moveWithoutStack(self._newCenter)
+
+
+class CopyConnectedComponentCommand(QUndoCommand):
+    def __init__(self, scene, component, x, y, parent=None):
+        super(CopyConnectedComponentCommand, self).__init__(parent)
+        self._scene = scene
+        self._component = component
+        self._x = x
+        self._y = y
+        self._copyComponent = None
+
+    def undo(self):
+        if self._copyComponent is not None:
+            self._scene.removeConnectedComponentWithoutStack(self._copyComponent)
+
+    def redo(self):
+        self._copyComponent = self._scene.copyConnectedComponentWithoutStack(self._component, self._x, self._y)

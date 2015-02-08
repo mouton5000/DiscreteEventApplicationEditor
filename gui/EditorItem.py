@@ -12,6 +12,7 @@ from undoRedoActions import *
 from NodeItems import NodeItem, ConnectedComponent
 from ArcItems import ArcItem
 from collections import deque
+from visual import vector
 
 
 class ViewWidget(QGraphicsView):
@@ -171,6 +172,27 @@ class SceneWidget(QGraphicsScene):
             self.addArcWithoutStack(arc)
         self.setSelected(nodeItem)
 
+    def mergeNodes(self, fromNode, toNode):
+        self.mainWindow.stack.push(MergeNodesCommand(self, fromNode, toNode))
+
+    def mergeNodesWithoutStack(self, fromNode, toNode, inputArcsOfFromNode, outputArcsOfFromNode):
+        for arc in inputArcsOfFromNode:
+            arc.changeOutputWithoutStack(toNode)
+        for arc in outputArcsOfFromNode:
+            arc.changeInputWithoutStack(toNode)
+        self.removeNodeWithoutStack(fromNode)
+        self.setSelected(toNode)
+        self.parent().showTab()
+
+    def unmergeNodesWithoutStack(self, fromNode, inputArcsOfFromNode, outputArcsOfFromNode):
+        self.addNodeWithoutStack(fromNode)
+        for arc in inputArcsOfFromNode:
+            arc.changeOutputWithoutStack(fromNode)
+        for arc in outputArcsOfFromNode:
+            arc.changeInputWithoutStack(fromNode)
+        self.setSelected(fromNode)
+        self.parent().showTab()
+
     def getCloseNodeOf(self, x, y):
         for node in self.nodes:
             if node.isCloseTo(x, y):
@@ -244,26 +266,54 @@ class SceneWidget(QGraphicsScene):
         newScene.setComponentMode()
         newScene.setSelected(connectedComponent)
 
-    def mergeNodes(self, fromNode, toNode):
-        self.mainWindow.stack.push(MergeNodesCommand(self, fromNode, toNode))
+    def removeConnectedComponentWithoutStack(self, connectedComponent):
+        for arc in connectedComponent.arcs:
+            self.removeArcWithoutStack(arc)
 
-    def mergeNodesWithoutStack(self, fromNode, toNode, inputArcsOfFromNode, outputArcsOfFromNode):
-        for arc in inputArcsOfFromNode:
-            arc.changeOutputWithoutStack(toNode)
-        for arc in outputArcsOfFromNode:
-            arc.changeInputWithoutStack(toNode)
-        self.removeNodeWithoutStack(fromNode)
-        self.setSelected(toNode)
-        self.parent().showTab()
+        def sortKey(n):
+            return n.num
 
-    def unmergeNodesWithoutStack(self, fromNode, inputArcsOfFromNode, outputArcsOfFromNode):
-        self.addNodeWithoutStack(fromNode)
-        for arc in inputArcsOfFromNode:
-            arc.changeOutputWithoutStack(fromNode)
-        for arc in outputArcsOfFromNode:
-            arc.changeInputWithoutStack(fromNode)
-        self.setSelected(fromNode)
+        for node in reversed(sorted(connectedComponent.nodes, key=sortKey)):
+            self.removeNodeWithoutStack(node, [])
         self.parent().showTab()
+        self.setSelected(None)
+
+    def copyConnectedComponent(self, connectedComponent, x, y):
+        self.mainWindow.stack.push(CopyConnectedComponentCommand(self, connectedComponent, x, y))
+
+    def copyConnectedComponentWithoutStack(self, connectedComponent, x, y):
+        node0 = connectedComponent.firstNode
+        v0 = node0.getXY()
+        v = vector(x, y)
+
+        def addNode(node):
+            v1 = node.getXY()
+            v2 = v + (v1 - v0)
+            copyNode = NodeItem(v2.x, v2.y, scene=self)
+            self.addNodeWithoutStack(copyNode)
+            return copyNode
+
+        def sortKey(node):
+            return node.num
+
+        dictNode = {node: addNode(node) for node in sorted(connectedComponent.nodes, key=sortKey)}
+
+        for arc in connectedComponent.arcs:
+            node1 = dictNode[arc.node1]
+            node2 = dictNode[arc.node2]
+            arc2 = ArcItem(node1, node2, scene=self)
+            self.addArcWithoutStack(arc2)
+            arc2.setCl(arc.getCl())
+            arc2.setCycleCl(arc.getCycleCl())
+            arc2.setDelta(arc.getDelta())
+            arc2.setLabel(arc.getLabel())
+            arc2.setFormula(arc.getFormula())
+            arc2.setConsequences(arc.getConsequences())
+
+        copyConnectedComponent = dictNode[node0].getConnectedComponent()
+        self.setSelected(copyConnectedComponent)
+        self.parent().showTab()
+        return copyConnectedComponent
 
     def setSelected(self, item):
         if self._selected == item:
@@ -337,6 +387,8 @@ class SceneWidget(QGraphicsScene):
             self.mouseReleaseEventSelectMode(event, mouseGrabberItem)
         elif self.isComponentMode():
             self.mouseReleaseEventConnectedComponentMode(event, mouseGrabberItem)
+        elif self.isCopyComponentMode():
+            self.mouseReleaseEventCopyConnectedComponentMode(event, mouseGrabberItem)
 
     def mouseReleaseEventNodeMode(self, event, mouseGrabberItem):
         if mouseGrabberItem is None:
@@ -393,26 +445,40 @@ class SceneWidget(QGraphicsScene):
                 self.setSelected(mouseGrabberItem.attachedItem())
             mouseGrabberItem.mouseReleaseEvent(event)
 
+    def _selectConnectedComponent(self, mouseGrabberItem):
+        try:
+            self.setSelected(mouseGrabberItem.getConnectedComponent())
+        except AttributeError:
+            pass
+
     def mouseReleaseEventConnectedComponentMode(self, event, mouseGrabberItem):
-
-        def _selectConnectedComponent():
-            try:
-                self.setSelected(mouseGrabberItem.getConnectedComponent())
-            except AttributeError:
-                pass
-
         if self._selected is not None:
             # selected is a connected component
             self._selected.endMove()
             if mouseGrabberItem is not None:
                 if mouseGrabberItem not in self._selected:
-                    _selectConnectedComponent()
+                    self._selectConnectedComponent(mouseGrabberItem)
                 mouseGrabberItem.mouseReleaseEvent(event)
             else:
                 self.setSelected(None)
         else:
             if mouseGrabberItem is not None:
-                _selectConnectedComponent()
+                self._selectConnectedComponent(mouseGrabberItem)
+                mouseGrabberItem.mouseReleaseEvent(event)
+
+    def mouseReleaseEventCopyConnectedComponentMode(self, event, mouseGrabberItem):
+        if self._selected is not None:
+            self._selected.endMove()
+            if mouseGrabberItem is not None:
+                if mouseGrabberItem not in self._selected:
+                    self._selectConnectedComponent(mouseGrabberItem)
+                mouseGrabberItem.mouseReleaseEvent(event)
+            else:
+                x, y = event.scenePos().x(), event.scenePos().y()
+                self.copyConnectedComponent(self._selected, x, y)
+        else:
+            if mouseGrabberItem is not None:
+                self._selectConnectedComponent(mouseGrabberItem)
                 mouseGrabberItem.mouseReleaseEvent(event)
 
     def keyPressEvent(self, event):
@@ -432,6 +498,8 @@ class SceneWidget(QGraphicsScene):
                 self.setPathMode()
         elif event.key() == QtCore.Qt.Key_S:
             self.setSelectMode()
+        if event.key() == QtCore.Qt.Key_C and event.modifiers() == QtCore.Qt.ShiftModifier:
+            self.setCopyComponentMode()
         elif event.key() == QtCore.Qt.Key_C:
             self.setComponentMode()
         elif event.key() == QtCore.Qt.Key_Delete:
@@ -463,14 +531,6 @@ class SceneWidget(QGraphicsScene):
         if isinstance(self._selected, ConnectedComponent):
             self.setSelected(None)
 
-    def setSelectMode(self):
-        self.modeController.setSelectMode()
-        self.setSelected(None)
-
-    def setComponentMode(self):
-        self.modeController.setComponentMode()
-        self.setSelected(None)
-
     def setSeparateInputMode(self):
         self.modeController.setSeparateInputMode()
         self.setSelected(None)
@@ -478,6 +538,20 @@ class SceneWidget(QGraphicsScene):
     def setSeparateOutputMode(self):
         self.modeController.setSeparateOutputMode()
         self.setSelected(None)
+
+    def setSelectMode(self):
+        self.modeController.setSelectMode()
+        self.setSelected(None)
+
+    def setComponentMode(self):
+        self.modeController.setComponentMode()
+        if not isinstance(self._selected, ConnectedComponent):
+            self.setSelected(None)
+
+    def setCopyComponentMode(self):
+        self.modeController.setCopyComponentMode()
+        if not isinstance(self._selected, ConnectedComponent):
+            self.setSelected(None)
 
     def isNodeMode(self):
         return self.modeController.isNodeMode()
@@ -494,17 +568,20 @@ class SceneWidget(QGraphicsScene):
     def isStarMode(self):
         return self.modeController.isStarMode()
 
+    def isSeparateInputMode(self):
+        return self.modeController.isSeparateInputMode()
+
+    def isSeparateOutputMode(self):
+        return self.modeController.isSeparateOutputMode()
+
     def isSelectMode(self):
         return self.modeController.isSelectMode()
 
     def isComponentMode(self):
         return self.modeController.isComponentMode()
 
-    def isSeparateInputMode(self):
-        return self.modeController.isSeparateInputMode()
-
-    def isSeparateOutputMode(self):
-        return self.modeController.isSeparateOutputMode()
+    def isCopyComponentMode(self):
+        return self.modeController.isCopyComponentMode()
 
 
 class NodesIdsGenerator():
@@ -547,6 +624,7 @@ class ModeController():
     SeparateInputMode = 5
     SeparateOutputMode = 6
     MergeNodeMode = 7
+    CopyComponentMode = 8
 
     def __init__(self, mainWindow=None):
         self._mode = ModeController.NodeMode
@@ -568,6 +646,14 @@ class ModeController():
         self.setMode(ModeController.StarMode)
         self.mainWindow.statusBar().showMessage('Star mode')
 
+    def setSeparateInputMode(self):
+        self.setMode(ModeController.SeparateInputMode)
+        self.mainWindow.statusBar().showMessage('Separate input mode')
+
+    def setSeparateOutputMode(self):
+        self.setMode(ModeController.SeparateOutputMode)
+        self.mainWindow.statusBar().showMessage('Separate output mode')
+
     def setSelectMode(self):
         self.setMode(ModeController.SelectMode)
         self.mainWindow.statusBar().showMessage('Select mode')
@@ -576,13 +662,9 @@ class ModeController():
         self.setMode(ModeController.ComponentMode)
         self.mainWindow.statusBar().showMessage('Component mode')
 
-    def setSeparateInputMode(self):
-        self.setMode(ModeController.SeparateInputMode)
-        self.mainWindow.statusBar().showMessage('Separate input mode')
-
-    def setSeparateOutputMode(self):
-        self.setMode(ModeController.SeparateOutputMode)
-        self.mainWindow.statusBar().showMessage('Separate output mode')
+    def setCopyComponentMode(self):
+        self.setMode(ModeController.CopyComponentMode)
+        self.mainWindow.statusBar().showMessage('Copy component mode')
 
     def setMode(self, mode):
         self._mode = mode
@@ -613,3 +695,6 @@ class ModeController():
 
     def isComponentMode(self):
         return self._mode == ModeController.ComponentMode
+
+    def isCopyComponentMode(self):
+        return self._mode == ModeController.CopyComponentMode

@@ -169,7 +169,7 @@ class NodeItem(QGraphicsEllipseItem):
         return False
 
     def getConnectedComponent(self):
-        coComp = ConnectedComponent(self.scene())
+        coComp = ConnectedComponent(self.scene(), self)
         toVisit = set([self])
         while len(toVisit) != 0:
             node = toVisit.pop()
@@ -194,11 +194,13 @@ class NodeItem(QGraphicsEllipseItem):
 
 class ConnectedComponent():
 
-    def __init__(self, scene):
+    def __init__(self, scene, node):
         self.nodes = set([])
         self.arcs = set([])
         self.px = None
         self.py = None
+
+        self.firstNode = node
 
         self._x = 0
         self._y = 0
