@@ -17,13 +17,49 @@ class AddNodeItemCommand(QUndoCommand):
 class RemoveNodeItemCommand(QUndoCommand):
     def __init__(self, scene, nodeItem, parent=None):
         super(RemoveNodeItemCommand, self).__init__(parent)
-        self._opposite = AddNodeItemCommand(scene, nodeItem, parent)
+        self._scene = scene
+        self._nodeItem = nodeItem
+        from copy import copy
+        self._arcsItems = set(copy(nodeItem.outputArcs) + copy(nodeItem.inputArcs))
 
     def undo(self):
-        self._opposite.redo()
+        self._scene.undoRemoveNodeWithoutStack(self._nodeItem, self._arcsItems)
 
     def redo(self):
-        self._opposite.undo()
+        self._scene.removeNodeWithoutStack(self._nodeItem, self._arcsItems)
+
+
+class MoveNodeCommand(QUndoCommand):
+    def __init__(self, scene, node, prevPos, newPos, parent=None):
+        super(MoveNodeCommand, self).__init__(parent)
+        self._scene = scene
+        self._node = node
+        self._prevPos = prevPos
+        self._newPos = newPos
+
+    def undo(self):
+        self._node.moveWithoutStack(self._prevPos)
+
+    def redo(self):
+        self._node.moveWithoutStack(self._newPos)
+
+
+class MergeNodesCommand(QUndoCommand):
+    def __init__(self, scene, fromNode, toNode, parent=None):
+        super(MergeNodesCommand, self).__init__(parent)
+        self._scene = scene
+        self._fromNode = fromNode
+        self._toNode = toNode
+        from copy import copy
+        self._inputArcsOfFromNodes = copy(fromNode.inputArcs)
+        self._outputArcsOfFromNodes = copy(fromNode.outputArcs)
+
+    def undo(self):
+        self._scene.unmergeNodesWithoutStack(self._fromNode, self._inputArcsOfFromNodes, self._outputArcsOfFromNodes)
+
+    def redo(self):
+        self._scene.mergeNodesWithoutStack(self._fromNode, self._toNode,
+                                           self._inputArcsOfFromNodes, self._outputArcsOfFromNodes)
 
 
 class AddArcItemCommand(QUndoCommand):
@@ -51,21 +87,6 @@ class RemoveArcItemCommand(QUndoCommand):
         self._opposite.undo()
 
 
-class MoveNodeCommand(QUndoCommand):
-    def __init__(self, scene, node, prevPos, newPos, parent=None):
-        super(MoveNodeCommand, self).__init__(parent)
-        self._scene = scene
-        self._node = node
-        self._prevPos = prevPos
-        self._newPos = newPos
-
-    def undo(self):
-        self._node.moveWithoutStack(self._prevPos)
-
-    def redo(self):
-        self._node.moveWithoutStack(self._newPos)
-
-
 class MoveArcCommand(QUndoCommand):
     def __init__(self, scene, arc, prevCl, newCl, prevCycleCl, newCycleCl, prevDelta=None, newDelta=None, parent=None):
         super(MoveArcCommand, self).__init__(parent)
@@ -83,38 +104,6 @@ class MoveArcCommand(QUndoCommand):
 
     def redo(self):
         self._arc.moveWithoutStack(self._newCl, self._newCycleCl, self._newDelta)
-
-
-class MoveLabelItemCommand(QUndoCommand):
-    def __init__(self, scene, labelItem, prevOffset, newOffset, parent=None):
-        super(MoveLabelItemCommand, self).__init__(parent)
-        self._scene = scene
-        self._labelItem = labelItem
-        self._prevOffset = prevOffset
-        self._newOffset = newOffset
-
-    def undo(self):
-        self._labelItem.moveWithoutStack(self._prevOffset)
-
-    def redo(self):
-        self._labelItem.moveWithoutStack(self._newOffset)
-
-
-class MoveConnectedComponentCommand(QUndoCommand):
-    def __init__(self, scene, component, prevCenter, newCenter, parent=None):
-        super(MoveConnectedComponentCommand, self).__init__(parent)
-        self._scene = scene
-        self._component = component
-        self._prevCenter = prevCenter
-        self._newCenter = newCenter
-
-    def undo(self):
-        print self._prevCenter
-        self._component.moveWithoutStack(self._prevCenter)
-
-    def redo(self):
-        print self._newCenter
-        self._component.moveWithoutStack(self._newCenter)
 
 
 class ChangeConnectedComponentSceneCommand(QUndoCommand):
@@ -151,3 +140,35 @@ class ChangeInputOrOuputCommand(QUndoCommand):
             self._arc.changeInputWithoutStack(self._newNode)
         else:
             self._arc.changeOutputWithoutStack(self._newNode)
+
+
+class MoveLabelItemCommand(QUndoCommand):
+    def __init__(self, scene, labelItem, prevOffset, newOffset, parent=None):
+        super(MoveLabelItemCommand, self).__init__(parent)
+        self._scene = scene
+        self._labelItem = labelItem
+        self._prevOffset = prevOffset
+        self._newOffset = newOffset
+
+    def undo(self):
+        self._labelItem.moveWithoutStack(self._prevOffset)
+
+    def redo(self):
+        self._labelItem.moveWithoutStack(self._newOffset)
+
+
+class MoveConnectedComponentCommand(QUndoCommand):
+    def __init__(self, scene, component, prevCenter, newCenter, parent=None):
+        super(MoveConnectedComponentCommand, self).__init__(parent)
+        self._scene = scene
+        self._component = component
+        self._prevCenter = prevCenter
+        self._newCenter = newCenter
+
+    def undo(self):
+        print self._prevCenter
+        self._component.moveWithoutStack(self._prevCenter)
+
+    def redo(self):
+        print self._newCenter
+        self._component.moveWithoutStack(self._newCenter)

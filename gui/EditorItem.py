@@ -154,18 +154,22 @@ class SceneWidget(QGraphicsScene):
     def removeNode(self, nodeItem):
         self.mainWindow.stack.push(RemoveNodeItemCommand(self, nodeItem))
 
-    def removeNodeWithoutStack(self, nodeItem):
+    def removeNodeWithoutStack(self, nodeItem, arcs):
         # Should not be called by any instance but a QUndoRedoCommand instance
         self.nodes.remove(nodeItem)
         self.removeNodeIndex(nodeItem.num)
-        for a in copy(nodeItem.inputArcs):
-            self.removeArc(a)
-        for a in copy(nodeItem.outputArcs):
-            self.removeArc(a)
+        for a in arcs:
+            self.removeArcWithoutStack(a)
 
         self.removeItem(nodeItem.getLabelItem())
         self.removeItem(nodeItem)
         self.parent().showTab()
+
+    def undoRemoveNodeWithoutStack(self, nodeItem, arcs):
+        self.addNodeWithoutStack(nodeItem)
+        for arc in arcs:
+            self.addArcWithoutStack(arc)
+        self.setSelected(nodeItem)
 
     def getCloseNodeOf(self, x, y):
         for node in self.nodes:
