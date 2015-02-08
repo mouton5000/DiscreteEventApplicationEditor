@@ -177,6 +177,8 @@ class SceneWidget(QGraphicsScene):
         self.mainWindow.stack.push(AddArcItemCommand(self, arcItem))
         if self.isPathMode():
             self.setSelected(n2)
+        elif self.isStarMode():
+            self.setSelected(n1)
         return arcItem
 
     def addArcWithoutStack(self, arcItem):
