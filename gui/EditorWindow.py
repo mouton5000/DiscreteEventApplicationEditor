@@ -123,7 +123,13 @@ class MainWindow(QMainWindow):
         self.centralWidget().reinit()
 
     def new(self):
-        if not self.checkSave():
+        self._new(True)
+
+    def newFromLoad(self):
+        self._new(False)
+
+    def _new(self, doCheckSave):
+        if doCheckSave and not self.checkSave():
             return
         scenes = self.scenes()
         for scene in scenes:
@@ -208,7 +214,7 @@ class MainWindow(QMainWindow):
                 d = json.load(f)
 
                 self._lastSaveOpenFileDirectory = os.path.dirname(fname)
-                self.new()
+                self.newFromLoad()
                 self.setCurrentFile(os.path.basename(fname))
         except IOError:
             return
