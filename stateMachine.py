@@ -226,14 +226,14 @@ class Transition:
         in1.outputArcs.append(self)
         self.n2 = in2
         self._trigger = BExpression(BooleanExpressionParser.parse(trigger))
-        self._consequences = consequences
+        self._consequences = [ConsequencesParser.parse(cons) for cons in consequences]
 
     def eval(self, token):
         return self._trigger.eval(token)
 
     def applyConsequences(self, evaluation, stateMachine, token):
-        for cons in self._consequences:
-            ConsequencesParser.parse(cons).eval_update(evaluation, stateMachine, token)
+        for parsedCons in self._consequences:
+            parsedCons.eval_update(evaluation, stateMachine, token)
 
     def __str__(self):
         return str(self.n1) + ' ' + str(self.n2)
