@@ -2,7 +2,7 @@ import lrparsing
 from lrparsing import List, Prio, Ref, Token, Opt, Sequence
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
-    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral, SelfExpression
+    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral, SelfExpression, Min, Max
 from database import Variable
 from consequencesExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
@@ -120,6 +120,8 @@ class ConsequencesParser(lrparsing.Grammar):
                 Token('sign') | Token('floor') | Token('ceil') | Token('acos') | Token('asin') | Token('atan') |
                 Token('sh') | Token('ch') | Token('th') | Token('ash') | Token('ach') | Token('ath') | Token('len')) \
                + parArithmExpr
+    minExpr = Token('min') + '(' + arithmExpr + ',' + arithmExpr + ')'
+    maxExpr = Token('max') + '(' + arithmExpr + ',' + arithmExpr + ')'
     getItemArithExpr = arithmExpr + '[' + arithmExpr + ']'
     getSublistArithExpr = arithmExpr + '[' + Opt(arithmExpr) + ':' + Opt(arithmExpr) + ']'
     insertArithExpr = arithmExpr << '<' << Opt(arithmExpr) << '<' << arithmExpr
@@ -127,7 +129,7 @@ class ConsequencesParser(lrparsing.Grammar):
 
     arithmExpr = Prio(T.integer, T.float, T.variable, T.selfvariable, T.string, constantExpr, listExpr, linkedListExpr,
                       setExpr, parArithmExpr, getItemArithExpr, getSublistArithExpr, insertArithExpr, removeArithExpr,
-                      funcExpr, powerArithExpr, multArithExpr, minusArithExpr, addArithExpr)
+                      minExpr, maxExpr, funcExpr, powerArithExpr, multArithExpr, minusArithExpr, addArithExpr)
 
     # arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, parArithmExpr,
     #                   funcExpr, powerArithExpr, multArithExpr, addArithExpr, minusArithExpr)
@@ -564,6 +566,16 @@ class ConsequencesParser(lrparsing.Grammar):
             elif tree[1][1] == 'len':
                 return Func(a, len)
 
+        def buildMinExpression():
+            x1 = cls.buildArithmeticExpression(tree[3])
+            x2 = cls.buildArithmeticExpression(tree[5])
+            return Min(x1, x2)
+
+        def buildMaxExpression():
+            x1 = cls.buildArithmeticExpression(tree[3])
+            x2 = cls.buildArithmeticExpression(tree[5])
+            return Max(x1, x2)
+
         arithmeticSymbols = {
             ConsequencesParser.arithmExpr: buildNext,
             ConsequencesParser.parArithmExpr: buildDoubleNext,
@@ -584,7 +596,9 @@ class ConsequencesParser(lrparsing.Grammar):
             ConsequencesParser.multArithExpr: buildBinaryExpression,
             ConsequencesParser.powerArithExpr: buildBinaryExpression,
             ConsequencesParser.constantExpr: buildConstant,
-            ConsequencesParser.funcExpr: buildFunctionExpression
+            ConsequencesParser.funcExpr: buildFunctionExpression,
+            ConsequencesParser.minExpr: buildMinExpression,
+            ConsequencesParser.maxExpr: buildMaxExpression
         }
 
         return arithmeticSymbols[rootName]()
@@ -592,5 +606,5 @@ class ConsequencesParser(lrparsing.Grammar):
 
 if __name__ == '__main__':
     print ConsequencesParser.pre_compile_grammar()
-    expr = 'print 2,3,4'
+    expr = 'print min(3,5+3)'
     print ConsequencesParser.parse(expr)

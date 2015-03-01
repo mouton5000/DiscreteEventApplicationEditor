@@ -373,6 +373,26 @@ class Func(AUnOp):
         return self._func(v)
 
 
+class Min(ABiOp):
+    def __init__(self, a1, a2):
+        super(Min, self).__init__(a1, a2)
+
+    def value(self, evaluation, selfParam=None):
+        v1 = self._a1.value(evaluation, selfParam)
+        v2 = self._a2.value(evaluation, selfParam)
+        return min(v1, v2)
+
+
+class Max(ABiOp):
+    def __init__(self, a1, a2):
+        super(Max, self).__init__(a1, a2)
+
+    def value(self, evaluation, selfParam=None):
+        v1 = self._a1.value(evaluation, selfParam)
+        v2 = self._a2.value(evaluation, selfParam)
+        return max(v1, v2)
+
+
 class SelfExpression():
     def __init__(self):
         pass

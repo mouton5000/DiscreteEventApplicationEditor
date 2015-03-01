@@ -2,7 +2,7 @@ import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
-    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral
+    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral, Min, Max
 from booleanExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
     EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is
@@ -73,6 +73,8 @@ class BooleanExpressionParser(lrparsing.Grammar):
                 Token('sign') | Token('floor') | Token('ceil') | Token('acos') | Token('asin') | Token('atan') |
                 Token('sh') | Token('ch') | Token('th') | Token('ash') | Token('ach') | Token('ath') | Token('len')) \
                + parArithmExpr
+    minExpr = Token('min') + '(' + arithmExpr + ',' + arithmExpr + ')'
+    maxExpr = Token('max') + '(' + arithmExpr + ',' + arithmExpr + ')'
     getItemExpr = arithmExpr + '[' + arithmExpr + ']'
     getSublistExpr = arithmExpr + '[' + Opt(arithmExpr) + ':' + Opt(arithmExpr) + ']'
     insertExpr = arithmExpr << '<' << Opt(arithmExpr) << '<' << arithmExpr
@@ -80,7 +82,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
     arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, listExpr, linkedListExpr,
                       setExpr, parArithmExpr, getItemExpr, getSublistExpr, insertExpr, removeExpr,
-                      funcExpr, powerExpr, multExpr, minusExpr, addExpr)
+                      minExpr, maxExpr, funcExpr, powerExpr, multExpr, minusExpr, addExpr)
 
     START = boolExpr
 
@@ -390,6 +392,16 @@ class BooleanExpressionParser(lrparsing.Grammar):
             elif tree[1][1] == 'len':
                 return Func(a, len)
 
+        def buildMinExpression():
+            x1 = cls.buildArithmeticExpression(tree[3])
+            x2 = cls.buildArithmeticExpression(tree[5])
+            return Min(x1, x2)
+
+        def buildMaxExpression():
+            x1 = cls.buildArithmeticExpression(tree[3])
+            x2 = cls.buildArithmeticExpression(tree[5])
+            return Max(x1, x2)
+
         arithmeticSymbols = {
             BooleanExpressionParser.arithmExpr: buildNext,
             BooleanExpressionParser.parArithmExpr: buildDoubleNext,
@@ -409,7 +421,9 @@ class BooleanExpressionParser(lrparsing.Grammar):
             BooleanExpressionParser.multExpr: buildBinaryExpression,
             BooleanExpressionParser.powerExpr: buildBinaryExpression,
             BooleanExpressionParser.constantExpr: buildConstant,
-            BooleanExpressionParser.funcExpr: buildFunctionExpression
+            BooleanExpressionParser.funcExpr: buildFunctionExpression,
+            BooleanExpressionParser.minExpr: buildMinExpression,
+            BooleanExpressionParser.maxExpr: buildMaxExpression
         }
 
         return arithmeticSymbols[rootName]()
