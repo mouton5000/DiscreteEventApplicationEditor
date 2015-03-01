@@ -320,6 +320,11 @@ class MainWindow(QMainWindow):
             for arc in chain.from_iterable(node.outputArcs for node in scene.nodes):
                 compileArc(arc)
 
+        self._stateMachine.init()
+        for node, compNode in self._nodeDict.iteritems():
+            for token in node.getTokens():
+                self._stateMachine.addToken(compNode, token)
+
         setW = self.settingsWidget()
         fps = setW.getFPS()
         maxTick = setW.getMaxTick()
@@ -330,11 +335,6 @@ class MainWindow(QMainWindow):
 
         gw = gameWindow.GameWindow(fps, width, height, spritesRegistery, rootDir)
         self._stateMachine.setGameWindow(gw)
-
-        self._stateMachine.init()
-        for node, compNode in self._nodeDict.iteritems():
-            for token in node.getTokens():
-                self._stateMachine.addToken(compNode, token)
 
         frame = 0
         tick = 0

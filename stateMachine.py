@@ -3,6 +3,20 @@ from grammar.booleanExpressions import BExpression
 from grammar.consequencesGrammar import ConsequencesParser
 from grammar.tokenGrammar import TokenParametersParser
 from database import Property, Event, UNDEFINED_PARAMETER
+from lrparsing import LrParsingError
+
+
+class TokenParseException(Exception):
+    def __init__(self, node, tokenText, parseError):
+        super(TokenParseException, self).__init__(
+            TokenParseException.getMessage(node, tokenText, parseError))
+
+    @staticmethod
+    def getMessage(node, tokenText, parseError):
+        s1 = 'Error while parsing token of node ' + str(node.num)
+        s2 = 'Token text : ' + tokenText
+        s3 = str(parseError)
+        return s1 + '\n' + s2 + '\n' + s3
 
 
 class StateMachine:
@@ -21,7 +35,10 @@ class StateMachine:
         self._tokens.add(token)
 
     def addToken(self, node, tokenStr):
-        token = Token(node, TokenParametersParser.parse(tokenStr))
+        try:
+            token = Token(node, TokenParametersParser.parse(tokenStr))
+        except LrParsingError as e:
+            raise TokenParseException(node, tokenStr, e)
         self._tokens.add(token)
 
     def removeToken(self, token):
@@ -220,13 +237,50 @@ class Node:
         return str(self._name)
 
 
+class TransitionTriggerParserException(Exception):
+    def __init__(self, tr, trigger, parseError):
+        super(TransitionTriggerParserException, self).__init__(
+            TransitionTriggerParserException.getMessage(tr, trigger, parseError))
+
+    @staticmethod
+    def getMessage(tr, trigger, parseError):
+        s1 = 'Error while parsing trigger of transition between ' + str(tr.n1.num) + ' and ' + str(tr.n2.num)
+        s2 = 'Trigger : ' + trigger
+        s3 = str(parseError)
+        return s1 + '\n' + s2 + '\n' + s3
+
+
+class TransitionConsequenceParserException(Exception):
+    def __init__(self, tr, consequence, parseError):
+        super(TransitionConsequenceParserException, self).__init__(
+            TransitionConsequenceParserException.getMessage(tr, consequence, parseError))
+
+    @staticmethod
+    def getMessage(tr, consequence, parseError):
+        s1 = 'Error while parsing consequence of transition between ' + str(tr.n1.num) + ' and ' + str(tr.n2.num)
+        s2 = 'Consequence : ' + consequence
+        s3 = str(parseError)
+        return s1 + '\n' + s2 + '\n' + s3
+
+
 class Transition:
     def __init__(self, in1, in2, trigger, consequences):
         self.n1 = in1
         in1.outputArcs.append(self)
         self.n2 = in2
-        self._trigger = BExpression(BooleanExpressionParser.parse(trigger))
-        self._consequences = [ConsequencesParser.parse(cons) for cons in consequences]
+
+        try:
+            self._trigger = BExpression(BooleanExpressionParser.parse(trigger))
+        except LrParsingError as triggerParseError:
+            raise TransitionTriggerParserException(self, trigger, triggerParseError)
+
+        def parseConsequence(consequence):
+            try:
+                return ConsequencesParser.parse(consequence)
+            except LrParsingError as consequenceParseError:
+                raise TransitionConsequenceParserException(self, consequence, consequenceParseError)
+
+        self._consequences = [parseConsequence(cons) for cons in consequences]
 
     def eval(self, token):
         return self._trigger.eval(token)
