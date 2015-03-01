@@ -180,7 +180,7 @@ class SceneWidget(QGraphicsScene):
             arc.changeOutputWithoutStack(toNode)
         for arc in outputArcsOfFromNode:
             arc.changeInputWithoutStack(toNode)
-        self.removeNodeWithoutStack(fromNode)
+        self.removeNodeWithoutStack(fromNode, [])
         self.setSelected(toNode)
         self.parent().showTab()
 
