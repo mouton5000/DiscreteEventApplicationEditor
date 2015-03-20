@@ -1,8 +1,8 @@
-from grammar.grammar import BooleanExpressionParser
-from grammar.booleanExpressions import BExpression
-from grammar.consequencesGrammar import ConsequencesParser
+from grammar.triggerGrammar import TriggerParser
+from grammar.triggerExpressions import BExpression
+from grammar.consequenceGrammar import ConsequenceParser
 from grammar.tokenGrammar import TokenParametersParser
-from database import Property, Event, UNDEFINED_PARAMETER
+from database import Property, Event, UNDEFINED_PARAMETER, ParameterizedExpression
 from lrparsing import LrParsingError
 
 
@@ -29,14 +29,14 @@ class StateMachine:
     def setGameWindow(self, gw):
         self.gameWindow = gw
 
-    def addTokenByNodeNum(self, nodeNum, parameters):
+    def addTokenByNodeNum(self, nodeNum, args, kwargs):
         node = self.getNodeByNum(nodeNum)
-        token = Token(node, parameters)
+        token = Token(node, args, kwargs)
         self._tokens.add(token)
 
     def addToken(self, node, tokenStr):
         try:
-            token = Token(node, TokenParametersParser.parse(tokenStr))
+            token = Token(node, *TokenParametersParser.parse(tokenStr))
         except LrParsingError as e:
             raise TokenParseException(node, tokenStr, e)
         self._tokens.add(token)
@@ -167,17 +167,17 @@ class StateMachine:
         return True
 
 
-class Token:
-    def __init__(self, node, args):
+class Token(ParameterizedExpression):
+    def __init__(self, node, args, kwargs):
+        super(Token, self).__init__(args, kwargs)
         self._node = node
-        self._args = args
         self._nbFrameSinceLastMove = 0
 
     @property
     def node(self):
         return self._node
 
-    def setArgs(self, unevaluatedArgs, evaluation):
+    def setArgs(self, unevaluatedArgs, unevaluatedKWArgs, evaluation):
         def evalArg(uArg, tArg):
             if uArg is None:
                 return
@@ -186,8 +186,21 @@ class Token:
                 value = tArg
             return value
 
-        newArgs = (evalArg(unevaluatedArg, arg) for unevaluatedArg, arg in map(None, unevaluatedArgs, self))
+        def evalKWArgs(unevaluatedKey, unevaluatedValue, token):
+            key1 = unevaluatedKey.value(evaluation)
+            try:
+                value2 = token.getKWArg(key1)
+                value1 = unevaluatedValue.value(evaluation, selfParam=value2)
+            except KeyError:
+                value1 = unevaluatedValue.value(evaluation)
+            return key1, value1
+
+        newArgs = (evalArg(unevaluatedArg, arg) for unevaluatedArg, arg in map(None, unevaluatedArgs, self.iterArgs()))
         self._args[:] = [arg for arg in newArgs if arg is not None]
+
+        newKWArgs = (evalKWArgs(unevaluatedKey, unevaluatedValue, self) for unevaluatedKey, unevaluatedValue in
+                     unevaluatedKWArgs.iteritems())
+        self._kwargs = {key: value for key, value in newKWArgs if key is not None and value is not None}
 
     def moveTo(self, node):
         self._node = node
@@ -200,24 +213,12 @@ class Token:
     def nbFrameSinceLastMove(self):
         return self._nbFrameSinceLastMove
 
-    def __iter__(self):
-        return iter(self._args)
-
-    def __getitem__(self, index):
-        return self._args[index]
-
     def __str__(self):
-        return 'Token(' + str(self.node) + ',' + str(self._nbFrameSinceLastMove) + ',' + ','.join([str(o)
-                                                                                                   for o in
-                                                                                                   self._args]) + ')'
+        s = super(Token, self).__str__()
+        return str(self._node.num) + ',' + str(self._nbFrameSinceLastMove) + ',' + s
 
     def __repr__(self):
-        return 'Token(' + str(self.node) + ',' + str(self._nbFrameSinceLastMove) + ',' + ','.join([str(o)
-                                                                                                   for o in
-                                                                                                   self._args]) + ')'
-
-    def __len__(self):
-        return len(self._args)
+        return str(self)
 
 
 class Node:
@@ -270,13 +271,13 @@ class Transition:
         self.n2 = in2
 
         try:
-            self._trigger = BExpression(BooleanExpressionParser.parse(trigger))
+            self._trigger = BExpression(TriggerParser.parse(trigger))
         except LrParsingError as triggerParseError:
             raise TransitionTriggerParserException(self, trigger, triggerParseError)
 
         def parseConsequence(consequence):
             try:
-                return ConsequencesParser.parse(consequence)
+                return ConsequenceParser.parse(consequence)
             except LrParsingError as consequenceParseError:
                 raise TransitionConsequenceParserException(self, consequence, consequenceParseError)
 

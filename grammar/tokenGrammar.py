@@ -1,7 +1,7 @@
 __author__ = 'mouton'
 
 import lrparsing
-from lrparsing import List, Prio, Ref, Token
+from lrparsing import List, Prio, Opt, Token
 
 
 class TokenParametersParser(lrparsing.Grammar):
@@ -10,12 +10,13 @@ class TokenParametersParser(lrparsing.Grammar):
         float = Token(re='-?[0-9]+\.[0-9]+')
         string = Token(re='\'[A-Za-z_0-9]*\'')
 
-    consExpr = Ref('consExpr')
+    parameter = T.string | T.integer | T.float
+    namedParameter = parameter + '=' + parameter
+    parameters = \
+        Prio(List(parameter, Token(',')) + Opt(',' + List(namedParameter, Token(','))),
+             List(namedParameter, Token(',')))
 
-    parameters = List(T.string | T.integer | T.float, Token(','))
-    consExpr = Prio(parameters)
-
-    START = consExpr
+    START = parameters
 
     @classmethod
     def parse(cls, expr, tree_factory=None, on_error=None, log=None):
@@ -26,7 +27,7 @@ class TokenParametersParser(lrparsing.Grammar):
     def buildToken(cls, tree):
         rootName = tree[0]
 
-        def build():
+        def buildNext():
             return cls.buildToken(tree[1])
 
         def stringWithoutQuotes():
@@ -38,17 +39,26 @@ class TokenParametersParser(lrparsing.Grammar):
         def floatvalue():
             return float(tree[1])
 
+        def buildNamedParameter():
+            name = cls.buildToken(tree[1])
+            parameter = cls.buildToken(tree[3])
+            return name, parameter
+
         def buildParameters():
-            return [cls.buildToken(arg) for arg in tree[1::2]]
+            buildArgs = [cls.buildToken(arg) for arg in tree[1::2]]
+            args = [arg for arg in buildArgs if not isinstance(arg, tuple)]
+            kwargs = {kwarg[0]: kwarg[1] for kwarg in buildArgs if isinstance(kwarg, tuple)}
+            return args, kwargs
 
         tokenSymbols = {
-            TokenParametersParser.START: build,
-            TokenParametersParser.consExpr: build,
+            TokenParametersParser.START: buildNext,
+            # TokenParametersParser.consExpr: buildNext,
             TokenParametersParser.T.string: stringWithoutQuotes,
             TokenParametersParser.T.integer: intvalue,
             TokenParametersParser.T.float: floatvalue,
-            TokenParametersParser.parameters: buildParameters,
-
+            TokenParametersParser.parameter: buildNext,
+            TokenParametersParser.namedParameter: buildNamedParameter,
+            TokenParametersParser.parameters: buildParameters
         }
 
         return tokenSymbols[rootName]()

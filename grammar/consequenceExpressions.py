@@ -9,65 +9,77 @@ def _evalArg(arg, evaluation):
 
 class AddPropertyConsequence():
 
-    def __init__(self, name, args):
+    def __init__(self, name, args, kwargs):
         self._name = name
         self._args = args
+        self._kwargs = kwargs
 
     def eval_update(self, evaluation, *_):
         try:
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
-            prop = Property(name, newArgs)
-            Property.properties.add(prop)
-            return name, newArgs
+            newKWargs = {_evalArg(key, evaluation): _evalArg(value, evaluation)
+                         for key, value in self._kwargs.iteritems()}
+            Property.add(name, newArgs, newKWargs)
         except (ArithmeticError, TypeError, ValueError):
-            pass
+            import traceback
+            print traceback.format_exc()
 
 
 class RemovePropertyConsequence():
 
-    def __init__(self, name, args):
+    def __init__(self, name, args, kwargs):
         self._name = name
         self._args = args
+        self._kwargs = kwargs
 
     def eval_update(self, evaluation, *_):
         try:
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
-            Property.removeAll(name, newArgs)
+            newKWargs = {_evalArg(key, evaluation): _evalArg(value, evaluation)
+                         for key, value in self._kwargs.iteritems()}
+            Property.removeAll(name, newArgs, newKWargs)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
 
 class EditPropertyConsequence():
 
-    def __init__(self, name, args1, args2):
+    def __init__(self, name, args1, kwargs1, args2, kwargs2):
         self._name = name
         self._args1 = args1
+        self._kwargs1 = kwargs1
         self._args2 = args2
+        self._kwargs2 = kwargs2
 
     def eval_update(self, evaluation, *_):
         try:
             name = self._name
             newArgs1 = [_evalArg(arg, evaluation) for arg in self._args1]
-            Property.edit(name, newArgs1, self._args2, evaluation)
+            newKWArgs1 = {_evalArg(key, evaluation): _evalArg(value, evaluation)
+                          for key, value in self._kwargs1.iteritems()}
+            Property.edit(name, newArgs1, newKWArgs1, self._args2, self._kwargs2, evaluation)
         except (ArithmeticError, TypeError, ValueError):
-            pass
+            import traceback
+            print traceback.format_exc()
 
 
 class AddEventConsequence():
     events = set([])
 
-    def __init__(self, name, args):
+    def __init__(self, name, args, kwargs):
         self._name = name
         self._args = args
+        self._kwargs = kwargs
 
     def eval_update(self, evaluation, *_):
         try:
             name = self._name
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
-            event = Event(name, newArgs)
-            Event.events.add(event)
+            newKWargs = {_evalArg(unevaluatedKey, evaluation): _evalArg(unevaluatedValue, evaluation)
+                         for unevaluatedKey, unevaluatedValue in self._kwargs.iteritems()}
+            Event.add(name, newArgs, newKWargs)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -231,8 +243,7 @@ class AddLineConsequence(NamedConsequence):
             colorName = str(_evalArg(self._colorName, evaluation))
             stateMachine.gameWindow.addLine(name, x1, y1, x2, y2, width, colorName)
         except (ArithmeticError, TypeError, ValueError):
-            import traceback
-            print traceback.format_exc()
+            pass
 
 
 class RemoveLineConsequence(NamedConsequence):
@@ -293,8 +304,7 @@ class AddRectConsequence(NamedConsequence):
             colorName = str(_evalArg(self._colorName, evaluation))
             stateMachine.gameWindow.addRect(name, x, y, w, h, width, colorName)
         except (ArithmeticError, TypeError, ValueError):
-            import traceback
-            print traceback.format_exc()
+            pass
 
 
 class RemoveRectConsequence(NamedConsequence):
@@ -417,8 +427,7 @@ class AddPolygonConsequence(NamedConsequence):
             colorName = str(_evalArg(self._colorName, evaluation))
             stateMachine.gameWindow.addPolygon(name, listPoint, width, colorName)
         except (ArithmeticError, TypeError, ValueError):
-            import traceback
-            print traceback.format_exc()
+            pass
 
 
 class RemovePolygonConsequence(NamedConsequence):
@@ -456,38 +465,30 @@ class EditPolygonConsequence(NamedConsequence):
 
 
 class AddTokenConsequence(object):
-    def __init__(self, nodeNum, args):
+    def __init__(self, nodeNum, args, kwargs):
         self._nodeNum = nodeNum
-        self._parameters = args
-
-    @property
-    def nodeNum(self):
-        return self._nodeNum
-
-    @property
-    def parameters(self):
-        return self._parameters
+        self._args = args
+        self._kwargs = kwargs
 
     def eval_update(self, evaluation, stateMachine, *_):
         try:
             nodeNum = int(_evalArg(self._nodeNum, evaluation))
-            newParameters = [_evalArg(arg, evaluation) for arg in self._parameters]
-            stateMachine.addTokenByNodeNum(nodeNum, newParameters)
+            newArgs = [_evalArg(arg, evaluation) for arg in self._args]
+            newKWArgs = {_evalArg(key, evaluation): _evalArg(value, evaluation)
+                         for key, value in self._kwargs.iteritems()}
+            stateMachine.addTokenByNodeNum(nodeNum, newArgs, newKWArgs)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
 
 class EditTokenConsequence(object):
-    def __init__(self, args):
-        self._parameters = args
-
-    @property
-    def parameters(self):
-        return self._parameters
+    def __init__(self, args, kwargs):
+        self._args = args
+        self._kwargs = kwargs
 
     def eval_update(self, evaluation, _, token):
         try:
-            token.setArgs(self._parameters, evaluation)
+            token.setArgs(self._args, self._kwargs, evaluation)
         except (ArithmeticError, TypeError, ValueError):
             pass
 

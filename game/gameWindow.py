@@ -33,15 +33,15 @@ class GameWindow:
                 return False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    Event.events.add(Event('Key', ['left']))
+                    Event.add('Key', ['left'], {})
                 if event.key == pygame.K_RIGHT:
-                    Event.events.add(Event('Key', ['right']))
+                    Event.add('Key', ['right'], {})
                 if event.key == pygame.K_DOWN:
-                    Event.events.add(Event('Key', ['down']))
+                    Event.add('Key', ['down'], {})
                 if event.key == pygame.K_UP:
-                    Event.events.add(Event('Key', ['up']))
+                    Event.add('Key', ['up'], {})
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                Event.events.add(Event('Mouse', [event.pos[0], event.pos[1]]))
+                Event.add('Mouse', [event.pos[0], event.pos[1]], {})
         self._scene.fill((255, 255, 255))
 
         for lineReg in self._lineRegs.itervalues():

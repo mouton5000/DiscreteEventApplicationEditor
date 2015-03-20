@@ -1,5 +1,6 @@
 from database import Variable
 from collections import deque
+from database import UNDEFINED_PARAMETER
 
 
 class ALitteral(object):
@@ -24,7 +25,7 @@ class ALitteral(object):
             return self._value
 
 
-class UndefinnedLitteral(object):
+class UndefinedLitteral(object):
     def __init__(self):
         pass
 
@@ -89,6 +90,9 @@ class ABiOp(object):
     def value(self, evaluation, selfParam=None):
         v1 = self._a1.value(evaluation, selfParam)
         v2 = self._a2.value(evaluation, selfParam)
+
+        if v1 == UNDEFINED_PARAMETER or v2 == UNDEFINED_PARAMETER:
+            raise TypeError
         return self.operation(v1, v2)
 
 
@@ -158,6 +162,24 @@ class Power(ABiOp):
         return v1 ** v2
 
 
+class Min(ABiOp):
+    def __init__(self, a1, a2):
+        super(Min, self).__init__(a1, a2)
+        self.symbol = 'min'
+
+    def operation(self, v1, v2):
+        return min(v1, v2)
+
+
+class Max(ABiOp):
+    def __init__(self, a1, a2):
+        super(Max, self).__init__(a1, a2)
+        self.symbol = 'max'
+
+    def operation(self, v1, v2):
+        return max(v1, v2)
+
+
 class GetItemExpression(object):
     def __init__(self, l, index):
         self._list = l
@@ -171,8 +193,8 @@ class GetItemExpression(object):
 
     def value(self, evaluation, selfParam=None):
         l1 = self._list.value(evaluation, selfParam)
+        a2 = self._index.value(evaluation, selfParam)
         if isinstance(l1, (list, deque)):
-            a2 = self._index.value(evaluation, selfParam)
             return l1[a2]
         else:
             return next(iter(l1))
@@ -211,37 +233,50 @@ class GetSublistExpression(object):
     def value(self, evaluation, selfParam=None):
         import itertools
         l1 = self._list.value(evaluation, selfParam)
-        if self._index1 is None:
-            if self._index2 is None:
-                return l1
-            else:
-                a2 = self._index2.value(evaluation, selfParam) % len(l1)
-                if isinstance(l1, list):
-                    return l1[:a2]
-                elif isinstance(l1, deque):
-                    return deque(itertools.islice(l1, a2))
-                else:
-                    it = iter(l1)
-                    return set([next(it) for _ in xrange(a2)])
+
+        try:
+            a1 = self._index1.value(evaluation, selfParam)
+        except AttributeError:
+            a1 = None
+
+        try:
+            a2 = self._index2.value(evaluation, selfParam)
+        except AttributeError:
+            a2 = None
+
+        if not isinstance(a1, int) and a1 is not None:
+            raise TypeError
+        if not isinstance(a2, int) and a2 is not None:
+            raise TypeError
+
+        if isinstance(l1, list):
+            return l1[a1:a2]
+
+        elif isinstance(l1, deque):
+            def rebound(value, length):
+                if value is not None:
+                    value = min(value, length)
+                    value = max(value, -length)
+                    if value < 0:
+                        value += length
+                return value
+            a1 = rebound(a1, len(l1))
+            a2 = rebound(a2, len(l1))
+            return deque(itertools.islice(l1, a1, a2))
+
         else:
-            a1 = self._index1.value(evaluation, selfParam) % len(l1)
-            if self._index2 is None:
-                if isinstance(l1, list):
-                    return l1[a1:]
-                elif isinstance(l1, deque):
-                    return deque(itertools.islice(l1, a1, len(l1)))
-                else:
-                    it = iter(l1)
-                    return set([next(it) for _ in xrange(len(l1) - a1)])
+            if a1 is not None:
+                raise TypeError
+
+            it = iter(l1)
+            if a2 is None:
+                sliceLen = len(l1)
             else:
-                a2 = self._index2.value(evaluation, selfParam) % len(l1)
-                if isinstance(l1, list):
-                    return l1[a1:a2]
-                elif isinstance(l1, deque):
-                    return deque(itertools.islice(l1, a1, a2))
+                if a2 > 0:
+                    sliceLen = min(len(l1), a2)
                 else:
-                    it = iter(l1)
-                    return set([next(it) for _ in xrange(a2 - a1)])
+                    sliceLen = max(0, len(l1) + a2)
+            return set([next(it) for _ in xrange(sliceLen)])
 
 
 class InsertExpression(object):
@@ -373,29 +408,11 @@ class Func(AUnOp):
         return self._func(v)
 
 
-class Min(ABiOp):
-    def __init__(self, a1, a2):
-        super(Min, self).__init__(a1, a2)
-
-    def value(self, evaluation, selfParam=None):
-        v1 = self._a1.value(evaluation, selfParam)
-        v2 = self._a2.value(evaluation, selfParam)
-        return min(v1, v2)
-
-
-class Max(ABiOp):
-    def __init__(self, a1, a2):
-        super(Max, self).__init__(a1, a2)
-
-    def value(self, evaluation, selfParam=None):
-        v1 = self._a1.value(evaluation, selfParam)
-        v2 = self._a2.value(evaluation, selfParam)
-        return max(v1, v2)
-
-
-class SelfExpression():
+class SelfLitteral():
     def __init__(self):
         pass
 
     def value(self, _, selfParam=None):
+        if selfParam is None:
+            raise ValueError
         return selfParam

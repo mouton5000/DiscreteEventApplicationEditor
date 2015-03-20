@@ -2,14 +2,14 @@ import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, ListLitteral, LinkedListLitteral, SetLitteral, GetItemExpression, GetSublistExpression, \
-    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinnedLitteral, Min, Max
-from booleanExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
+    InsertExpression, RemoveAllExpression, RemoveExpression, UndefinedLitteral, Min, Max
+from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
     EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is
 from database import Variable
 
 
-class BooleanExpressionParser(lrparsing.Grammar):
+class TriggerParser(lrparsing.Grammar):
     class T(lrparsing.TokenRegistry):
         integer = Token(re='[0-9]+')
         float = Token(re='[0-9]+\.[0-9]+')
@@ -43,7 +43,11 @@ class BooleanExpressionParser(lrparsing.Grammar):
     eLockParameters = List(arithmExpr, Token(','))
     eLockExpr = T.elock + '(' + arithmExpr + ',' + eLockParameters + ')'
 
-    parameters = List(Prio(T.variable, arithmExpr) | T.uvariable, Token(','))
+    parameter = Prio(T.variable, arithmExpr) | T.uvariable
+    namedParameter = arithmExpr + '=' + parameter
+    parameters = \
+        Prio(List(parameter, Token(',')) + Opt(',' + List(namedParameter, Token(','))),
+             List(namedParameter, Token(',')))
     propExpr = T.prop + '(' + parameters + ')'
     eventExpr = T.event + '(' + parameters + ')'
     tokenExpr = T.token + '(' + parameters + ')'
@@ -88,7 +92,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
     @classmethod
     def parse(cls, expr, tree_factory=None, on_error=None, log=None):
-        tree = super(BooleanExpressionParser, cls).parse(expr, tree_factory, on_error, log)
+        tree = super(TriggerParser, cls).parse(expr, tree_factory, on_error, log)
         return cls.buildExpression(tree)
 
     @classmethod
@@ -108,7 +112,7 @@ class BooleanExpressionParser(lrparsing.Grammar):
             return Variable(tree[1])
 
         def unnamedVariableValue():
-            return UndefinnedLitteral()
+            return UndefinedLitteral()
 
         def buildLitteral():
             return BLitteral(tree[1][1] == 'true')
@@ -126,7 +130,18 @@ class BooleanExpressionParser(lrparsing.Grammar):
             max = cls.buildExpression((tree[5]))
             return RandInt(var, max)
 
+        def buildNamedParameter():
+            name = cls.buildExpression(tree[1])
+            parameter = cls.buildExpression(tree[3])
+            return name, parameter
+
         def buildParameters():
+            buildArgs = [cls.buildExpression(arg) for arg in tree[1::2]]
+            args = [arg for arg in buildArgs if not isinstance(arg, tuple)]
+            kwargs = {kwarg[0]: kwarg[1] for kwarg in buildArgs if isinstance(kwarg, tuple)}
+            return args, kwargs
+
+        def buildELockParameters():
             return [cls.buildExpression(arg) for arg in tree[1::2]]
 
         def buildElock():
@@ -136,17 +151,17 @@ class BooleanExpressionParser(lrparsing.Grammar):
 
         def buildProperty():
             name = cls.buildExpression(tree[1])[1:]
-            args = cls.buildExpression(tree[3])
-            return PropertyBooleanExpression(name, args)
+            args, kwargs = cls.buildExpression(tree[3])
+            return PropertyBooleanExpression(name, args, kwargs)
 
         def buildEvent():
             name = cls.buildExpression(tree[1])[1:]
-            args = cls.buildExpression(tree[3])
-            return EventBooleanExpression(name, args)
+            args, kwargs = cls.buildExpression(tree[3])
+            return EventBooleanExpression(name, args, kwargs)
 
         def buildToken():
-            args = cls.buildExpression(tree[3])
-            return TokenExpression(args)
+            args, kwargs = cls.buildExpression(tree[3])
+            return TokenExpression(args, kwargs)
 
         def buildCompare():
             a1 = cls.buildExpression(tree[1])
@@ -187,30 +202,31 @@ class BooleanExpressionParser(lrparsing.Grammar):
             return cls.buildArithmeticExpression(tree)
 
         booleanSymbols = {
-            BooleanExpressionParser.START: buildNext,
-            BooleanExpressionParser.boolExpr: buildNext,
-            BooleanExpressionParser.parExpr: buildDoubleNext,
-            BooleanExpressionParser.T.event: value,
-            BooleanExpressionParser.T.prop: value,
-            BooleanExpressionParser.T.variable: variableValue,
-            BooleanExpressionParser.T.uvariable: unnamedVariableValue,
-            BooleanExpressionParser.litExpr: buildLitteral,
-            BooleanExpressionParser.timerExpr: buildTimer,
-            BooleanExpressionParser.randExpr: buildRand,
-            BooleanExpressionParser.randIntExpr: buildRandInt,
-            BooleanExpressionParser.parameters: buildParameters,
-            BooleanExpressionParser.eLockParameters: buildParameters,
-            BooleanExpressionParser.eLockExpr: buildElock,
-            BooleanExpressionParser.propExpr: buildProperty,
-            BooleanExpressionParser.eventExpr: buildEvent,
-            BooleanExpressionParser.tokenExpr: buildToken,
-            BooleanExpressionParser.compareArithmExpr: buildCompare,
-            BooleanExpressionParser.andExpr: buildAnd,
-            BooleanExpressionParser.orExpr: buildOr,
-            BooleanExpressionParser.notExpr: buildNot,
-            BooleanExpressionParser.isExpr: buildIs,
-            BooleanExpressionParser.arithmExpr: buildArithmetic
-
+            TriggerParser.START: buildNext,
+            TriggerParser.boolExpr: buildNext,
+            TriggerParser.parExpr: buildDoubleNext,
+            TriggerParser.T.event: value,
+            TriggerParser.T.prop: value,
+            TriggerParser.T.variable: variableValue,
+            TriggerParser.T.uvariable: unnamedVariableValue,
+            TriggerParser.litExpr: buildLitteral,
+            TriggerParser.timerExpr: buildTimer,
+            TriggerParser.randExpr: buildRand,
+            TriggerParser.randIntExpr: buildRandInt,
+            TriggerParser.parameter: buildNext,
+            TriggerParser.namedParameter: buildNamedParameter,
+            TriggerParser.parameters: buildParameters,
+            TriggerParser.eLockParameters: buildELockParameters,
+            TriggerParser.eLockExpr: buildElock,
+            TriggerParser.propExpr: buildProperty,
+            TriggerParser.eventExpr: buildEvent,
+            TriggerParser.tokenExpr: buildToken,
+            TriggerParser.compareArithmExpr: buildCompare,
+            TriggerParser.andExpr: buildAnd,
+            TriggerParser.orExpr: buildOr,
+            TriggerParser.notExpr: buildNot,
+            TriggerParser.isExpr: buildIs,
+            TriggerParser.arithmExpr: buildArithmetic
         }
 
         return booleanSymbols[rootName]()
@@ -403,38 +419,33 @@ class BooleanExpressionParser(lrparsing.Grammar):
             return Max(x1, x2)
 
         arithmeticSymbols = {
-            BooleanExpressionParser.arithmExpr: buildNext,
-            BooleanExpressionParser.parArithmExpr: buildDoubleNext,
-            BooleanExpressionParser.T.integer: intvalue,
-            BooleanExpressionParser.T.float: floatvalue,
-            BooleanExpressionParser.T.variable: variableValue,
-            BooleanExpressionParser.T.string: stringWithoutQuotes,
-            BooleanExpressionParser.listExpr: listValue,
-            BooleanExpressionParser.linkedListExpr: linkedListValue,
-            BooleanExpressionParser.setExpr: setValue,
-            BooleanExpressionParser.getItemExpr: buildGetItemExpression,
-            BooleanExpressionParser.getSublistExpr: buildGetSublistExpression,
-            BooleanExpressionParser.insertExpr: buildInsertExpression,
-            BooleanExpressionParser.removeExpr: buildRemoveExpression,
-            BooleanExpressionParser.addExpr: buildBinaryExpression,
-            BooleanExpressionParser.minusExpr: buildMinusExpression,
-            BooleanExpressionParser.multExpr: buildBinaryExpression,
-            BooleanExpressionParser.powerExpr: buildBinaryExpression,
-            BooleanExpressionParser.constantExpr: buildConstant,
-            BooleanExpressionParser.funcExpr: buildFunctionExpression,
-            BooleanExpressionParser.minExpr: buildMinExpression,
-            BooleanExpressionParser.maxExpr: buildMaxExpression
+            TriggerParser.arithmExpr: buildNext,
+            TriggerParser.parArithmExpr: buildDoubleNext,
+            TriggerParser.T.integer: intvalue,
+            TriggerParser.T.float: floatvalue,
+            TriggerParser.T.variable: variableValue,
+            TriggerParser.T.string: stringWithoutQuotes,
+            TriggerParser.listExpr: listValue,
+            TriggerParser.linkedListExpr: linkedListValue,
+            TriggerParser.setExpr: setValue,
+            TriggerParser.getItemExpr: buildGetItemExpression,
+            TriggerParser.getSublistExpr: buildGetSublistExpression,
+            TriggerParser.insertExpr: buildInsertExpression,
+            TriggerParser.removeExpr: buildRemoveExpression,
+            TriggerParser.addExpr: buildBinaryExpression,
+            TriggerParser.minusExpr: buildMinusExpression,
+            TriggerParser.multExpr: buildBinaryExpression,
+            TriggerParser.powerExpr: buildBinaryExpression,
+            TriggerParser.constantExpr: buildConstant,
+            TriggerParser.funcExpr: buildFunctionExpression,
+            TriggerParser.minExpr: buildMinExpression,
+            TriggerParser.maxExpr: buildMaxExpression
         }
 
         return arithmeticSymbols[rootName]()
 
 if __name__ == '__main__':
-    print BooleanExpressionParser.pre_compile_grammar()
-    expr = 'M is Y+2+X'
-    expr = BooleanExpressionParser.parse(expr)
+    # print BooleanExpressionParser.pre_compile_grammar()
+    expr = 'pTest(X,Y, Z = 2, \'abc\' = X + 2, 2 + 4 - Z =Y)'
+    expr = TriggerParser.parse(expr)
     print expr
-    expr = 'M is (X-X0)**2/A + (Y-Y0)**2/B'
-    expr = BooleanExpressionParser.parse(expr)
-    print expr
-#    for evaluation in expr.eval(1, {Variable('Y'): 1}):
-#        print evaluation
