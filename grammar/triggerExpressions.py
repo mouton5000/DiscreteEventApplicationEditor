@@ -271,6 +271,9 @@ class Compare(BBiOp):
             v1 = self._a1.value(previousEvaluation)
             v2 = self._a2.value(previousEvaluation)
 
+            if v1 == UNDEFINED_PARAMETER or v2 == UNDEFINED_PARAMETER:
+                raise TypeError
+
             if v1 is not None and v2 is not None and self.comp(v1, v2):
                 yield previousEvaluation
         except (ArithmeticError, TypeError, ValueError):
