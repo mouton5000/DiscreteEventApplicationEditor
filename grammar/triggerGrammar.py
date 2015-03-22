@@ -6,6 +6,8 @@ from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyB
     EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is
 from database import Variable
+from utils.mathutils import sign
+from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
 
 
 class TriggerParser(lrparsing.Grammar):
@@ -377,63 +379,40 @@ class TriggerParser(lrparsing.Grammar):
         def buildUnaryFunctionExpression():
             a = cls.buildArithmeticExpression(tree[2])
             if tree[1][1] == 'cos':
-                from math import cos
                 return Func(a, cos)
             elif tree[1][1] == 'sin':
-                from math import sin
                 return Func(a, sin)
             elif tree[1][1] == 'tan':
-                from math import tan
                 return Func(a, tan)
             elif tree[1][1] == 'acos':
-                from math import acos
                 return Func(a, acos)
             elif tree[1][1] == 'asin':
-                from math import asin
                 return Func(a, asin)
             elif tree[1][1] == 'atan':
-                from math import atan
                 return Func(a, atan)
             elif tree[1][1] == 'ch':
-                from math import acosh
-                return Func(a, acosh)
-            elif tree[1][1] == 'sh':
-                from math import asinh
-                return Func(a, asinh)
-            elif tree[1][1] == 'th':
-                from math import atanh
-                return Func(a, atanh)
-            elif tree[1][1] == 'cosh':
-                from math import cosh
                 return Func(a, cosh)
-            elif tree[1][1] == 'sinh':
-                from math import sinh
+            elif tree[1][1] == 'sh':
                 return Func(a, sinh)
-            elif tree[1][1] == 'tanh':
-                from math import tanh
+            elif tree[1][1] == 'th':
                 return Func(a, tanh)
+            elif tree[1][1] == 'ash':
+                return Func(a, acosh)
+            elif tree[1][1] == 'ash':
+                return Func(a, asinh)
+            elif tree[1][1] == 'ath':
+                return Func(a, atanh)
             elif tree[1][1] == 'exp':
-                from math import exp
                 return Func(a, exp)
             elif tree[1][1] == 'log':
-                from math import log
                 return Func(a, log)
             elif tree[1][1] == 'abs':
                 return Func(a, abs)
             elif tree[1][1] == 'sign':
-                def sign(x):
-                    if x == 0:
-                        return 0
-                    elif x > 0:
-                        return 1
-                    else:
-                        return -1
                 return Func(a, sign)
             elif tree[1][1] == 'ceil':
-                from math import ceil
                 return Func(a, ceil)
             elif tree[1][1] == 'floor':
-                from math import floor
                 return Func(a, floor)
             elif tree[1][1] == 'len':
                 return Func(a, len)

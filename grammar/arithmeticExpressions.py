@@ -397,6 +397,10 @@ class AUnOp(object):
 
     def value(self, evaluation, selfParam=None):
         v = self._a.value(evaluation, selfParam)
+
+        if v == UNDEFINED_PARAMETER:
+            raise TypeError
+
         return self.operation(v)
 
 
