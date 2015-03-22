@@ -40,40 +40,40 @@ class UndefinedLitteral(object):
         return UNDEFINED_PARAMETER
 
 
-class ListLitteral(object):
-    def __init__(self, args):
-        self._args = args
+# class ListLitteral(object):
+#     def __init__(self, args):
+#         self._args = args
+#
+#     def __str__(self):
+#         return '(' + ','.join([str(o) for o in self._args]) + ')'
+#
+#     def __repr__(self):
+#         return '(' + ','.join([str(o) for o in self._args]) + ')'
+#
+#     def _evalArgs(self, evaluation, selfParam):
+#         return [arg.value(evaluation, selfParam) for arg in self._args]
+#
+#     def value(self, evaluation, selfParam=None):
+#         argsValue = self._evalArgs(evaluation, selfParam)
+#         return argsValue
+#
 
-    def __str__(self):
-        return '(' + ','.join([str(o) for o in self._args]) + ')'
-
-    def __repr__(self):
-        return '(' + ','.join([str(o) for o in self._args]) + ')'
-
-    def _evalArgs(self, evaluation, selfParam):
-        return [arg.value(evaluation, selfParam) for arg in self._args]
-
-    def value(self, evaluation, selfParam=None):
-        argsValue = self._evalArgs(evaluation, selfParam)
-        return argsValue
-
-
-class LinkedListLitteral(ListLitteral):
-    def __init__(self, args):
-        super(LinkedListLitteral, self).__init__(args)
-
-    def value(self, evaluation, selfParam=None):
-        argsValue = self._evalArgs(evaluation, selfParam)
-        return deque(argsValue)
-
-
-class SetLitteral(ListLitteral):
-    def __init__(self, args):
-        super(SetLitteral, self).__init__(args)
-
-    def value(self, evaluation, selfParam=None):
-        argsValue = self._evalArgs(evaluation, selfParam)
-        return set(argsValue)
+# class LinkedListLitteral(ListLitteral):
+#     def __init__(self, args):
+#         super(LinkedListLitteral, self).__init__(args)
+#
+#     def value(self, evaluation, selfParam=None):
+#         argsValue = self._evalArgs(evaluation, selfParam)
+#         return deque(argsValue)
+#
+#
+# class SetLitteral(ListLitteral):
+#     def __init__(self, args):
+#         super(SetLitteral, self).__init__(args)
+#
+#     def value(self, evaluation, selfParam=None):
+#         argsValue = self._evalArgs(evaluation, selfParam)
+#         return set(argsValue)
 
 
 class ABiOp(object):
@@ -180,207 +180,209 @@ class Max(ABiOp):
         return max(v1, v2)
 
 
-class GetItemExpression(object):
-    def __init__(self, l, index):
-        self._list = l
-        self._index = index
-
-    def __str__(self):
-        return str(self._list) + '[' + str(self._index) + ']'
-
-    def __repr__(self):
-        return str(self._list) + '[' + str(self._index) + ']'
-
-    def value(self, evaluation, selfParam=None):
-        l1 = self._list.value(evaluation, selfParam)
-        a2 = self._index.value(evaluation, selfParam)
-        if isinstance(l1, (list, deque)):
-            return l1[a2]
-        else:
-            return next(iter(l1))
-
-
-class GetSublistExpression(object):
-    def __init__(self, l, index1, index2):
-        self._list = l
-        self._index1 = index1
-        self._index2 = index2
-
-    def __str__(self):
-        if self._index1 is None:
-            if self._index2 is None:
-                return str(self._list) + '[:]'
-            else:
-                return str(self._list) + '[:' + str(self._index2) + ']'
-        else:
-            if self._index2 is None:
-                return str(self._list) + '[' + str(self._index1) + ':]'
-            else:
-                return str(self._list) + '[' + str(self._index1) + ':' + str(self._index2) + ']'
-
-    def __repr__(self):
-        if self._index1 is None:
-            if self._index2 is None:
-                return str(self._list) + '[:]'
-            else:
-                return str(self._list) + '[:' + str(self._index2) + ']'
-        else:
-            if self._index2 is None:
-                return str(self._list) + '[' + str(self._index1) + ':]'
-            else:
-                return str(self._list) + '[' + str(self._index1) + ':' + str(self._index2) + ']'
-
-    def value(self, evaluation, selfParam=None):
-        import itertools
-        l1 = self._list.value(evaluation, selfParam)
-
-        try:
-            a1 = self._index1.value(evaluation, selfParam)
-        except AttributeError:
-            a1 = None
-
-        try:
-            a2 = self._index2.value(evaluation, selfParam)
-        except AttributeError:
-            a2 = None
-
-        if not isinstance(a1, int) and a1 is not None:
-            raise TypeError
-        if not isinstance(a2, int) and a2 is not None:
-            raise TypeError
-
-        if isinstance(l1, list):
-            return l1[a1:a2]
-
-        elif isinstance(l1, deque):
-            def rebound(value, length):
-                if value is not None:
-                    value = min(value, length)
-                    value = max(value, -length)
-                    if value < 0:
-                        value += length
-                return value
-            a1 = rebound(a1, len(l1))
-            a2 = rebound(a2, len(l1))
-            return deque(itertools.islice(l1, a1, a2))
-
-        else:
-            if a1 is not None:
-                raise TypeError
-
-            it = iter(l1)
-            if a2 is None:
-                sliceLen = len(l1)
-            else:
-                if a2 > 0:
-                    sliceLen = min(len(l1), a2)
-                else:
-                    sliceLen = max(0, len(l1) + a2)
-            return set([next(it) for _ in xrange(sliceLen)])
-
-
-class InsertExpression(object):
-    def __init__(self, l, index, value):
-        self._list = l
-        self._index = index
-        self._value = value
-
-    def __str__(self):
-        if self._index is None:
-            return str(self._list) + '<<' + str(self._value)
-        else:
-            return str(self._list) + '<' + str(self._index) + '<' + str(self._value)
-
-    def __repr__(self):
-        if self._index is None:
-            return str(self._list) + '<<' + str(self._value)
-        else:
-            return str(self._list) + '<' + str(self._index) + '<' + str(self._value)
-
-    def value(self, evaluation, selfParam=None):
-        l1 = self._list.value(evaluation, selfParam)
-        if isinstance(l1, list):
-            l2 = l1[:]
-        elif isinstance(l1, deque):
-            l2 = deque(l1)
-        else:
-            l2 = l1.copy()
-
-        v = self._value.value(evaluation, selfParam)
-        if isinstance(l1, (list, deque)):
-            if self._index is None:
-                l2.append(v)
-            else:
-                index = self._index.value(evaluation, selfParam)
-                l2.insert(index, v)
-        else:
-            l2.add(v)
-        return l2
-
-
-class RemoveExpression(object):
-    def __init__(self, l, index, value):
-        self._list = l
-        self._index = index
-        self._value = value
-
-    def __str__(self):
-        if self._index is None:
-            return str(self._list) + '>>' + str(self._value)
-        else:
-            return str(self._list) + '>' + str(self._index) + '>' + str(self._value)
-
-    def __repr__(self):
-        if self._index is None:
-            return str(self._list) + '>>' + str(self._value)
-        else:
-            return str(self._list) + '>' + str(self._index) + '>' + str(self._value)
-
-    def value(self, evaluation, selfParam=None):
-        l1 = self._list.value(evaluation, selfParam)
-        if isinstance(l1, list):
-            l2 = l1[:]
-        elif isinstance(l1, deque):
-            l2 = deque(l1)
-        else:
-            l2 = l1.copy()
-
-        if self._index is None:
-            v = self._value.value(evaluation, selfParam)
-            l2.remove(v)
-        else:
-            if isinstance(l1, (list, deque)):
-                index = self._index.value(evaluation, selfParam)
-                l2.pop(index)
-            else:
-                l2.pop()
-        return l2
-
-
-class RemoveAllExpression(object):
-    def __init__(self, l, value):
-        self._list = l
-        self._value = value
-
-    def __str__(self):
-        return str(self._list) + '>>>' + str(self._value)
-
-    def __repr__(self):
-        return str(self._list) + '>>>' + str(self._value)
-
-    def value(self, evaluation, selfParam=None):
-        l1 = self._list.value(evaluation, selfParam)
-        v = self._value.value(evaluation, selfParam)
-        if isinstance(l1, set):
-            l2 = l1.copy()
-            l2.remove(v)
-            return l2
-        else:
-            l2 = [x for x in l1 if x != v]
-            if isinstance(l1, list):
-                return l2
-            else:
-                return deque(l2)
+# class GetItemExpression(object):
+#     def __init__(self, l, index):
+#         self._list = l
+#         self._index = index
+#
+#     def __str__(self):
+#         return str(self._list) + '[' + str(self._index) + ']'
+#
+#     def __repr__(self):
+#         return str(self._list) + '[' + str(self._index) + ']'
+#
+#     def value(self, evaluation, selfParam=None):
+#         l1 = self._list.value(evaluation, selfParam)
+#         a2 = self._index.value(evaluation, selfParam)
+#         if isinstance(l1, (list, deque)):
+#             return l1[a2]
+#         else:
+#             if a2 != UNDEFINED_PARAMETER:
+#                 raise TypeError
+#             return next(iter(l1))
+#
+#
+# class GetSublistExpression(object):
+#     def __init__(self, l, index1, index2):
+#         self._list = l
+#         self._index1 = index1
+#         self._index2 = index2
+#
+#     def __str__(self):
+#         if self._index1 is None:
+#             if self._index2 is None:
+#                 return str(self._list) + '[:]'
+#             else:
+#                 return str(self._list) + '[:' + str(self._index2) + ']'
+#         else:
+#             if self._index2 is None:
+#                 return str(self._list) + '[' + str(self._index1) + ':]'
+#             else:
+#                 return str(self._list) + '[' + str(self._index1) + ':' + str(self._index2) + ']'
+#
+#     def __repr__(self):
+#         if self._index1 is None:
+#             if self._index2 is None:
+#                 return str(self._list) + '[:]'
+#             else:
+#                 return str(self._list) + '[:' + str(self._index2) + ']'
+#         else:
+#             if self._index2 is None:
+#                 return str(self._list) + '[' + str(self._index1) + ':]'
+#             else:
+#                 return str(self._list) + '[' + str(self._index1) + ':' + str(self._index2) + ']'
+#
+#     def value(self, evaluation, selfParam=None):
+#         import itertools
+#         l1 = self._list.value(evaluation, selfParam)
+#
+#         try:
+#             a1 = self._index1.value(evaluation, selfParam)
+#         except AttributeError:
+#             a1 = None
+#
+#         try:
+#             a2 = self._index2.value(evaluation, selfParam)
+#         except AttributeError:
+#             a2 = None
+#
+#         if not isinstance(a1, int) and a1 is not None:
+#             raise TypeError
+#         if not isinstance(a2, int) and a2 is not None:
+#             raise TypeError
+#
+#         if isinstance(l1, list):
+#             return l1[a1:a2]
+#
+#         elif isinstance(l1, deque):
+#             def rebound(value, length):
+#                 if value is not None:
+#                     value = min(value, length)
+#                     value = max(value, -length)
+#                     if value < 0:
+#                         value += length
+#                 return value
+#             a1 = rebound(a1, len(l1))
+#             a2 = rebound(a2, len(l1))
+#             return deque(itertools.islice(l1, a1, a2))
+#
+#         else:
+#             if a1 is not None:
+#                 raise TypeError
+#
+#             it = iter(l1)
+#             if a2 is None:
+#                 sliceLen = len(l1)
+#             else:
+#                 if a2 > 0:
+#                     sliceLen = min(len(l1), a2)
+#                 else:
+#                     sliceLen = max(0, len(l1) + a2)
+#             return set([next(it) for _ in xrange(sliceLen)])
+#
+#
+# class InsertExpression(object):
+#     def __init__(self, l, index, value):
+#         self._list = l
+#         self._index = index
+#         self._value = value
+#
+#     def __str__(self):
+#         if self._index is None:
+#             return str(self._list) + '<<' + str(self._value)
+#         else:
+#             return str(self._list) + '<' + str(self._index) + '<' + str(self._value)
+#
+#     def __repr__(self):
+#         if self._index is None:
+#             return str(self._list) + '<<' + str(self._value)
+#         else:
+#             return str(self._list) + '<' + str(self._index) + '<' + str(self._value)
+#
+#     def value(self, evaluation, selfParam=None):
+#         l1 = self._list.value(evaluation, selfParam)
+#         if isinstance(l1, list):
+#             l2 = l1[:]
+#         elif isinstance(l1, deque):
+#             l2 = deque(l1)
+#         else:
+#             l2 = l1.copy()
+#
+#         v = self._value.value(evaluation, selfParam)
+#         if isinstance(l1, (list, deque)):
+#             if self._index is None:
+#                 l2.append(v)
+#             else:
+#                 index = self._index.value(evaluation, selfParam)
+#                 l2.insert(index, v)
+#         else:
+#             l2.add(v)
+#         return l2
+#
+#
+# class RemoveExpression(object):
+#     def __init__(self, l, index, value):
+#         self._list = l
+#         self._index = index
+#         self._value = value
+#
+#     def __str__(self):
+#         if self._index is None:
+#             return str(self._list) + '>>' + str(self._value)
+#         else:
+#             return str(self._list) + '>' + str(self._index) + '>' + str(self._value)
+#
+#     def __repr__(self):
+#         if self._index is None:
+#             return str(self._list) + '>>' + str(self._value)
+#         else:
+#             return str(self._list) + '>' + str(self._index) + '>' + str(self._value)
+#
+#     def value(self, evaluation, selfParam=None):
+#         l1 = self._list.value(evaluation, selfParam)
+#         if isinstance(l1, list):
+#             l2 = l1[:]
+#         elif isinstance(l1, deque):
+#             l2 = deque(l1)
+#         else:
+#             l2 = l1.copy()
+#
+#         if self._index is None:
+#             v = self._value.value(evaluation, selfParam)
+#             l2.remove(v)
+#         else:
+#             if isinstance(l1, (list, deque)):
+#                 index = self._index.value(evaluation, selfParam)
+#                 l2.pop(index)
+#             else:
+#                 l2.pop()
+#         return l2
+#
+#
+# class RemoveAllExpression(object):
+#     def __init__(self, l, value):
+#         self._list = l
+#         self._value = value
+#
+#     def __str__(self):
+#         return str(self._list) + '>>>' + str(self._value)
+#
+#     def __repr__(self):
+#         return str(self._list) + '>>>' + str(self._value)
+#
+#     def value(self, evaluation, selfParam=None):
+#         l1 = self._list.value(evaluation, selfParam)
+#         v = self._value.value(evaluation, selfParam)
+#         if isinstance(l1, set):
+#             l2 = l1.copy()
+#             l2.remove(v)
+#             return l2
+#         else:
+#             l2 = [x for x in l1 if x != v]
+#             if isinstance(l1, list):
+#                 return l2
+#             else:
+#                 return deque(l2)
 
 
 class AUnOp(object):
