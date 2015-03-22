@@ -33,6 +33,20 @@ class TestModulo(TestCase):
         expr = Modulo(a1, a2)
         self.assertEqual(expr.value(self.eval2), 10)
 
+    def test_bad_integer_modulo_with_empty_evaluation(self):
+        a1 = ALitteral(pi)
+        a2 = ALitteral(0.0)
+        expr = Modulo(a1, a2)
+        with self.assertRaises(ArithmeticError):
+            expr.value(self.eval1)
+
+    def test_bad_integer_modulo_with_non_empty_evaluation(self):
+        a1 = ALitteral(pi)
+        a2 = ALitteral(0.0)
+        expr = Modulo(a1, a2)
+        with self.assertRaises(ArithmeticError):
+            expr.value(self.eval2)
+
     def test_strings_modulo_with_empty_evaluation(self):
         a1 = ALitteral('abc')
         a2 = ALitteral('def')
@@ -58,6 +72,20 @@ class TestModulo(TestCase):
         a2 = ALitteral(sqrt(2))
         expr = Modulo(a1, a2)
         self.assertEqual(expr.value(self.eval2), pi % sqrt(2))
+
+    def test_bad_float_modulo_with_empty_evaluation(self):
+        a1 = ALitteral(pi)
+        a2 = ALitteral(0.0)
+        expr = Modulo(a1, a2)
+        with self.assertRaises(ArithmeticError):
+            expr.value(self.eval1)
+
+    def test_bad_float_modulo_with_non_empty_evaluation(self):
+        a1 = ALitteral(pi)
+        a2 = ALitteral(0.0)
+        expr = Modulo(a1, a2)
+        with self.assertRaises(ArithmeticError):
+            expr.value(self.eval2)
 
     def test_integer_string_modulo_with_empty_evaluation(self):
         a1 = ALitteral(10)
