@@ -402,7 +402,7 @@ class ParameterizedExpression(object):
                 p2 = namedExpr.getKWArg(k2)
                 if not unifyVariable(p1, p2, neval):
                     return
-            except (KeyError, ValueError):
+            except (KeyError, ArithmeticError, TypeError, ValueError):
                 return
 
         return neval
@@ -465,20 +465,20 @@ class NamedExpression(ParameterizedExpression):
             return False
 
 
-class PropertyBooleanExpression(NamedExpression):
+class PropertyTriggerExpression(NamedExpression):
 
     def __init__(self, name, args, kwargs):
-        super(PropertyBooleanExpression, self).__init__(name, args, kwargs)
+        super(PropertyTriggerExpression, self).__init__(name, args, kwargs)
 
     def _getContainer(self):
         return Property.properties
 
 
-class EventBooleanExpression(NamedExpression):
+class EventTriggerExpression(NamedExpression):
     events = set([])
 
     def __init__(self, name, args, kwargs):
-        super(EventBooleanExpression, self).__init__(name, args, kwargs)
+        super(EventTriggerExpression, self).__init__(name, args, kwargs)
 
     def _getContainer(self):
         return Event.events

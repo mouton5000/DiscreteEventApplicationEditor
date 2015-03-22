@@ -2,8 +2,8 @@ import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, UndefinedLitteral, Min, Max
-from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyBooleanExpression, \
-    EventBooleanExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
+from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
+    EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is
 from database import Variable
 from utils.mathutils import sign
@@ -184,12 +184,12 @@ class TriggerParser(lrparsing.Grammar):
         def buildProperty():
             name = cls.buildExpression(tree[1])[1:]
             args, kwargs = cls.buildExpression(tree[3])
-            return PropertyBooleanExpression(name, args, kwargs)
+            return PropertyTriggerExpression(name, args, kwargs)
 
         def buildEvent():
             name = cls.buildExpression(tree[1])[1:]
             args, kwargs = cls.buildExpression(tree[3])
-            return EventBooleanExpression(name, args, kwargs)
+            return EventTriggerExpression(name, args, kwargs)
 
         def buildToken():
             args, kwargs = cls.buildExpression(tree[3])
