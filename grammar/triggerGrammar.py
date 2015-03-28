@@ -4,7 +4,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
     Power, Func, UndefinedLitteral, Min, Max
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
-    NotEquals, And, Or, Not, Is, Any, Random
+    NotEquals, And, Or, Not, Is, Any, Random, Del
 from database import Variable
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
@@ -32,6 +32,7 @@ class TriggerParser(lrparsing.Grammar):
         elock = Keyword('eLock')
         any = Token('any')
         random = Token('random')
+        delkw = Token('del')
 
         cosf = Token('cos')
         sinf = Token('sin')
@@ -86,6 +87,7 @@ class TriggerParser(lrparsing.Grammar):
     orExpr = boolExpr << T.orkw << boolExpr
     notExpr = T.notkw + boolExpr
     isExpr = T.variable + T.iskw + arithmExpr
+    delExpr = T.delkw + T.variable
 
     anyExpr = T.any + parExpr
     randomExpr = T.random + parExpr
@@ -235,6 +237,10 @@ class TriggerParser(lrparsing.Grammar):
             variable = cls.buildExpression(tree[1])
             function = cls.buildExpression(tree[3])
             return Is(variable, function)
+
+        def buildDel():
+            variable = cls.buildExpression(tree[2])
+            return Del(variable)
 
         def buildAny():
             expr = cls.buildExpression(tree[2])

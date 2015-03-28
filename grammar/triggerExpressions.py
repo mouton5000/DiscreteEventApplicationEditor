@@ -260,6 +260,19 @@ class Is(BBiOp):
             pass
 
 
+class Del(object):
+    def __init__(self, variable):
+        self._a1 = variable
+
+    def eval(self, _, previousEvaluation):
+        neval = previousEvaluation.copy()
+        try:
+            del neval[self._a1]
+        except KeyError:
+            pass
+        yield neval
+        
+
 class Compare(BBiOp):
     def __init__(self, a1, a2):
         super(Compare, self).__init__(a1, a2)
