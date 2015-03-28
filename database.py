@@ -57,9 +57,10 @@ class ParameterizedExpression(object):
 
     def __eq__(self, obj):
         try:
-            return self._args == obj._args and self._kwargs == self._kwargs
+            return self._args == obj._args and self._kwargs == obj._kwargs
         except AttributeError:
             return False
+
 
 class NamedExpression(ParameterizedExpression):
     __metaclass__ = abc.ABCMeta
