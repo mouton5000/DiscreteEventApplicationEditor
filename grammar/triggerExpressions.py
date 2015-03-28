@@ -250,7 +250,7 @@ class Is(BBiOp):
         self.symbol = 'is'
 
     def eval(self, _, previousEvaluation):
-        if self._a1 not in previousEvaluation:
+        if isinstance(self._a1, Variable):
             try:
                 value = self._a2.value(previousEvaluation)
                 if value is not None:

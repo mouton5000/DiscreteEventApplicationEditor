@@ -44,35 +44,41 @@ class TestIs(TestCase):
         simpleTests.test_evaluation(self, trig, self.eval1, None, evaluation)
 
     def test_integer_is_false_with_empty_previous_evaluation(self):
-        self.is_false_with_non_empty_previous_evaluation(42)
+        self.is_true_with_non_empty_previous_evaluation_1(42)
 
     def test_float_is_false_with_empty_previous_evaluation(self):
-        self.is_false_with_non_empty_previous_evaluation(3.14)
+        self.is_true_with_non_empty_previous_evaluation_1(3.14)
 
     def test_string_is_false_with_empty_previous_evaluation(self):
-        self.is_false_with_non_empty_previous_evaluation('zywx')
+        self.is_true_with_non_empty_previous_evaluation_1('zywx')
 
     def test_boolean_is_false_with_empty_previous_evaluation(self):
-        self.is_false_with_non_empty_previous_evaluation(True)
+        self.is_true_with_non_empty_previous_evaluation_1(True)
 
-    def is_false_with_non_empty_previous_evaluation(self, isValue):
+    def is_true_with_non_empty_previous_evaluation_1(self, isValue):
         trig = Is(Variable('X'), ALitteral(isValue))
 
-        simpleTests.test_evaluation(self, trig, self.eval2, None)
+        evaluation = Evaluation()
+        evaluation[Variable('X')] = isValue
+        evaluation[Variable('Y')] = 'abc'
+        evaluation[Variable('Z')] = 12.0
+        evaluation[Variable('T')] = True
+
+        simpleTests.test_evaluation(self, trig, self.eval2, None, evaluation)
 
     def test_integer_is_true_with_empty_previous_evaluation(self):
-        self.is_true_with_non_empty_previous_evaluation(-42)
+        self.is_true_with_non_empty_previous_evaluation_2(-42)
 
     def test_float_is_true_with_empty_previous_evaluation(self):
-        self.is_true_with_non_empty_previous_evaluation(6.0231023)
+        self.is_true_with_non_empty_previous_evaluation_2(6.0231023)
 
     def test_string_is_true_with_empty_previous_evaluation(self):
-        self.is_true_with_non_empty_previous_evaluation('abcdefgh')
+        self.is_true_with_non_empty_previous_evaluation_2('abcdefgh')
 
     def test_boolean_is_true_with_empty_previous_evaluation(self):
-        self.is_true_with_non_empty_previous_evaluation(False)
+        self.is_true_with_non_empty_previous_evaluation_2(False)
 
-    def is_true_with_non_empty_previous_evaluation(self, isValue):
+    def is_true_with_non_empty_previous_evaluation_2(self, isValue):
         trig = Is(Variable('J'), ALitteral(isValue))
 
         evaluation = Evaluation()
