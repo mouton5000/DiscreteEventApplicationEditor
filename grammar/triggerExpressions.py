@@ -240,7 +240,6 @@ class eLock(object):
         def evalArg(arg):
             return arg.value(evaluation)
 
-        print self._keys
         keys = tuple([evalArg(key) for key in self._keys])
         return keys
 
@@ -505,6 +504,49 @@ class TokenExpression(ParameterizedExpression):
             neval = self.unify(token, previousEvaluation)
             if neval is not None:
                 yield neval
+
+
+class Any(object):
+    def __init__(self, expr):
+        super(Any, self).__init__()
+        self._expr = expr
+
+    def __str__(self):
+        return 'Any(' + str(self._expr) + ')'
+
+    def __repr__(self):
+        return 'Any(' + str(self._expr) + ')'
+
+    def eval(self, token, previousEvaluation):
+        evaluations = self._expr.eval(token, previousEvaluation)
+        try:
+            yield evaluations.next()
+        except StopIteration:
+            pass
+
+
+class Random(object):
+    def __init__(self, expr):
+        super(Random, self).__init__()
+        self._expr = expr
+
+    def __str__(self):
+        return 'Random(' + str(self._expr) + ')'
+
+    def __repr__(self):
+        return 'Random(' + str(self._expr) + ')'
+
+    def eval(self, token, previousEvaluation):
+        evaluations = self._expr.eval(token, previousEvaluation)
+
+        selected_evaluation = None
+
+        for index, evaluation in enumerate(evaluations):
+            if randint(0, index) == 0:
+                selected_evaluation = evaluation
+
+        if selected_evaluation is not None:
+            yield selected_evaluation
 
 
 if __name__ == '__main__':

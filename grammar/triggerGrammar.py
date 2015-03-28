@@ -4,7 +4,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
     Power, Func, UndefinedLitteral, Min, Max
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
-    NotEquals, And, Or, Not, Is
+    NotEquals, And, Or, Not, Is, Any, Random
 from database import Variable
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
@@ -30,6 +30,8 @@ class TriggerParser(lrparsing.Grammar):
         notkw = Token('not')
         token = Token('token')
         elock = Keyword('eLock')
+        any = Token('any')
+        random = Token('random')
 
         cosf = Token('cos')
         sinf = Token('sin')
@@ -85,8 +87,12 @@ class TriggerParser(lrparsing.Grammar):
     notExpr = T.notkw + boolExpr
     isExpr = T.variable + T.iskw + arithmExpr
 
+    anyExpr = T.any + parExpr
+    randomExpr = T.random + parExpr
+
     boolExpr = Prio(litExpr, timerExpr, randExpr, randIntExpr, eLockExpr, propExpr,
-                    eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr)
+                    eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr,
+                    anyExpr, randomExpr)
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     # linkedListExpr = 'll' + listExpr
@@ -230,6 +236,14 @@ class TriggerParser(lrparsing.Grammar):
             function = cls.buildExpression(tree[3])
             return Is(variable, function)
 
+        def buildAny():
+            expr = cls.buildExpression(tree[2])
+            return Any(expr)
+
+        def buildRandom():
+            expr = cls.buildExpression(tree[2])
+            return Random(expr)
+
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)
 
@@ -258,7 +272,9 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.orExpr: buildOr,
             TriggerParser.notExpr: buildNot,
             TriggerParser.isExpr: buildIs,
-            TriggerParser.arithmExpr: buildArithmetic
+            TriggerParser.anyExpr: buildAny,
+            TriggerParser.randomExpr: buildRandom,
+            TriggerParser.arithmExpr: buildArithmetic,
         }
 
         return booleanSymbols[rootName]()
@@ -452,6 +468,33 @@ class TriggerParser(lrparsing.Grammar):
 
 if __name__ == '__main__':
     # print BooleanExpressionParser.pre_compile_grammar()
-    expr = 'pTest(X,Y, Z = 2, \'abc\' = X + 2, 2 + 4 - Z =Y)'
-    expr = TriggerParser.parse(expr)
+
+    from database import Property
+    from triggerExpressions import BExpression
+
+    Property.add('Test', [1, 2], {})
+    Property.add('Test', [1, 3], {})
+    Property.add('Test', [2, 4], {})
+    Property.add('Test', [1, 5], {})
+
+    expr = 'pTest(X,Y)'
+    expr = BExpression(TriggerParser.parse(expr))
     print expr
+    for evaluation in expr.eval(None):
+        print evaluation
+
+    print
+
+    expr = 'any(pTest(X,Y))'
+    expr = BExpression(TriggerParser.parse(expr))
+    print expr
+    for evaluation in expr.eval(None):
+        print evaluation
+
+    print
+
+    expr = 'random(pTest(X,Y))'
+    expr = BExpression(TriggerParser.parse(expr))
+    print expr
+    for evaluation in expr.eval(None):
+        print evaluation
