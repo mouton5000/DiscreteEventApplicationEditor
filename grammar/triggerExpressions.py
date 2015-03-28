@@ -250,15 +250,14 @@ class Is(BBiOp):
         self.symbol = 'is'
 
     def eval(self, _, previousEvaluation):
-        if isinstance(self._a1, Variable):
-            try:
-                value = self._a2.value(previousEvaluation)
-                if value is not None:
-                    neval = previousEvaluation.copy()
-                    neval[self._a1] = value
-                    yield neval
-            except (ArithmeticError, TypeError, ValueError):
-                pass
+        try:
+            value = self._a2.value(previousEvaluation)
+            if value is not None:
+                neval = previousEvaluation.copy()
+                neval[self._a1] = value
+                yield neval
+        except (ArithmeticError, TypeError, ValueError):
+            pass
 
 
 class Compare(BBiOp):
