@@ -127,21 +127,31 @@ class StateMachine:
         #     token.moveTo(tr.n2)
         #     tr.applyConsequences(evaluation, self, token)
 
-        atLeastOneTokenMoves = False
+        transitionGen = {}
 
         for token in self._tokens:
-            tokenMoves = False
             for transition in token.node.outputArcs:
                 evaluations = transition.eval(token)
-                for evaluation in evaluations:
-                    tokenMoves = True
-                    transition.applyConsequences(evaluation, self, token)
-                if tokenMoves:
-                    atLeastOneTokenMoves = True
-                    token.moveTo(transition.n2)
-                    break
+                try:
+                    evaluation = evaluations.next()
+                except StopIteration:
+                    continue
 
-        return atLeastOneTokenMoves
+                transitionGen[token] = (transition, [evaluation] + list(evaluations))
+                break
+        Event.events.clear()
+        if len(transitionGen) == 0:
+            return False
+
+        print transitionGen
+
+        for token in transitionGen:
+            tr, evaluations = transitionGen[token]
+            token.moveTo(tr.n2)
+            for evaluation in evaluations:
+                tr.applyConsequences(evaluation, self, token)
+
+        return True
 
 
 class Token(ParameterizedExpression):
@@ -192,7 +202,7 @@ class Token(ParameterizedExpression):
 
     def __str__(self):
         s = super(Token, self).__str__()
-        return str(self._node.num) + ',' + str(self._nbFrameSinceLastMove) + ',' + s
+        return '(' + str(self._node.num) + ',' + str(self._nbFrameSinceLastMove) + ',' + s + ')'
 
     def __repr__(self):
         return str(self)

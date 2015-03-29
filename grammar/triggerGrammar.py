@@ -36,29 +36,6 @@ class TriggerParser(lrparsing.Grammar):
         minEvalKw = Token('minEval')
         maxEvalKw = Token('maxEval')
 
-        cosf = Token('cos')
-        sinf = Token('sin')
-        tanf = Token('tan')
-        expf = Token('exp')
-        logf = Token('log')
-        absf = Token('abs')
-        signf = Token('sign')
-        floorf = Token('floor')
-        ceilf = Token('ceil')
-        acosf = Token('acos')
-        asinf = Token('asin')
-        atanf = Token('atan')
-        chf = Token('ch')
-        shf = Token('sh')
-        thf = Token('th')
-        achf = Token('ach')
-        ashf = Token('ash')
-        athf = Token('ath')
-
-        lenf = Token('len')
-
-        minf = Token('min')
-        maxf = Token('max')
 
     arithmExpr = Ref('arithmExpr')
     boolExpr = Ref('boolExpr')
@@ -82,6 +59,7 @@ class TriggerParser(lrparsing.Grammar):
     eventExpr = T.event + '(' + parameters + ')'
     tokenExpr = T.token + '(' + parameters + ')'
 
+    parArithmExpr = '(' + arithmExpr + ')'
     compareArithmExpr = arithmExpr << (Token('==') | Token('>') | Token('<') | Token('<=') |
                                        Token('>=') | Token('!=')) << arithmExpr
 
@@ -93,12 +71,29 @@ class TriggerParser(lrparsing.Grammar):
 
     anyEvalExpr = T.anyEval + parExpr
     randomEvalExpr = T.randomEval + parExpr
-    minEvalExpr = T.minEvalKw + parExpr + '[' + arithmExpr + ']'
-    maxEvalExpr = T.maxEvalKw + parExpr + '[' + arithmExpr + ']'
+    minEvalExpr = T.minEvalKw + '[' + arithmExpr + ']' + parExpr
+    maxEvalExpr = T.maxEvalKw + '[' + arithmExpr + ']' + parExpr
 
-    boolExpr = Prio(litExpr, timerExpr, randExpr, randIntExpr, eLockExpr, propExpr,
-                    eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr,
-                    anyEvalExpr, randomEvalExpr, minEvalExpr, maxEvalExpr)
+    boolExpr = Prio(litExpr,
+                    timerExpr,
+                    randExpr,
+                    randIntExpr,
+                    eLockExpr,
+                    propExpr,
+                    eventExpr,
+                    tokenExpr,
+                    parExpr,
+                    isExpr,
+                    delExpr,
+                    compareArithmExpr,
+                    notExpr,
+                    andExpr,
+                    orExpr,
+                    anyEvalExpr,
+                    randomEvalExpr,
+                    # minEvalExpr,
+                    # maxEvalExpr
+    )
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     # linkedListExpr = 'll' + listExpr
@@ -109,12 +104,10 @@ class TriggerParser(lrparsing.Grammar):
     multExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
     powerExpr = arithmExpr << Token('**') << arithmExpr
     constantExpr = Token('pi') | Token('e')
-    parArithmExpr = '(' + arithmExpr + ')'
 
-    unaryFuncExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf
-                     | T.acosf | T.asinf | T.atanf | T.shf | T.chf | T.thf | T.ashf | T.achf | T.athf | T.lenf) \
+    unaryFuncExpr = Token('cos sin tan exp log abs sign floor ceil acos asin atan sh ch th ash ach ath len') \
                      + parArithmExpr
-    binaryFuncExpr = (T.minf | T.maxf) + '(' + arithmExpr + ',' + arithmExpr + ')'
+    binaryFuncExpr = Token('min max') + '(' + arithmExpr + ',' + arithmExpr + ')'
 
     # getItemExpr = arithmExpr + '[' + arithmExpr + ']'
     # setItemExpr = arithmExpr + '[' + arithmExpr + '<<' + arithmExpr + ']'
@@ -298,6 +291,7 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.minEvalExpr: buildMinEvalExpr,
             TriggerParser.maxEvalExpr: buildMaxEvalExpr,
             TriggerParser.arithmExpr: buildArithmetic,
+            TriggerParser.parArithmExpr: buildArithmetic,
         }
 
         return booleanSymbols[rootName]()
@@ -492,48 +486,55 @@ class TriggerParser(lrparsing.Grammar):
 if __name__ == '__main__':
     # print BooleanExpressionParser.pre_compile_grammar()
 
+    # from database import Property
+    # from triggerExpressions import BExpression
+    #
+    # Property.add('Test', [1, 2], {})
+    # Property.add('Test', [1, 3], {})
+    # Property.add('Test', [2, 4], {})
+    # Property.add('Test', [1, 5], {})
+    #
+    # expr = 'pTest(X,Y)'
+    # expr = BExpression(TriggerParser.parse(expr))
+    # print expr
+    # for evaluation in expr.eval(None):
+    #     print evaluation
+    #
+    # print
+    #
+    # expr = 'anyEval(pTest(X,Y))'
+    # expr = BExpression(TriggerParser.parse(expr))
+    # print expr
+    # for evaluation in expr.eval(None):
+    #     print evaluation
+    #
+    # print
+    #
+    # expr = 'randomEval(pTest(X,Y))'
+    # expr = BExpression(TriggerParser.parse(expr))
+    # print expr
+    # for evaluation in expr.eval(None):
+    #     print evaluation
+    #
+    # print
+    #
+    # expr = 'minEval(pTest(X,Y) or Z is 3 and X is 2 or Z is 2 and X is 1)[X + Z]'
+    # expr = BExpression(TriggerParser.parse(expr))
+    # print expr
+    # for evaluation in expr.eval(None):
+    #     print evaluation
+    #
+    # print
+    #
+    # expr = 'maxEval(pTest(X,Y) or Z is 8 and X is 2 or Z is 2 and X is 1)[X + Y]'
+    # expr = BExpression(TriggerParser.parse(expr))
+    # print expr
+    # for evaluation in expr.eval(None):
+    #     print evaluation
+
     from database import Property
     from triggerExpressions import BExpression
 
-    Property.add('Test', [1, 2], {})
-    Property.add('Test', [1, 3], {})
-    Property.add('Test', [2, 4], {})
-    Property.add('Test', [1, 5], {})
-
-    expr = 'pTest(X,Y)'
+    expr = '(A + B ** 2) != (A + B ** 2)'
     expr = BExpression(TriggerParser.parse(expr))
     print expr
-    for evaluation in expr.eval(None):
-        print evaluation
-
-    print
-
-    expr = 'anyEval(pTest(X,Y))'
-    expr = BExpression(TriggerParser.parse(expr))
-    print expr
-    for evaluation in expr.eval(None):
-        print evaluation
-
-    print
-
-    expr = 'randomEval(pTest(X,Y))'
-    expr = BExpression(TriggerParser.parse(expr))
-    print expr
-    for evaluation in expr.eval(None):
-        print evaluation
-
-    print
-
-    expr = 'minEval(pTest(X,Y) or Z is 3 and X is 2 or Z is 2 and X is 1)[X + Z]'
-    expr = BExpression(TriggerParser.parse(expr))
-    print expr
-    for evaluation in expr.eval(None):
-        print evaluation
-
-    print
-
-    expr = 'maxEval(pTest(X,Y) or Z is 8 and X is 2 or Z is 2 and X is 1)[X + Y]'
-    expr = BExpression(TriggerParser.parse(expr))
-    print expr
-    for evaluation in expr.eval(None):
-        print evaluation
