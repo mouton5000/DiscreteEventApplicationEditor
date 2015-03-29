@@ -91,8 +91,8 @@ class TriggerParser(lrparsing.Grammar):
                     orExpr,
                     anyEvalExpr,
                     randomEvalExpr,
-                    # minEvalExpr,
-                    # maxEvalExpr
+                    minEvalExpr,
+                    maxEvalExpr
     )
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
