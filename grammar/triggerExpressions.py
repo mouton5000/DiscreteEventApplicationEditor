@@ -518,16 +518,16 @@ class TokenExpression(ParameterizedExpression):
                 yield neval
 
 
-class Any(object):
+class AnyEval(object):
     def __init__(self, expr):
-        super(Any, self).__init__()
+        super(AnyEval, self).__init__()
         self._expr = expr
 
     def __str__(self):
-        return 'Any(' + str(self._expr) + ')'
+        return 'AnyEval(' + str(self._expr) + ')'
 
     def __repr__(self):
-        return 'Any(' + str(self._expr) + ')'
+        return 'AnyEval(' + str(self._expr) + ')'
 
     def eval(self, token, previousEvaluation):
         evaluations = self._expr.eval(token, previousEvaluation)
@@ -537,16 +537,16 @@ class Any(object):
             pass
 
 
-class Random(object):
+class RandomEval(object):
     def __init__(self, expr):
-        super(Random, self).__init__()
+        super(RandomEval, self).__init__()
         self._expr = expr
 
     def __str__(self):
-        return 'Random(' + str(self._expr) + ')'
+        return 'RandomEval(' + str(self._expr) + ')'
 
     def __repr__(self):
-        return 'Random(' + str(self._expr) + ')'
+        return 'RandomEval(' + str(self._expr) + ')'
 
     def eval(self, token, previousEvaluation):
         evaluations = self._expr.eval(token, previousEvaluation)

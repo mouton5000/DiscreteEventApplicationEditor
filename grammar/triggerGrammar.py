@@ -4,7 +4,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
     Power, Func, UndefinedLitteral, Min, Max
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
-    NotEquals, And, Or, Not, Is, Any, Random, Del, SelectMinEvaluation, SelectMaxEvaluation
+    NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEvaluation, SelectMaxEvaluation
 from database import Variable
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
@@ -25,14 +25,14 @@ class TriggerParser(lrparsing.Grammar):
         rand = Token('rand')
         randInt = Token('randInt')
         iskw = Token('is')
+        delkw = Token('del')
         andkw = Token('and')
         orkw = Token('or')
         notkw = Token('not')
         token = Token('token')
         elock = Keyword('eLock')
-        any = Token('any')
-        random = Token('random')
-        delkw = Token('del')
+        anyEval = Token('anyEval')
+        randomEval = Token('randomEval')
         minEvalKw = Token('minEval')
         maxEvalKw = Token('maxEval')
 
@@ -91,14 +91,14 @@ class TriggerParser(lrparsing.Grammar):
     isExpr = T.variable + T.iskw + arithmExpr
     delExpr = T.delkw + T.variable
 
-    anyExpr = T.any + parExpr
-    randomExpr = T.random + parExpr
+    anyEvalExpr = T.anyEval + parExpr
+    randomEvalExpr = T.randomEval + parExpr
     minEvalExpr = T.minEvalKw + parExpr + '[' + arithmExpr + ']'
     maxEvalExpr = T.maxEvalKw + parExpr + '[' + arithmExpr + ']'
 
     boolExpr = Prio(litExpr, timerExpr, randExpr, randIntExpr, eLockExpr, propExpr,
                     eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr,
-                    anyExpr, randomExpr, minEvalExpr, maxEvalExpr)
+                    anyEvalExpr, randomEvalExpr, minEvalExpr, maxEvalExpr)
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     # linkedListExpr = 'll' + listExpr
@@ -246,13 +246,13 @@ class TriggerParser(lrparsing.Grammar):
             variable = cls.buildExpression(tree[2])
             return Del(variable)
 
-        def buildAny():
+        def buildAnyEval():
             expr = cls.buildExpression(tree[2])
-            return Any(expr)
+            return AnyEval(expr)
 
-        def buildRandom():
+        def buildRandomEval():
             expr = cls.buildExpression(tree[2])
-            return Random(expr)
+            return RandomEval(expr)
 
         def buildMinEvalExpr():
             expr = cls.buildExpression(tree[2])
@@ -293,8 +293,8 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.notExpr: buildNot,
             TriggerParser.isExpr: buildIs,
             TriggerParser.delExpr: buildDel,
-            TriggerParser.anyExpr: buildAny,
-            TriggerParser.randomExpr: buildRandom,
+            TriggerParser.anyEvalExpr: buildAnyEval,
+            TriggerParser.randomEvalExpr: buildRandomEval,
             TriggerParser.minEvalExpr: buildMinEvalExpr,
             TriggerParser.maxEvalExpr: buildMaxEvalExpr,
             TriggerParser.arithmExpr: buildArithmetic,
@@ -508,7 +508,7 @@ if __name__ == '__main__':
 
     print
 
-    expr = 'any(pTest(X,Y))'
+    expr = 'anyEval(pTest(X,Y))'
     expr = BExpression(TriggerParser.parse(expr))
     print expr
     for evaluation in expr.eval(None):
@@ -516,7 +516,7 @@ if __name__ == '__main__':
 
     print
 
-    expr = 'random(pTest(X,Y))'
+    expr = 'randomEval(pTest(X,Y))'
     expr = BExpression(TriggerParser.parse(expr))
     print expr
     for evaluation in expr.eval(None):
