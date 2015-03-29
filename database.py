@@ -85,9 +85,9 @@ class NamedExpression(ParameterizedExpression):
         container = self.container
         try:
             l = container[self._name]
-            l.add(self)
+            l.append(self)
         except KeyError:
-            l = set([self])
+            l = [self]
             container[self._name] = l
 
     def __hash__(self):
@@ -125,8 +125,8 @@ class Property(NamedExpression):
     @staticmethod
     def removeAll(name, args, kwargs):
         try:
-            Property.properties[name] = {prop for prop in Property.properties[name]
-                                         if not prop.filter(args, kwargs)}
+            Property.properties[name] = [prop for prop in Property.properties[name]
+                                         if not prop.filter(args, kwargs)]
         except KeyError:
             pass
 
@@ -149,38 +149,28 @@ class Property(NamedExpression):
             for (index, arg), param in zip(enumerate(unevaluatedArgs2), prop.iterArgs()):
                 newArg = arg.value(evaluation, selfParam=param)
                 if newArg == UNDEFINED_PARAMETER:
-                    continue
-                newArgCommands.append((index, newArg))
+                    newArg = param
+                newArgCommands.append(newArg)
 
-            newKWArgCommands = []
+            newKWArgCommands = {}
             for unevaluatedKey2, key2 in keys2:
                 unevaluatedValue2 = unevaluatedKWArgs2[unevaluatedKey2]
                 value = prop.getKWArg(key2)
                 value2 = unevaluatedValue2.value(evaluation, selfParam=value)
                 if value2 == UNDEFINED_PARAMETER:
-                    continue
-                newKWArgCommands.append((key2, value2))
-            return prop, newArgCommands, newKWArgCommands
+                    value2 = value
+                newKWArgCommands[key2] = value2
+
+            prop._args = newArgCommands
+            prop._kwargs = newKWArgCommands
 
         try:
             props = Property.properties[name]
         except KeyError:
             return
 
-        editCommands = [editProp(prop) for prop in props]
-        for command in editCommands:
-            if command is None:
-                continue
-            prop = command[0]
-            props.remove(prop)
-            newArgCommands = command[1]
-            newKWArgCommands = command[2]
-
-            for index, newArg in newArgCommands:
-                prop.setArg(index, newArg)
-            for key, newValue in newKWArgCommands:
-                prop.setKWArg(key, newValue)
-            props.add(prop)
+        for prop in props:
+            editProp(prop)
 
     def _getContainer(self):
         return Property.properties
