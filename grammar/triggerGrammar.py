@@ -278,6 +278,7 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.orExpr: buildOr,
             TriggerParser.notExpr: buildNot,
             TriggerParser.isExpr: buildIs,
+            TriggerParser.delExpr: buildDel,
             TriggerParser.anyExpr: buildAny,
             TriggerParser.randomExpr: buildRandom,
             TriggerParser.arithmExpr: buildArithmetic,
