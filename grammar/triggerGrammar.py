@@ -4,7 +4,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
     Power, Func, UndefinedLitteral, Min, Max
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
-    NotEquals, And, Or, Not, Is, Any, Random, Del
+    NotEquals, And, Or, Not, Is, Any, Random, Del, SelectMinEvaluation, SelectMaxEvaluation
 from database import Variable
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
@@ -33,6 +33,8 @@ class TriggerParser(lrparsing.Grammar):
         any = Token('any')
         random = Token('random')
         delkw = Token('del')
+        minEvalKw = Token('minEval')
+        maxEvalKw = Token('maxEval')
 
         cosf = Token('cos')
         sinf = Token('sin')
@@ -91,10 +93,12 @@ class TriggerParser(lrparsing.Grammar):
 
     anyExpr = T.any + parExpr
     randomExpr = T.random + parExpr
+    minEvalExpr = T.minEvalKw + parExpr + '[' + arithmExpr + ']'
+    maxEvalExpr = T.maxEvalKw + parExpr + '[' + arithmExpr + ']'
 
     boolExpr = Prio(litExpr, timerExpr, randExpr, randIntExpr, eLockExpr, propExpr,
                     eventExpr, tokenExpr, parExpr, isExpr, compareArithmExpr, notExpr, andExpr, orExpr,
-                    anyExpr, randomExpr)
+                    anyExpr, randomExpr, minEvalExpr, maxEvalExpr)
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     # linkedListExpr = 'll' + listExpr
@@ -250,6 +254,16 @@ class TriggerParser(lrparsing.Grammar):
             expr = cls.buildExpression(tree[2])
             return Random(expr)
 
+        def buildMinEvalExpr():
+            expr = cls.buildExpression(tree[2])
+            arithmExpr = cls.buildExpression(tree[4])
+            return SelectMinEvaluation(expr, arithmExpr)
+
+        def buildMaxEvalExpr():
+            expr = cls.buildExpression(tree[2])
+            arithmExpr = cls.buildExpression(tree[4])
+            return SelectMaxEvaluation(expr, arithmExpr)
+
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)
 
@@ -281,6 +295,8 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.delExpr: buildDel,
             TriggerParser.anyExpr: buildAny,
             TriggerParser.randomExpr: buildRandom,
+            TriggerParser.minEvalExpr: buildMinEvalExpr,
+            TriggerParser.maxEvalExpr: buildMaxEvalExpr,
             TriggerParser.arithmExpr: buildArithmetic,
         }
 
@@ -501,6 +517,22 @@ if __name__ == '__main__':
     print
 
     expr = 'random(pTest(X,Y))'
+    expr = BExpression(TriggerParser.parse(expr))
+    print expr
+    for evaluation in expr.eval(None):
+        print evaluation
+
+    print
+
+    expr = 'minEval(pTest(X,Y) or Z is 3 and X is 2 or Z is 2 and X is 1)[X + Z]'
+    expr = BExpression(TriggerParser.parse(expr))
+    print expr
+    for evaluation in expr.eval(None):
+        print evaluation
+
+    print
+
+    expr = 'maxEval(pTest(X,Y) or Z is 8 and X is 2 or Z is 2 and X is 1)[X + Y]'
     expr = BExpression(TriggerParser.parse(expr))
     print expr
     for evaluation in expr.eval(None):

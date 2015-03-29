@@ -271,7 +271,7 @@ class Del(object):
         except KeyError:
             pass
         yield neval
-        
+
 
 class Compare(BBiOp):
     def __init__(self, a1, a2):
@@ -551,15 +551,67 @@ class Random(object):
     def eval(self, token, previousEvaluation):
         evaluations = self._expr.eval(token, previousEvaluation)
 
-        selected_evaluation = None
+        selectedEvaluation = None
 
         for index, evaluation in enumerate(evaluations):
             if randint(0, index) == 0:
-                selected_evaluation = evaluation
+                selectedEvaluation = evaluation
 
-        if selected_evaluation is not None:
-            yield selected_evaluation
+        if selectedEvaluation is not None:
+            yield selectedEvaluation
 
+
+class SelectEvaluation(object):
+    def __init__(self, expr, arithmExpr, selectFunction):
+        super(SelectEvaluation, self).__init__()
+        self._expr = expr
+        self._arithmExpr = arithmExpr
+        self._selectFunction = selectFunction
+
+    def eval(self, token, previousEvaluation):
+        evaluations = self._expr.eval(token, previousEvaluation)
+
+        selectedEvaluation = None
+        selectedValue = None
+
+        for evaluation in evaluations:
+            try:
+                value = self._arithmExpr.value(evaluation)
+
+                if selectedValue is None or self._selectFunction(value, selectedValue):
+                    selectedEvaluation = evaluation
+                    selectedValue = value
+            except (ArithmeticError, TypeError, ValueError):
+                pass
+
+        if selectedEvaluation is not None:
+            yield selectedEvaluation
+
+
+class SelectMinEvaluation(SelectEvaluation):
+    def __init__(self, expr, arithmExpr):
+        def selectFunction(challenger, best):
+                return challenger < best
+        super(SelectMinEvaluation, self).__init__(expr, arithmExpr, selectFunction)
+
+    def __str__(self):
+        return 'SelectMinEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+
+    def __repr__(self):
+        return 'SelectMinEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+
+
+class SelectMaxEvaluation(SelectEvaluation):
+    def __init__(self, expr, arithmExpr):
+        def selectFunction(challenger, best):
+                return challenger > best
+        super(SelectMaxEvaluation, self).__init__(expr, arithmExpr, selectFunction)
+
+    def __str__(self):
+        return 'SelectMaxEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+
+    def __repr__(self):
+        return 'SelectMaxEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
 
 if __name__ == '__main__':
     pass
