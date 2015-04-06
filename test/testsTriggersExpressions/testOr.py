@@ -23,10 +23,18 @@ class TestOr(TestCase):
         self.eval2[Variable('T')] = True
 
     def test_eval_true_true_with_empty_previous_evaluation(self):
-        self.eval_true(self.eval1, True, True)
+        self.eval_true_true(self.eval1)
 
     def test_eval_true_true_with_non_empty_previous_evaluation(self):
-        self.eval_true(self.eval2, True, True)
+        self.eval_true_true(self.eval2)
+
+    def eval_true_true(self, previousEvaluation):
+        lit1 = BLitteral(True)
+        lit2 = BLitteral(True)
+        token = None
+        trig = Or(lit1, lit2)
+
+        simpleTests.test_evaluation(self, trig, previousEvaluation, token, previousEvaluation, previousEvaluation)
 
     def test_eval_true_false_with_empty_previous_evaluation(self):
         self.eval_true(self.eval1, True, False)

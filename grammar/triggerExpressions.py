@@ -125,13 +125,10 @@ class Or(BBiOp):
         self.symbol = 'or'
 
     def eval(self, token, previousEvaluation):
-        dc = DictContainer()
         for eval1 in self._a1.eval(token, previousEvaluation):
-            dc.add(eval1.variables)
             yield eval1
         for eval2 in self._a2.eval(token, previousEvaluation):
-            if dc.add(eval2.variables):
-                yield eval2
+            yield eval2
 
 
 class Not(object):

@@ -85,9 +85,9 @@ class NamedExpression(ParameterizedExpression):
         container = self.container
         try:
             l = container[self._name]
-            l.append(self)
+            l.add(self)
         except KeyError:
-            l = [self]
+            l = set([self])
             container[self._name] = l
 
     def __hash__(self):
@@ -125,8 +125,8 @@ class Property(NamedExpression):
     @staticmethod
     def removeAll(name, args, kwargs):
         try:
-            Property.properties[name] = [prop for prop in Property.properties[name]
-                                         if not prop.filter(args, kwargs)]
+            Property.properties[name] = set([prop for prop in Property.properties[name]
+                                         if not prop.filter(args, kwargs)])
         except KeyError:
             pass
 

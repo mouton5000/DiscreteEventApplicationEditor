@@ -69,7 +69,7 @@ class StateMachine:
 
     def tick(self):
         print self._tokens, Property.properties, Event.events
-        # from itertools import chain
+        from itertools import chain
 
         # bug? la variable token est iteree a partir de la liste tokens
         # cependant la variable token dans les valeurs chain.from ... token.node.outputArcs)
@@ -80,14 +80,79 @@ class StateMachine:
         #                                               for tr in token.node.outputArcs) for token in tokens}
 
         # la version suivant fonctionne correctement
+        # tokenTransitionArcs = {token: iter(token.node.outputArcs) for token in self._tokens}
         # tokenEvaluations = {}
         # for token in self._tokens:
-        #     tokenEvaluations[token] = chain.from_iterable(((evaluation, tr) for evaluation in tr.eval(token))
-        #                                                   for tr in token.node.outputArcs)
+        #     try:
+        #         transitionArc = tokenTransitionArcs[token].next()
+        #         tokenEvaluations[token] = transitionArc.eval(token)
+        #     except StopIteration:
+        #         pass
         #
-        # locks = {}
+        #
         # transitionGen = {}
-        #
+
+        locks = {}
+        tokensEvaluations = {}
+
+        tokenTransitionArcIterator = {token: iter(token.node.outputArcs) for token in self._tokens}
+        toCheck = self._tokens
+
+        def checkLock(locks, keys, prio, toRecheck, tokensEvaluations, token):
+            try:
+                if locks[keys][0] > prio:
+                    toRecheck |= locks[keys][1]
+                    for token2 in locks[keys][1]:
+                        del tokensEvaluations[token2]
+                    locks[keys] = (prio, set([token]))
+                elif locks[keys][0] == prio:
+                    locks[keys][1].add(token)
+                else:
+                    return True
+            except KeyError:
+                locks[keys] = (prio, set([token]))
+            return False
+
+        while len(toCheck) > 0:
+            toRecheck = set([])
+
+            for token in toCheck:
+                try:
+                    transition = tokenTransitionArcIterator[token].next()
+                except StopIteration:
+                    continue
+
+                tokenEvaluations = transition.eval(token)
+                try:
+                    evaluation = tokenEvaluations.next()
+                except StopIteration:
+                    toRecheck.add(token)
+                    continue
+
+                tokenEvaluations = [evaluation] + list(tokenEvaluations)
+                tokenLocks = chain.from_iterable(((keys, prio) for keys, prio in evaluation.locks.iteritems())
+                                                 for evaluation in tokenEvaluations)
+
+                locked = False
+
+                try:
+                    keys, prio = tokenLocks.next()
+                    locked |= checkLock(locks, keys, prio, toRecheck, tokensEvaluations, token)
+
+                except StopIteration:
+                    tokensEvaluations[token] = (transition, tokenEvaluations)
+                    continue
+
+                for keys, prio in tokenLocks:
+                    locked |= checkLock(locks, keys, prio, toRecheck, tokensEvaluations, token)
+
+                if locked:
+                    toRecheck.add(token)
+                else:
+                    tokensEvaluations[token] = (transition, tokenEvaluations)
+
+            toCheck = toRecheck
+
         # toCheck = self._tokens
         # while len(toCheck) > 0:
         #     toRecheck = set([])
@@ -127,26 +192,15 @@ class StateMachine:
         #     token.moveTo(tr.n2)
         #     tr.applyConsequences(evaluation, self, token)
 
-        transitionGen = {}
-
-        for token in self._tokens:
-            for transition in token.node.outputArcs:
-                evaluations = transition.eval(token)
-                try:
-                    evaluation = evaluations.next()
-                except StopIteration:
-                    continue
-
-                transitionGen[token] = (transition, [evaluation] + list(evaluations))
-                break
         Event.events.clear()
-        if len(transitionGen) == 0:
+        if len(tokensEvaluations) == 0:
             return False
 
-        print transitionGen
+        for token in tokensEvaluations:
+            print token, tokensEvaluations[token]
 
-        for token in transitionGen:
-            tr, evaluations = transitionGen[token]
+        for token in tokensEvaluations:
+            tr, evaluations = tokensEvaluations[token]
             token.moveTo(tr.n2)
             for evaluation in evaluations:
                 tr.applyConsequences(evaluation, self, token)
