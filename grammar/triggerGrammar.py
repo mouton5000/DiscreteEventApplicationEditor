@@ -248,13 +248,13 @@ class TriggerParser(lrparsing.Grammar):
             return RandomEval(expr)
 
         def buildMinEvalExpr():
-            expr = cls.buildExpression(tree[2])
-            arithmExpr = cls.buildExpression(tree[4])
+            arithmExpr = cls.buildExpression(tree[3])
+            expr = cls.buildExpression(tree[5])
             return SelectMinEvaluation(expr, arithmExpr)
 
         def buildMaxEvalExpr():
-            expr = cls.buildExpression(tree[2])
-            arithmExpr = cls.buildExpression(tree[4])
+            arithmExpr = cls.buildExpression(tree[3])
+            expr = cls.buildExpression(tree[5])
             return SelectMaxEvaluation(expr, arithmExpr)
 
         def buildArithmetic():
