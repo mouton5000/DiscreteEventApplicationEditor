@@ -1,7 +1,8 @@
 import lrparsing
 from lrparsing import List, Prio, Ref, Token, Opt, Sequence
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
-    Power, Func, UndefinedLitteral, SelfLitteral, Min, Max
+    Power, Func, UndefinedLitteral, SelfLitteral, Min, Max, globalsFpsExpression, globalsHeightExpression, \
+    globalsWidthExpression
 from database import Variable
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
@@ -57,6 +58,11 @@ class ConsequenceParser(lrparsing.Grammar):
 
         minf = Token('min')
         maxf = Token('max')
+
+        globalsKw = Token('globals')
+        globalsFpsKw = Token('fps')
+        globalsHeightKw = Token('height')
+        globalsWidthKw = Token('width')
 
     consExpr = Ref('consExpr')
     arithmExpr = Ref('arithmExpr')
@@ -159,7 +165,11 @@ class ConsequenceParser(lrparsing.Grammar):
     # insertExpr = T.insertf + '(' + arithmExpr + ',' + arithmExpr + ',' + Opt(arithmExpr) + ')'
     # removeExpr = T.popf + '(' + arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
 
+    globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
+    globalsExpr = T.globalsKw + '(' + globalsKeyWord + ')'
+
     arithmExpr = Prio(T.integer, T.float, T.variable, T.selfvariable, T.string, constantExpr,
+                      globalsExpr,
                       # listExpr,
                       # linkedListExpr,
                       # setExpr,
@@ -441,6 +451,9 @@ class ConsequenceParser(lrparsing.Grammar):
         def buildDoubleNext():
             return cls.buildArithmeticExpression(tree[2])
 
+        def buildTripleNext():
+            return cls.buildArithmeticExpression(tree[3])
+
         def stringWithoutQuotes():
             return ALitteral(tree[1][1:-1])
 
@@ -619,6 +632,15 @@ class ConsequenceParser(lrparsing.Grammar):
             elif tree[1][1] == 'max':
                 return Max(x1, x2)
 
+        def buildGlobalFpsKeyWord():
+            return globalsFpsExpression
+
+        def buildGlobalWidthKeyWord():
+            return globalsWidthExpression
+
+        def buildGlobalHeightKeyWord():
+            return globalsHeightExpression
+
         arithmeticSymbols = {
             ConsequenceParser.arithmExpr: buildNext,
             ConsequenceParser.parArithmExpr: buildDoubleNext,
@@ -640,7 +662,12 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.powerArithmExpr: buildBinaryExpression,
             ConsequenceParser.constantExpr: buildConstant,
             ConsequenceParser.unaryFuncExpr: buildUnaryFunctionExpression,
-            ConsequenceParser.binaryFuncExpr: buildBinaryFunctionExpression
+            ConsequenceParser.binaryFuncExpr: buildBinaryFunctionExpression,
+            ConsequenceParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
+            ConsequenceParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
+            ConsequenceParser.T.globalsWidthKw: buildGlobalWidthKeyWord,
+            ConsequenceParser.globalsKeyWord: buildNext,
+            ConsequenceParser.globalsExpr: buildTripleNext
         }
 
         return arithmeticSymbols[rootName]()

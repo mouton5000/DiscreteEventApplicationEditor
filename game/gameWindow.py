@@ -8,6 +8,7 @@ from game.Registeries import SpriteReg, TextReg, LineReg, RectReg, OvalReg, Poly
 
 
 class GameWindow:
+
     def __init__(self, fps, width, height, spritesRegistery, rootDir):
         pygame.init()
         pygame.display.init()
@@ -16,6 +17,8 @@ class GameWindow:
         self._spritesList = pygame.sprite.OrderedUpdates()
         self._spritesList.draw(self._scene)
         self._fps = fps
+        self._width = width
+        self._height = height
         self._spriteRegistery = spritesRegistery
         self._rootDir = rootDir
         pygame.display.flip()
@@ -391,3 +394,12 @@ class GameWindow:
     def hide(self):
         pygame.display.quit()
         self._scene = None
+
+    def getFps(self):
+        return self._fps
+
+    def getWidth(self):
+        return self._width
+
+    def getHeight(self):
+        return self._height

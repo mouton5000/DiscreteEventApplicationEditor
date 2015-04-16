@@ -414,6 +414,48 @@ class Func(AUnOp):
         return self._func(v)
 
 
+class _GlobalFPS(object):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return 'globals(fps)'
+
+    def value(self, _, selfParam=None):
+        import stateMachine
+        return stateMachine.stateMachineInstance.gameWindow.getFps()
+
+globalsFpsExpression = _GlobalFPS()
+
+
+class _GlobalWidth(object):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return 'globals(width)'
+
+    def value(self, _, selfParam=None):
+        import stateMachine
+        return stateMachine.stateMachineInstance.gameWindow.getWidth()
+
+globalsWidthExpression = _GlobalWidth()
+
+
+class _GlobalHeight(object):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return 'globals(height)'
+
+    def value(self, _, selfParam=None):
+        import stateMachine
+        return stateMachine.stateMachineInstance.gameWindow.getHeight()
+
+globalsHeightExpression = _GlobalHeight()
+
+
 class SelfLitteral():
     def __init__(self):
         pass

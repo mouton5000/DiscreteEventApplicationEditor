@@ -1,7 +1,7 @@
 import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
-    Power, Func, UndefinedLitteral, Min, Max
+    Power, Func, UndefinedLitteral, Min, Max, globalsHeightExpression, globalsWidthExpression, globalsFpsExpression
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEvaluation, SelectMaxEvaluation
@@ -35,6 +35,10 @@ class TriggerParser(lrparsing.Grammar):
         randomEval = Token('randomEval')
         minEvalKw = Token('minEval')
         maxEvalKw = Token('maxEval')
+        globalsKw = Token('globals')
+        globalsFpsKw = Token('fps')
+        globalsHeightKw = Token('height')
+        globalsWidthKw = Token('width')
 
 
     arithmExpr = Ref('arithmExpr')
@@ -117,7 +121,11 @@ class TriggerParser(lrparsing.Grammar):
     # insertExpr = T.insertf + '(' + arithmExpr + ',' + arithmExpr + ',' + Opt(arithmExpr) + ')'
     # removeExpr = T.popf + '(' + arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
 
+    globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
+    globalsExpr = T.globalsKw + '(' + globalsKeyWord + ')'
+
     arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr,
+                      globalsExpr,
                       # listExpr,
                       # linkedListExpr,
                       # setExpr,
@@ -376,6 +384,9 @@ class TriggerParser(lrparsing.Grammar):
         def buildDoubleNext():
             return cls.buildArithmeticExpression(tree[2])
 
+        def buildTripleNext():
+            return cls.buildArithmeticExpression(tree[3])
+
         def buildConstant():
             from math import pi, e
             if tree[1][1] == 'pi':
@@ -458,6 +469,15 @@ class TriggerParser(lrparsing.Grammar):
             elif tree[1][1] == 'max':
                 return Max(x1, x2)
 
+        def buildGlobalFpsKeyWord():
+            return globalsFpsExpression
+
+        def buildGlobalWidthKeyWord():
+            return globalsWidthExpression
+
+        def buildGlobalHeightKeyWord():
+            return globalsHeightExpression
+
         arithmeticSymbols = {
             TriggerParser.arithmExpr: buildNext,
             TriggerParser.parArithmExpr: buildDoubleNext,
@@ -478,7 +498,12 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.powerExpr: buildBinaryExpression,
             TriggerParser.constantExpr: buildConstant,
             TriggerParser.unaryFuncExpr: buildUnaryFunctionExpression,
-            TriggerParser.binaryFuncExpr: buildBinaryFunctionExpression
+            TriggerParser.binaryFuncExpr: buildBinaryFunctionExpression,
+            TriggerParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
+            TriggerParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
+            TriggerParser.T.globalsWidthKw: buildGlobalWidthKeyWord,
+            TriggerParser.globalsKeyWord: buildNext,
+            TriggerParser.globalsExpr: buildTripleNext
         }
 
         return arithmeticSymbols[rootName]()
