@@ -51,8 +51,8 @@ class TriggerParser(lrparsing.Grammar):
     randExpr = T.rand + '(' + arithmExpr + ')'
     randIntExpr = T.randInt + '(' + Prio(T.variable, arithmExpr) + ',' + arithmExpr + ')'
 
-    eLockParameters = List(arithmExpr, Token(','))
-    eLockExpr = T.elock + '(' + arithmExpr + ',' + eLockParameters + ')'
+    eLockParameters = List(arithmExpr, Token(','), min=1)
+    eLockExpr = T.elock + '(' + arithmExpr + Opt(',' + eLockParameters) + ')'
 
     parameter = Prio(T.variable, arithmExpr) | T.uvariable
     namedParameter = arithmExpr + '=' + parameter
@@ -67,8 +67,8 @@ class TriggerParser(lrparsing.Grammar):
     compareArithmExpr = arithmExpr << (Token('==') | Token('>') | Token('<') | Token('<=') |
                                        Token('>=') | Token('!=')) << arithmExpr
 
-    andExpr = boolExpr << T.andkw << boolExpr
-    orExpr = boolExpr << T.orkw << boolExpr
+    andExpr = boolExpr >> T.andkw >> boolExpr
+    orExpr = boolExpr >> T.orkw >> boolExpr
     notExpr = T.notkw + boolExpr
     isExpr = T.variable + T.iskw + arithmExpr
     delExpr = T.delkw + T.variable
@@ -191,7 +191,10 @@ class TriggerParser(lrparsing.Grammar):
 
         def buildElock():
             priority = cls.buildExpression(tree[3])
-            args = cls.buildExpression(tree[5])
+            if len(tree) >= 6:
+                args = cls.buildExpression(tree[5])
+            else:
+                args = []
             return eLock(priority, args)
 
         def buildProperty():
