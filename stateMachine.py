@@ -18,6 +18,8 @@ class TokenParseException(Exception):
         s3 = str(parseError)
         return s1 + '\n' + s2 + '\n' + s3
 
+stateMachineInstance = None
+
 
 class StateMachine:
     def __init__(self):
@@ -25,6 +27,9 @@ class StateMachine:
         self._nodes = {}
         self.i = 0
         self.gameWindow = None
+        global stateMachineInstance
+        stateMachineInstance = self
+        print stateMachineInstance
 
     def setGameWindow(self, gw):
         self.gameWindow = gw
@@ -68,6 +73,7 @@ class StateMachine:
         Event.events.clear()
 
     def tick(self):
+        print stateMachineInstance
         print self._tokens, Property.properties, Event.events
         from itertools import chain
 
