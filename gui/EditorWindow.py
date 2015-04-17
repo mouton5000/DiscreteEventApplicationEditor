@@ -6,7 +6,8 @@ from visual import vector
 import json
 import os.path
 import game.gameWindow as gameWindow
-from stateMachine import StateMachine, Transition
+import stateMachine
+from stateMachine import Transition
 from itertools import chain
 from PropertiesItems import PropertyWidget
 from ScenesManagerItems import ViewsManagerWidget
@@ -24,7 +25,6 @@ class MainWindow(QMainWindow):
         self.stack.indexChanged.connect(self.setModified)
 
         self._nodeDict = None
-        self._stateMachine = StateMachine()
 
         self.setCurrentFile(None)
         self._lastSaveOpenFileDirectory = '/home'
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
 
     def reinit(self):
         self.stack.clear()
-        self._stateMachine = StateMachine()
+        stateMachine.clear()
         self.setCurrentFile(None)
         self._modified = False
         self.centralWidget().reinit()
@@ -303,11 +303,11 @@ class MainWindow(QMainWindow):
 
     def run(self):
 
-        self._stateMachine.clearNodes()
-        self._stateMachine.clearTokens()
+        stateMachine.clearNodes()
+        stateMachine.clearTokens()
 
         def compileNode(node):
-            return self._stateMachine.addNode(node.num, str(node.num) + ':' + str(node.getLabel()))
+            return stateMachine.addNode(node.num, str(node.num) + ':' + str(node.getLabel()))
 
         def compileArc(a):
             n1 = self._nodeDict[a.node1]
@@ -320,10 +320,10 @@ class MainWindow(QMainWindow):
             for arc in chain.from_iterable(node.outputArcs for node in scene.nodes):
                 compileArc(arc)
 
-        self._stateMachine.init()
+        stateMachine.init()
         for node, compNode in self._nodeDict.iteritems():
             for token in node.getTokens():
-                self._stateMachine.addToken(compNode, token)
+                stateMachine.addToken(compNode, token)
 
         setW = self.settingsWidget()
         fps = setW.getFPS()
@@ -334,7 +334,7 @@ class MainWindow(QMainWindow):
         rootDir = self._lastSaveOpenFileDirectory
 
         gw = gameWindow.GameWindow(fps, width, height, spritesRegistery, rootDir)
-        self._stateMachine.setGameWindow(gw)
+        stateMachine.setGameWindow(gw)
 
         frame = 0
         tick = 0
@@ -343,10 +343,10 @@ class MainWindow(QMainWindow):
             while retick and (maxTick <= 0 or tick < maxTick):
                 print frame, tick
                 tick += 1
-                retick = self._stateMachine.tick()
+                retick = stateMachine.tick()
             frame += 1
-            self._stateMachine.updateTokensNbFrames()
-            if not self._stateMachine.gameWindow.tick():
+            stateMachine.updateTokensNbFrames()
+            if not stateMachine.gameWindow.tick():
                 break
         self.stop()
 
@@ -355,7 +355,7 @@ class MainWindow(QMainWindow):
 
     def stop(self):
         try:
-            self._stateMachine.gameWindow.hide()
+            stateMachine.gameWindow.hide()
         except AttributeError:
             pass
 

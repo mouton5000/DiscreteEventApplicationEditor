@@ -1,6 +1,7 @@
 from database import Variable
 from collections import deque
 from database import UNDEFINED_PARAMETER
+import stateMachine
 
 
 class ALitteral(object):
@@ -422,8 +423,7 @@ class _GlobalFPS(object):
         return 'globals(fps)'
 
     def value(self, _, selfParam=None):
-        import stateMachine
-        return stateMachine.stateMachineInstance.gameWindow.getFps()
+        return stateMachine.gameWindow.getFps()
 
 globalsFpsExpression = _GlobalFPS()
 
@@ -436,8 +436,7 @@ class _GlobalWidth(object):
         return 'globals(width)'
 
     def value(self, _, selfParam=None):
-        import stateMachine
-        return stateMachine.stateMachineInstance.gameWindow.getWidth()
+        return stateMachine.gameWindow.getWidth()
 
 globalsWidthExpression = _GlobalWidth()
 
@@ -450,8 +449,7 @@ class _GlobalHeight(object):
         return 'globals(height)'
 
     def value(self, _, selfParam=None):
-        import stateMachine
-        return stateMachine.stateMachineInstance.gameWindow.getHeight()
+        return stateMachine.gameWindow.getHeight()
 
 globalsHeightExpression = _GlobalHeight()
 

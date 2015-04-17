@@ -1,6 +1,7 @@
 __author__ = 'mouton'
 
 from database import Property, Event
+import stateMachine
 
 
 def _evalArg(arg, evaluation):
@@ -100,7 +101,7 @@ class AddSpriteConsequence(NamedConsequence):
         self._x = x
         self._y = y
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             num = int(_evalArg(self._num, evaluation))
@@ -127,7 +128,7 @@ class RemoveSpriteConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveSpriteConsequence, self).__init__(name)
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
@@ -145,7 +146,7 @@ class EditSpriteConsequence(NamedConsequence):
         self._x = x
         self._y = y
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = _evalArg(self._name, evaluation)
             try:
@@ -170,7 +171,7 @@ class AddTextConsequence(NamedConsequence):
         self._font = font
         self._fontSize = fontSize
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             text = str(_evalArg(self._text, evaluation))
@@ -189,7 +190,7 @@ class RemoveTextConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveTextConsequence, self).__init__(name)
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
@@ -210,7 +211,7 @@ class EditTextConsequence(NamedConsequence):
         self._font = font
         self._fontSize = fontSize
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = _evalArg(self._name, evaluation)
             try:
@@ -232,7 +233,7 @@ class AddLineConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             x1 = int(_evalArg(self._x1, evaluation))
@@ -250,7 +251,7 @@ class RemoveLineConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveLineConsequence, self).__init__(name)
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
@@ -271,7 +272,7 @@ class EditLineConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = _evalArg(self._name, evaluation)
             try:
@@ -293,7 +294,7 @@ class AddRectConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             x = int(_evalArg(self._x, evaluation))
@@ -311,7 +312,7 @@ class RemoveRectConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveRectConsequence, self).__init__(name)
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
@@ -332,7 +333,7 @@ class EditRectConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = _evalArg(self._name, evaluation)
             try:
@@ -354,7 +355,7 @@ class AddOvalConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             x = int(_evalArg(self._x, evaluation))
@@ -373,7 +374,7 @@ class RemoveOvalConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemoveOvalConsequence, self).__init__(name)
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
@@ -394,7 +395,7 @@ class EditOvalConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = _evalArg(self._name, evaluation)
             try:
@@ -413,7 +414,7 @@ class AddPolygonConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
 
@@ -434,7 +435,7 @@ class RemovePolygonConsequence(NamedConsequence):
     def __init__(self, name):
         super(RemovePolygonConsequence, self).__init__(name)
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
@@ -452,7 +453,7 @@ class EditPolygonConsequence(NamedConsequence):
         self._colorName = colorName
         self._width = width
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             name = _evalArg(self._name, evaluation)
             try:
@@ -470,7 +471,7 @@ class AddTokenConsequence(object):
         self._args = args
         self._kwargs = kwargs
 
-    def eval_update(self, evaluation, stateMachine, *_):
+    def eval_update(self, evaluation, *_):
         try:
             nodeNum = int(_evalArg(self._nodeNum, evaluation))
             newArgs = [_evalArg(arg, evaluation) for arg in self._args]
@@ -486,7 +487,7 @@ class EditTokenConsequence(object):
         self._args = args
         self._kwargs = kwargs
 
-    def eval_update(self, evaluation, _, token):
+    def eval_update(self, evaluation, token):
         try:
             token.setArgs(self._args, self._kwargs, evaluation)
         except (ArithmeticError, TypeError, ValueError):
@@ -497,7 +498,7 @@ class RemoveTokenConsequence(object):
     def __init__(self):
         pass
 
-    def eval_update(self, _, stateMachine, token):
+    def eval_update(self, _, token):
         stateMachine.removeToken(token)
 
 
