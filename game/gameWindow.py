@@ -2,9 +2,12 @@ __author__ = 'mouton'
 
 import pygame
 from pygame import Color
-from database import Event, UNDEFINED_PARAMETER
 from pygame.rect import Rect
-from game.Registeries import SpriteReg, TextReg, LineReg, RectReg, OvalReg, PolygonReg
+
+from database import Event, UNDEFINED_PARAMETER
+from game.Registeries.Registeries import TextReg, LineReg, RectReg, OvalReg, PolygonReg
+import game.Registeries.SpriteRegistery as spriteReg
+
 
 pygame.init()
 pygame.display.init()
@@ -15,31 +18,31 @@ _fps = 0
 _width = 0
 _height = 0
 
-_spritesList = pygame.sprite.OrderedUpdates()
-
 _clock = pygame.time.Clock()
 
-_spriteRegs = {}
 _textRegs = {}
 _lineRegs = {}
 _rectRegs = {}
 _ovalRegs = {}
 _polygonRegs = {}
 
-_spriteRegistery = None
-_rootDir = None
 
-
-def init(fps, width, height, spritesRegistery, rootDir):
-    global _scene, _fps, _width, _height, _spriteRegistery, _rootDir
+def init(fps, width, height, spritesDictionnary, rootDir):
+    global _scene, _fps, _width, _height
     _scene = pygame.display.set_mode([width, height])
     _scene.fill((255, 255, 255))
-    _spritesList.draw(_scene)
     _fps = fps
     _width = width
     _height = height
-    _spriteRegistery = spritesRegistery
-    _rootDir = rootDir
+    spriteReg.init(spritesDictionnary, rootDir)
+    spriteReg.spritesList.draw(_scene)
+    
+    _textRegs.clear()
+    _lineRegs.clear()
+    _rectRegs.clear()
+    _ovalRegs.clear()
+    _polygonRegs.clear()
+
     pygame.display.flip()
 
 
@@ -77,7 +80,7 @@ def tick():
         color = Color('#' + polygonReg.colorName)
         pygame.draw.polygon(_scene, color, polygonReg.pointList, polygonReg.width)
 
-    _spritesList.draw(_scene)
+    spriteReg.spritesList.draw(_scene)
 
     for textReg in _textRegs.itervalues():
         label = textReg.label
@@ -93,52 +96,8 @@ def tick():
     return True
 
 
-def addSprite(name, num, x, y):
-    try:
-        filePath = _rootDir + '/' + _spriteRegistery[num]
-        sp = SpriteReg(num, filePath, x, y, _scene)
-        _spritesList.add(sp)
-        _spriteRegs[name] = sp
-    except KeyError:
-        pass
-
-
-def removeSprite(name):
-    try:
-        _spritesList.remove(_spriteRegs[name])
-    except KeyError:
-        pass
-
-
-def editSprite(name, unevaluatedNum, unevaluatedX, unevaluatedY, evaluation):
-    try:
-        sp = _spriteRegs[name]
-    except KeyError:
-        return
-    newNum = unevaluatedNum.value(evaluation, selfParam=sp.num)
-    if newNum == UNDEFINED_PARAMETER:
-        newNum = sp.num
-    else:
-        newNum = int(newNum)
-
-    x = sp.rect.x
-    y = sp.rect.y
-    newX = unevaluatedX.value(evaluation, selfParam=x)
-    if newX == UNDEFINED_PARAMETER:
-        newX = x
-    else:
-        newX = int(newX)
-    newY = unevaluatedY.value(evaluation, selfParam=y)
-    if newY == UNDEFINED_PARAMETER:
-        newY = y
-    else:
-        newY = int(newY)
-
-    try:
-        newFilePath = _rootDir + '/' + _spriteRegistery[newNum]
-        sp.reload(newNum, newFilePath, newX, newY, _scene)
-    except KeyError:
-        pass
+def getScene():
+    return _scene
 
 
 def addText(name, text, x, y, color, fontName, fontSize):

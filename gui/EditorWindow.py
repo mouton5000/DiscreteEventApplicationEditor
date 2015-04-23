@@ -330,10 +330,10 @@ class MainWindow(QMainWindow):
         maxTick = setW.getMaxTick()
         width = setW.getWidth()
         height = setW.getHeight()
-        spritesRegistery = setW.getSpritesRegistery()
+        spritesDictionnary = setW.getSpritesDictionnary()
         rootDir = self._lastSaveOpenFileDirectory
 
-        gameWindow.init(fps, width, height, spritesRegistery, rootDir)
+        gameWindow.init(fps, width, height, spritesDictionnary, rootDir)
 
         frame = 0
         tick = 0

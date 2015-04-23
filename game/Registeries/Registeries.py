@@ -1,30 +1,7 @@
 __author__ = 'mouton'
 
-from pygame.sprite import Sprite
 import pygame
 from pygame import Color
-
-
-class SpriteReg(Sprite):
-
-    def __init__(self, num, filePath, x, y, scene):
-        Sprite.__init__(self)
-        self.num = None
-        self.reload(num, filePath, x, y, scene)
-
-    def reload(self, num, filePath, x, y, scene):
-        if self.num is None or self.num != num:
-            self.num = num
-            self.image = pygame.image.load(filePath).convert_alpha(scene)
-            self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-
-    def __str__(self):
-        return str((self.num, self.rect))
-
-    def __repr__(self):
-        return str((self.num, self.rect))
 
 
 class TextReg:

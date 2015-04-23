@@ -3,6 +3,7 @@ __author__ = 'mouton'
 from database import Property, Event
 import stateMachine
 import game.gameWindow as gameWindow
+import game.Registeries.SpriteRegistery as spriteRegistery
 
 
 def _evalArg(arg, evaluation):
@@ -108,7 +109,7 @@ class AddSpriteConsequence(NamedConsequence):
             num = int(_evalArg(self._num, evaluation))
             x = int(_evalArg(self._x, evaluation))
             y = int(_evalArg(self._y, evaluation))
-            gameWindow.addSprite(name, num, x, y)
+            spriteRegistery.addSprite(name, num, x, y)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -133,7 +134,7 @@ class RemoveSpriteConsequence(NamedConsequence):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
-                gameWindow.removeSprite(name)
+                spriteRegistery.removeSprite(name)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):
@@ -151,7 +152,7 @@ class EditSpriteConsequence(NamedConsequence):
         try:
             name = _evalArg(self._name, evaluation)
             try:
-                gameWindow.editSprite(name, self._num, self._x, self._y, evaluation)
+                spriteRegistery.editSprite(name, self._num, self._x, self._y, evaluation)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):

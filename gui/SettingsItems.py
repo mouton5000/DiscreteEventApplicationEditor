@@ -62,15 +62,15 @@ class SettingsWidget(QWidget):
     def getSprites(self):
         return str(self._spritesTE.toPlainText())
 
-    def getSpritesRegistery(self):
-        reg = {}
+    def getSpritesDictionnary(self):
+        dic = {}
         sprites = self.getSprites()
         if sprites != '':
             listOfSprites = sprites.split('\n')
             for sprStr in listOfSprites:
                     num, filePath = sprStr.split()
-                    reg[int(num)] = str(filePath)
-        return reg
+                    dic[int(num)] = str(filePath)
+        return dic
 
     def init(self):
         self._fpsTE.setText(str(SettingsWidget.DEFAULT_FPS))
