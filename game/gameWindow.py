@@ -14,6 +14,8 @@ import game.Registeries.PolygonRegistery as polygonReg
 
 pygame.init()
 pygame.display.init()
+pygame.joystick.init()
+
 
 _scene = None
 
@@ -44,20 +46,9 @@ def init(fps, width, height, spritesDictionnary, rootDir):
 
 
 def tick():
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            return False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                Event.add('Key', ['left'], {})
-            if event.key == pygame.K_RIGHT:
-                Event.add('Key', ['right'], {})
-            if event.key == pygame.K_DOWN:
-                Event.add('Key', ['down'], {})
-            if event.key == pygame.K_UP:
-                Event.add('Key', ['up'], {})
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            Event.add('Mouse', [event.pos[0], event.pos[1]], {})
+    if not _readEvents():
+        return False
+
     _scene.fill((255, 255, 255))
 
     for lineItem in lineReg.lineItemsIterator():
@@ -113,3 +104,53 @@ def getWidth():
 
 def getHeight():
     return _height
+
+
+def _readEvents():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            return False
+        elif event.type == pygame.KEYDOWN:
+            _readKeyDownEvent(event)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            _readMouseButtonDownEvent(event)
+        elif event.type == pygame.JOYBUTTONDOWN:
+            _readJoystickButtonDownEvent(event)
+        elif event.type == pygame.JOYAXISMOTION:
+            _readJoystickAxisMotionEvent(event)
+        elif event.type == pygame.JOYHATMOTION:
+            _readJoystickHatMotionEvent(event)
+        elif event.type == pygame.JOYBALLMOTION:
+            _readJoystickBallMotionEvent(event)
+    return True
+
+
+def _readKeyDownEvent(event):
+    if event.key == pygame.K_LEFT:
+        Event.add('Key', ['left'], {})
+    elif event.key == pygame.K_RIGHT:
+        Event.add('Key', ['right'], {})
+    elif event.key == pygame.K_DOWN:
+        Event.add('Key', ['down'], {})
+    elif event.key == pygame.K_UP:
+        Event.add('Key', ['up'], {})
+
+
+def _readMouseButtonDownEvent(event):
+    Event.add('Mouse', [event.pos[0], event.pos[1]], {})
+
+
+def _readJoystickButtonDownEvent(event):
+    Event.add('JoystickButton', [event.joy, event.button], {})
+
+
+def _readJoystickAxisMotionEvent(event):
+    Event.add('JoystickAxisMotion', [event.joy, event.axis, event.pos[0], event.pos[1]], {})
+
+
+def _readJoystickHatMotionEvent(event):
+    Event.add('JoystickHatMotion', [event.joy, event.hat, event.pos[0], event.pos[1]], {})
+
+
+def _readJoystickBallMotionEvent(event):
+    Event.add('JoystickBallMotion', [event.joy, event.ball, event.rel[0], event.rel[1]], {})
