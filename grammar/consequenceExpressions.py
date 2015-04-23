@@ -2,8 +2,12 @@ __author__ = 'mouton'
 
 from database import Property, Event
 import stateMachine
-import game.gameWindow as gameWindow
 import game.Registeries.SpriteRegistery as spriteRegistery
+import game.Registeries.TextRegistery as textRegistery
+import game.Registeries.LineRegistery as lineRegistery
+import game.Registeries.RectRegistery as rectRegistery
+import game.Registeries.OvalRegistery as ovalRegistery
+import game.Registeries.PolygonRegistery as polygonRegistery
 
 
 def _evalArg(arg, evaluation):
@@ -182,7 +186,7 @@ class AddTextConsequence(NamedConsequence):
             colorName = str(_evalArg(self._colorName, evaluation))
             font = str(_evalArg(self._font, evaluation))
             fontSize = int(_evalArg(self._fontSize, evaluation))
-            gameWindow.addText(name, text, x, y, colorName, font, fontSize)
+            textRegistery.addText(name, text, x, y, colorName, font, fontSize)
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
@@ -196,7 +200,7 @@ class RemoveTextConsequence(NamedConsequence):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
-                gameWindow.removeText(name)
+                textRegistery.removeText(name)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):
@@ -217,7 +221,7 @@ class EditTextConsequence(NamedConsequence):
         try:
             name = _evalArg(self._name, evaluation)
             try:
-                gameWindow.editText(name, self._text, self._x, self._y, self._colorName,
+                textRegistery.editText(name, self._text, self._x, self._y, self._colorName,
                                                  self._font, self._fontSize, evaluation)
             except KeyError:
                 pass
@@ -244,7 +248,7 @@ class AddLineConsequence(NamedConsequence):
             y2 = int(_evalArg(self._y2, evaluation))
             width = int(_evalArg(self._width, evaluation))
             colorName = str(_evalArg(self._colorName, evaluation))
-            gameWindow.addLine(name, x1, y1, x2, y2, width, colorName)
+            lineRegistery.addLine(name, x1, y1, x2, y2, width, colorName)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -257,7 +261,7 @@ class RemoveLineConsequence(NamedConsequence):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
-                gameWindow.removeLine(name)
+                lineRegistery.removeLine(name)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):
@@ -278,7 +282,7 @@ class EditLineConsequence(NamedConsequence):
         try:
             name = _evalArg(self._name, evaluation)
             try:
-                gameWindow.editLine(name, self._x1, self._y1, self._x2, self._y2, self._width,
+                lineRegistery.editLine(name, self._x1, self._y1, self._x2, self._y2, self._width,
                                                  self._colorName, evaluation)
             except KeyError:
                 pass
@@ -305,7 +309,7 @@ class AddRectConsequence(NamedConsequence):
             h = int(_evalArg(self._h, evaluation))
             width = int(_evalArg(self._width, evaluation))
             colorName = str(_evalArg(self._colorName, evaluation))
-            gameWindow.addRect(name, x, y, w, h, width, colorName)
+            rectRegistery.addRect(name, x, y, w, h, width, colorName)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -318,7 +322,7 @@ class RemoveRectConsequence(NamedConsequence):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
-                gameWindow.removeRect(name)
+                rectRegistery.removeRect(name)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):
@@ -339,7 +343,7 @@ class EditRectConsequence(NamedConsequence):
         try:
             name = _evalArg(self._name, evaluation)
             try:
-                gameWindow.editRect(name, self._x, self._y, self._w, self._h, self._width,
+                rectRegistery.editRect(name, self._x, self._y, self._w, self._h, self._width,
                                                  self._colorName, evaluation)
             except KeyError:
                 pass
@@ -366,7 +370,7 @@ class AddOvalConsequence(NamedConsequence):
             b = int(_evalArg(self._b, evaluation))
             width = int(_evalArg(self._width, evaluation))
             colorName = str(_evalArg(self._colorName, evaluation))
-            gameWindow.addOval(name, x, y, a, b, width, colorName)
+            ovalRegistery.addOval(name, x, y, a, b, width, colorName)
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
@@ -380,7 +384,7 @@ class RemoveOvalConsequence(NamedConsequence):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
-                gameWindow.removeOval(name)
+                ovalRegistery.removeOval(name)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):
@@ -401,7 +405,7 @@ class EditOvalConsequence(NamedConsequence):
         try:
             name = _evalArg(self._name, evaluation)
             try:
-                gameWindow.editOval(name, self._x, self._y, self._a, self._b, self._width,
+                ovalRegistery.editOval(name, self._x, self._y, self._a, self._b, self._width,
                                                  self._colorName, evaluation)
             except KeyError:
                 pass
@@ -428,7 +432,7 @@ class AddPolygonConsequence(NamedConsequence):
             listPoint = [addPoint(point) for point in self._listPoint]
             width = int(_evalArg(self._width, evaluation))
             colorName = str(_evalArg(self._colorName, evaluation))
-            gameWindow.addPolygon(name, listPoint, width, colorName)
+            polygonRegistery.addPolygon(name, listPoint, width, colorName)
         except (ArithmeticError, TypeError, ValueError):
             pass
 
@@ -441,7 +445,7 @@ class RemovePolygonConsequence(NamedConsequence):
         try:
             name = str(_evalArg(self._name, evaluation))
             try:
-                gameWindow.removePolygon(name)
+                polygonRegistery.removePolygon(name)
             except KeyError:
                 pass
         except (ArithmeticError, TypeError, ValueError):
@@ -459,7 +463,7 @@ class EditPolygonConsequence(NamedConsequence):
         try:
             name = _evalArg(self._name, evaluation)
             try:
-                gameWindow.editPolygon(name, self._listPoint, self._width,
+                polygonRegistery.editPolygon(name, self._listPoint, self._width,
                                                     self._colorName, evaluation)
             except KeyError:
                 pass
