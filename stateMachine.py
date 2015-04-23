@@ -21,20 +21,13 @@ class TokenParseException(Exception):
 _tokens = set([])
 _nodes = {}
 i = 0
-gameWindow = None
 
 
 def clear():
-    global _tokens, _nodes, i, gameWindow
+    global _tokens, _nodes, i
     _tokens = set([])
     _nodes = {}
     i = 0
-    gameWindow = None
-
-
-def setGameWindow(gw):
-    global gameWindow
-    gameWindow = gw
 
 
 def addTokenByNodeNum(nodeNum, args, kwargs):

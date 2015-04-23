@@ -333,8 +333,7 @@ class MainWindow(QMainWindow):
         spritesRegistery = setW.getSpritesRegistery()
         rootDir = self._lastSaveOpenFileDirectory
 
-        gw = gameWindow.GameWindow(fps, width, height, spritesRegistery, rootDir)
-        stateMachine.setGameWindow(gw)
+        gameWindow.init(fps, width, height, spritesRegistery, rootDir)
 
         frame = 0
         tick = 0
@@ -346,7 +345,7 @@ class MainWindow(QMainWindow):
                 retick = stateMachine.tick()
             frame += 1
             stateMachine.updateTokensNbFrames()
-            if not stateMachine.gameWindow.tick():
+            if not gameWindow.tick():
                 break
         self.stop()
 
@@ -355,7 +354,7 @@ class MainWindow(QMainWindow):
 
     def stop(self):
         try:
-            stateMachine.gameWindow.hide()
+            gameWindow.hide()
         except AttributeError:
             pass
 
