@@ -12,7 +12,7 @@ from undoRedoActions import *
 from NodeItems import NodeItem, ConnectedComponent
 from ArcItems import ArcItem
 from collections import deque
-from visual import vector
+from euclid import Vector2
 
 
 class ViewWidget(QGraphicsView):
@@ -291,7 +291,7 @@ class SceneWidget(QGraphicsScene):
     def copyConnectedComponentWithoutStack(self, connectedComponent, x, y):
         node0 = connectedComponent.firstNode
         v0 = node0.getXY()
-        v = vector(x, y)
+        v = Vector2(x, y)
 
         def addNode(node):
             v1 = node.getXY()

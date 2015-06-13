@@ -2,7 +2,7 @@ __author__ = 'mouton'
 
 from PyQt4.QtGui import QVBoxLayout, QAction, \
     QFileDialog, QMainWindow, QWidget, QDesktopWidget, QUndoStack, QMessageBox, QHBoxLayout
-from visual import vector
+from euclid import Vector2
 import json
 import os.path
 import game.gameWindow as gameWindow
@@ -227,7 +227,7 @@ class MainWindow(QMainWindow):
             n.setLabel(node['label'])
             n.setTokens(node['tokens'])
             lioff = node['labelItemOffset']
-            n.getLabelItem().setOffset(vector(lioff[0], lioff[1]))
+            n.getLabelItem().setOffset(Vector2(lioff[0], lioff[1]))
             return n
 
         def addArc(arc, scene, nodes):
@@ -241,7 +241,7 @@ class MainWindow(QMainWindow):
             a.setFormula(arc['formula'])
             a.setConsequences(arc['consequences'])
             lioff = arc['labelItemOffset']
-            a.getLabelItem().setOffset(vector(lioff[0], lioff[1]))
+            a.getLabelItem().setOffset(Vector2(lioff[0], lioff[1]))
             a.drawPath()
 
         class LoadingWith():

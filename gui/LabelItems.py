@@ -1,14 +1,14 @@
 from PyQt4.QtCore import QPointF
 from PyQt4.QtGui import QGraphicsSimpleTextItem
-from visual import vector
+from euclid import Vector2
 from undoRedoActions import MoveLabelItemCommand
 
 
 class LabelItem(QGraphicsSimpleTextItem):
     def __init__(self, parent=None, scene=None):
         super(LabelItem, self).__init__('', parent, scene)
-        self._offset = vector(0, 0)
-        self._center = vector(0, 0)
+        self._offset = Vector2(0, 0)
+        self._center = Vector2(0, 0)
         self._isMoving = False
         self._moveFromOffset = False
 
@@ -39,9 +39,9 @@ class LabelItem(QGraphicsSimpleTextItem):
             self._moveFromOffset = self._offset
             self._linkToParentItem.setVisible(True)
 
-        epos = vector(event.scenePos().x(), event.scenePos().y())
+        epos = Vector2(event.scenePos().x(), event.scenePos().y())
         rect = self.boundingRect()
-        pos = vector(self.pos().x() + rect.width() / 2, self.pos().y() + rect.height() / 2)
+        pos = Vector2(self.pos().x() + rect.width() / 2, self.pos().y() + rect.height() / 2)
         center = pos - self._offset
         self.setOffset(epos - center)
 

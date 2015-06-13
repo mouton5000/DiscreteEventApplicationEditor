@@ -1,12 +1,9 @@
-import itertools
-
 __author__ = 'mouton'
 
 
 from PyQt4 import QtCore
 from PyQt4.QtGui import QGraphicsEllipseItem, QBrush
-from visual import vector
-from copy import copy
+from euclid import Vector2
 from undoRedoActions import *
 from gui.LabelItems import LabelItem
 
@@ -24,7 +21,7 @@ class NodeItem(QGraphicsEllipseItem):
         self._label = ''
         self._tokens = []
 
-        self._center = vector(x, y)
+        self._center = Vector2(x, y)
         self._isMoving = False
         self._moveFrom = None
 
@@ -50,7 +47,7 @@ class NodeItem(QGraphicsEllipseItem):
         self._labelItem.setText(str(self.num))
         self._labelItem.setBrush(QBrush(QtCore.Qt.black))
         self._labelItem.setCenter(self.getXY())
-        self._labelItem.setOffset(vector(0, NodeItem.NodeWidth * 2))
+        self._labelItem.setOffset(Vector2(0, NodeItem.NodeWidth * 2))
         labelItem.setAttachedItem(self)
 
     def reorganizeArcLabels(self):
@@ -135,7 +132,7 @@ class NodeItem(QGraphicsEllipseItem):
     def setDXDY(self, dx, dy, drawArcs=True):
         self.moveBy(dx, dy)
         x, y = dx + self._center.x, dy + self._center.y
-        self._center = vector(x, y)
+        self._center = Vector2(x, y)
 
         if drawArcs:
             for a in self.inputArcs:
@@ -154,7 +151,7 @@ class NodeItem(QGraphicsEllipseItem):
         return self._center
 
     def isCloseTo(self, x, y):
-        return (self._center - vector(x, y)).mag < NodeItem.NodeWidth
+        return (self._center - Vector2(x, y)).magnitude() < NodeItem.NodeWidth
 
     def isPredecessorOf(self, node):
         for a in self.outputArcs:
@@ -237,7 +234,7 @@ class ConnectedComponent():
             arc.unselect()
 
     def initMove(self):
-        self._moveFrom = vector(self._x, self._y)
+        self._moveFrom = Vector2(self._x, self._y)
         self.px = None
         self.py = None
 
@@ -269,7 +266,7 @@ class ConnectedComponent():
 
     def commitMove(self):
         self.scene().mainWindow.stack.push(
-            MoveConnectedComponentCommand(self.scene(), self, self._moveFrom, vector(self._x, self._y)))
+            MoveConnectedComponentCommand(self.scene(), self, self._moveFrom, Vector2(self._x, self._y)))
 
     def moveWithoutStack(self, center):
         dx, dy = center.x - self._x, center.y - self._y

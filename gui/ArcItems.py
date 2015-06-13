@@ -4,7 +4,7 @@ __author__ = 'mouton'
 
 from PyQt4 import QtCore
 from PyQt4.QtGui import QGraphicsPathItem, QBrush, QPainterPath
-from visual import vector
+from euclid import Vector2
 from math import pi, cos, degrees, atan
 from random import uniform
 from undoRedoActions import *
@@ -250,13 +250,13 @@ class ArcItem(QGraphicsPathItem):
         x = event.scenePos().x()
         y = event.scenePos().y()
         v1 = self.node1.getXY()
-        v = vector(x, y) - v1
-        cycleCl = v.mag
+        v = Vector2(x, y) - v1
+        cycleCl = v.magnitude()
         if cycleCl < 50:
             cycleCl = 50
 
-        sindelta = vector(0, 1).dot(v) / cycleCl
-        delta = vector(1, 0).diff_angle(v)
+        sindelta = Vector2(0, 1).dot(v) / cycleCl
+        delta = Vector2(1, 0).angle(v)
         if sindelta < 0:
             delta *= -1
         self.setCycleCl(cycleCl)
@@ -272,9 +272,9 @@ class ArcItem(QGraphicsPathItem):
         y = event.scenePos().y()
         v1 = self.node1.getXY()
         v2 = self.node2.getXY()
-        v = vector(x, y) - v1
+        v = Vector2(x, y) - v1
         u = v2 - v1
-        n = (u.rotate(pi / 2)).norm()
+        n = (u.rotate(pi / 2)).normalized()
 
         self.setCl((2 * v).dot(n))
         self.drawPath()
@@ -283,7 +283,7 @@ class ArcItem(QGraphicsPathItem):
         x, y = event.scenePos().x(), event.scenePos().y()
         node = self.scene().getCloseNodeOf(x, y)
         if node is None:
-            self._separatingInput = vector(x, y)
+            self._separatingInput = Vector2(x, y)
         else:
             self._separatingInput = node.getXY()
         self.drawPath()
@@ -292,7 +292,7 @@ class ArcItem(QGraphicsPathItem):
         x, y = event.scenePos().x(), event.scenePos().y()
         node = self.scene().getCloseNodeOf(x, y)
         if node is None:
-            self._separatingOutput = vector(x, y)
+            self._separatingOutput = Vector2(x, y)
         else:
             self._separatingOutput = node.getXY()
         self.drawPath()
@@ -336,7 +336,7 @@ class ArcItem(QGraphicsPathItem):
         else:
             v2 = self.node2.getXY()
 
-        if (v2 - v1).mag < NodeItem.NodeWidth:
+        if (v2 - v1).magnitude() < NodeItem.NodeWidth:
             self.drawCyclePath(v1, sepInput, v2, sepOutput, self._delta, self._cycleCl)
         else:
             self.drawClassicPath(v1, sepInput, v2, sepOutput, self._cl)
@@ -352,14 +352,14 @@ class ArcItem(QGraphicsPathItem):
         # de cette methode
 
         u = v2 - v1  # Vecteur reliant v1 à v2
-        n = (u.rotate(pi / 2)).norm()  # Vecteur unitaire perpendiculaire à u
+        n = (u.rotate(pi / 2)).normalize()  # Vecteur unitaire perpendiculaire à u
 
         # Point sur la mediatrice de [v1,v2] situe a une distance cl
         # Il servira (presque) de point de controle pour les courbes de Beziers traçant les deux bords de l'arc.
         c = v1 + u / 2 + cl * n
 
-        v1m1norm = (c - v1).norm()  # Vecteur unitaire de la droite (v1,c), de v1 vers c
-        v2m2norm = (c - v2).norm()  # Vecteur unitaire de la droite (v2,c), de v2 vers c
+        v1m1norm = (c - v1).normalize()  # Vecteur unitaire de la droite (v1,c), de v1 vers c
+        v2m2norm = (c - v2).normalize()  # Vecteur unitaire de la droite (v2,c), de v2 vers c
 
         # m1 est le point du cercle node1 situé sur la droite (v1,c) entre ces deux points.
         # c'est également le milieu du départ de l'arc sur node1
@@ -384,12 +384,12 @@ class ArcItem(QGraphicsPathItem):
         v2m2p = v2m2.rotate(ArcItem.endingsAlpha)  # Vecteur v2 m2p
         # m2mp est le point sur le segment central de la pointe de la flêche qui appartient à la droite passant
         # par m2m parallèle au vecteur v2m2, définit ici à l'aide d'un projeté orthogonal
-        m2mp = a2 + v2m2m.proj(a2m - a2)
+        m2mp = a2 + v2m2m.project(a2m - a2)
         # m2pp est le point sur le segment central de la pointe de la flêche qui appartient à la droite passant
         # par m2p parallèle au vecteur v2m2, définit ici à l'aide d'un projeté orthogonal
-        m2pp = a2 + v2m2p.proj(a2p - a2)
+        m2pp = a2 + v2m2p.project(a2p - a2)
 
-        w = (m1p - m1m).mag / 2  # eviron la demi largeur de l'arc
+        w = (m1p - m1m).magnitude() / 2  # eviron la demi largeur de l'arc
         c1 = c - w * n  # point  de contrôle de la courbe de bézier du bord gauche de l'arc
         c2 = c + w * n  # point  de contrôle de la courbe de bézier du bord droit de l'arc
 
@@ -437,7 +437,7 @@ class ArcItem(QGraphicsPathItem):
         gamma = atan(m1omag / NodeItem.NodeWidth)
 
         # delta est l'angle qui existe entre l'horizontale est la droite coupant orthogonalement l'arc en son milieu
-        u = vector(1, 0).rotate(delta)  # vecteur normé orienté du centre du noeud vers le milieu de l'arc
+        u = Vector2(1, 0).rotate(delta)  # vecteur normé orienté du centre du noeud vers le milieu de l'arc
         # m1 est le point du cercle node1 au milieu du départ de l'arc
         v1m1norm = (u.rotate(-gamma))
         # m2 est la pointe de la flêche de l'arc
@@ -462,10 +462,10 @@ class ArcItem(QGraphicsPathItem):
         v2m2p = v2m2.rotate(ArcItem.endingsAlpha)  # Vecteur v2 m2p
         # m2mp est le point sur le segment central de la pointe de la flêche qui appartient à la droite passant
         # par m2m parallèle au vecteur v2m2, définit ici à l'aide d'un projeté orthogonal
-        m2mp = a2 + v2m2m.proj(a2m - a2)
+        m2mp = a2 + v2m2m.project(a2m - a2)
         # m2pp est le point sur le segment central de la pointe de la flêche qui appartient à la droite passant
         # par m2p parallèle au vecteur v2m2, définit ici à l'aide d'un projeté orthogonal
-        m2pp = a2 + v2m2p.proj(a2p - a2)
+        m2pp = a2 + v2m2p.project(a2p - a2)
 
         # o est le centre du cercle passant par les 3 points suivants : m1, m2 et c
         # où c est le point situé à une distance self.cl de v1, en suivant le vecteur u, cad le milieu de l'arc
@@ -473,15 +473,15 @@ class ArcItem(QGraphicsPathItem):
 
         c1 = 0.5 * (m2pp + m1m)  # c1 est le milieu de m2pp et m1m
         # o1 est le centre du cercle passant par m1m et m2pp le plus proche de o
-        o1 = c1 + (o - c1).proj((m1m - m2pp).rotate(pi / 2))
-        r1 = (o1 - m1m).mag  # le rayon du cercle en question
+        o1 = c1 + (o - c1).project((m1m - m2pp).rotate(pi / 2))
+        r1 = (o1 - m1m).magnitude()  # le rayon du cercle en question
 
-        sinstang1 = vector(0, 1).dot(m1m - o1)  # sinus de l'angle entre l'horizontale et (o1,m1m)
-        stang1 = -vector(1, 0).diff_angle(m1m - o1)  # opposé de la valeur absolue de cet angle
+        sinstang1 = Vector2(0, 1).dot(m1m - o1)  # sinus de l'angle entre l'horizontale et (o1,m1m)
+        stang1 = -Vector2(1, 0).angle(m1m - o1)  # opposé de la valeur absolue de cet angle
         if sinstang1 < 0:
             stang1 *= -1
-        sinendang1 = vector(0, 1).dot(m2pp - o1)  # sinus de l'angle entre l'horizontale et (o1,m2pp)
-        endang1 = -vector(1, 0).diff_angle(m2pp - o1)  # opposé de la valeur absolue de cet angle
+        sinendang1 = Vector2(0, 1).dot(m2pp - o1)  # sinus de l'angle entre l'horizontale et (o1,m2pp)
+        endang1 = -Vector2(1, 0).angle(m2pp - o1)  # opposé de la valeur absolue de cet angle
         if sinendang1 < 0:
             endang1 *= -1
         pathang1 = endang1 - stang1
@@ -492,14 +492,14 @@ class ArcItem(QGraphicsPathItem):
 
         c2 = 0.5 * (m2mp + m1p)  # c2 est le milieu de m2mp et m1p
         # o2 est le centre du cercle passant par m1p et m2mp le plus proche de o
-        o2 = c2 + (o - c2).proj((m1p - m2mp).rotate(pi / 2))
-        r2 = (o2 - m1p).mag  # le rayon du cercle en question
-        sinstang2 = vector(0, 1).dot(m2mp - o2)  # sinus de l'angle entre l'horizontale et (o2,m2mp)
-        stang2 = -vector(1, 0).diff_angle(m2mp - o2)  # opposé de la valeur absolue de cet angle
+        o2 = c2 + (o - c2).project((m1p - m2mp).rotate(pi / 2))
+        r2 = (o2 - m1p).magnitude()  # le rayon du cercle en question
+        sinstang2 = Vector2(0, 1).dot(m2mp - o2)  # sinus de l'angle entre l'horizontale et (o2,m2mp)
+        stang2 = -Vector2(1, 0).angle(m2mp - o2)  # opposé de la valeur absolue de cet angle
         if sinstang2 < 0:
             stang2 *= -1
-        sinendang2 = vector(0, 1).dot(m1p - o2)  # sinus de l'angle entre l'horizontale et (o2,m1p)
-        endang2 = -vector(1, 0).diff_angle(m1p - o2)  # opposé de la valeur absolue de cet angle
+        sinendang2 = Vector2(0, 1).dot(m1p - o2)  # sinus de l'angle entre l'horizontale et (o2,m1p)
+        endang2 = -Vector2(1, 0).angle(m1p - o2)  # opposé de la valeur absolue de cet angle
         if sinendang2 < 0:
             endang2 *= -1
         pathang2 = endang2 - stang2
