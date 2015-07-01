@@ -3,7 +3,7 @@ from lrparsing import List, Prio, Ref, Token, Opt, Sequence
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, UndefinedLitteral, SelfLitteral, Min, Max, globalsFpsExpression, globalsHeightExpression, \
     globalsWidthExpression
-from database import Variable
+from database import Variable, KEYWORD_ID
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
@@ -64,6 +64,8 @@ class ConsequenceParser(lrparsing.Grammar):
         globalsHeightKw = Token('height')
         globalsWidthKw = Token('width')
 
+        idkw = Token('id')
+
     consExpr = Ref('consExpr')
     arithmExpr = Ref('arithmExpr')
 
@@ -71,7 +73,7 @@ class ConsequenceParser(lrparsing.Grammar):
     parameters = \
         Prio(List(arithmExpr, Token(',')) + Opt(',' + List(namedParameter, Token(','))),
              List(namedParameter, Token(',')))
-    incompleteNamedParameter = arithmExpr + Token('=') + (arithmExpr, T.uvariable)
+    incompleteNamedParameter = (arithmExpr | T.idkw) + Token('=') + (arithmExpr, T.uvariable)
     incompleteParameters = \
         Prio(List((arithmExpr, T.uvariable), Token(',')) + Opt(',' + List(incompleteNamedParameter, Token(','))),
              List(incompleteNamedParameter, Token(',')))
@@ -380,6 +382,9 @@ class ConsequenceParser(lrparsing.Grammar):
         def unnamedVariableValue():
             return UndefinedLitteral()
 
+        def keywordIdValue():
+            return KEYWORD_ID
+
         def buildNamedParameter():
             name = cls.buildExpression(tree[1])
             parameter = cls.buildExpression(tree[3])
@@ -408,6 +413,7 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.T.event: value,
             ConsequenceParser.T.prop: value,
             ConsequenceParser.T.uvariable: unnamedVariableValue,
+            ConsequenceParser.T.idkw: keywordIdValue,
             ConsequenceParser.namedParameter: buildNamedParameter,
             ConsequenceParser.parameters: buildParameters,
             ConsequenceParser.incompleteNamedParameter: buildNamedParameter,

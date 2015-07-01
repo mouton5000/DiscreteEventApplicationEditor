@@ -62,12 +62,26 @@ class ParameterizedExpression(object):
             return False
 
 
+class KeyWordId:
+    def __init__(self):
+        pass
+
+    def value(self, _):
+        return self
+
+_expressionIDCounter = 0
+KEYWORD_ID = KeyWordId()
+
+
 class NamedExpression(ParameterizedExpression):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, name, args, kwargs):
+        global _expressionIDCounter
         super(NamedExpression, self).__init__(args, kwargs)
         self._name = name
+        self._id = _expressionIDCounter
+        _expressionIDCounter += 1
 
     @property
     def name(self):
@@ -76,6 +90,12 @@ class NamedExpression(ParameterizedExpression):
     @property
     def container(self):
         return self._getContainer()
+
+    def getKWArg(self, key):
+        if key == KEYWORD_ID:
+            return self._id
+        else:
+            return super(NamedExpression, self).getKWArg(key)
 
     @abc.abstractmethod
     def _getContainer(self):
@@ -92,6 +112,9 @@ class NamedExpression(ParameterizedExpression):
 
     def __hash__(self):
         return hash(len(self._args) + len(self._kwargs))
+
+    def getId(self):
+        return self._id
 
 
 class Property(NamedExpression):
@@ -111,7 +134,9 @@ class Property(NamedExpression):
 
         def filterKWArgs(key, value):
             try:
-                return self.getKWArg(key) == value or value == UNDEFINED_PARAMETER
+                return (key == KEYWORD_ID and value == self._id) \
+                    or self.getKWArg(key) == value \
+                    or value == UNDEFINED_PARAMETER
             except KeyError:
                 return False
 

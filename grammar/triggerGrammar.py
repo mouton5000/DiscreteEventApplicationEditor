@@ -5,7 +5,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEvaluation, SelectMaxEvaluation
-from database import Variable
+from database import Variable, KEYWORD_ID
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
 
@@ -39,6 +39,7 @@ class TriggerParser(lrparsing.Grammar):
         globalsFpsKw = Token('fps')
         globalsHeightKw = Token('height')
         globalsWidthKw = Token('width')
+        idkw = Token('id')
 
 
     arithmExpr = Ref('arithmExpr')
@@ -55,7 +56,7 @@ class TriggerParser(lrparsing.Grammar):
     eLockExpr = T.elock + '(' + arithmExpr + Opt(',' + eLockParameters) + ')'
 
     parameter = Prio(T.variable, arithmExpr) | T.uvariable
-    namedParameter = arithmExpr + '=' + parameter
+    namedParameter = (arithmExpr | T.idkw) + '=' + parameter
     parameters = \
         Prio(List(parameter, Token(',')) + Opt(',' + List(namedParameter, Token(','))),
              List(namedParameter, Token(',')))
@@ -158,6 +159,9 @@ class TriggerParser(lrparsing.Grammar):
 
         def unnamedVariableValue():
             return UndefinedLitteral()
+
+        def keywordIdValue():
+            return KEYWORD_ID
 
         def buildLitteral():
             return BLitteral(tree[1][1] == 'true')
@@ -279,6 +283,7 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.T.prop: value,
             TriggerParser.T.variable: variableValue,
             TriggerParser.T.uvariable: unnamedVariableValue,
+            TriggerParser.T.idkw: keywordIdValue,
             TriggerParser.litExpr: buildLitteral,
             TriggerParser.timerExpr: buildTimer,
             TriggerParser.randExpr: buildRand,

@@ -3,7 +3,7 @@ from random import random, randint
 from itertools import chain
 
 from utils.dictSet import DictContainer
-from database import Variable, Property, Event, UNDEFINED_PARAMETER
+from database import Variable, Property, Event, UNDEFINED_PARAMETER, KEYWORD_ID
 
 
 class BExpression(object):
@@ -406,8 +406,11 @@ class ParameterizedExpression(object):
 
         for k1, p1 in self._kwargs.iteritems():
             try:
-                k2 = k1.value(neval)
-                p2 = namedExpr.getKWArg(k2)
+                if k1 == KEYWORD_ID:
+                    p2 = namedExpr.getId()
+                else:
+                    k2 = k1.value(neval)
+                    p2 = namedExpr.getKWArg(k2)
                 if not unifyVariable(p1, p2, neval):
                     return
             except (KeyError, ArithmeticError, TypeError, ValueError):
@@ -438,7 +441,7 @@ class NamedExpression(ParameterizedExpression):
             return \
                 self.name == namedExpr.name and \
                 self.lenArgs() == namedExpr.lenArgs() and \
-                self.lenKWArgs() <= namedExpr.lenKWArgs()
+                self.lenKWArgs() <= namedExpr.lenKWArgs() + 1  # les named expr de base et l'ID
         except AttributeError:
             return False
 
