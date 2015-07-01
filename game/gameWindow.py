@@ -98,12 +98,29 @@ def getFps():
     return _fps
 
 
+def setFps(fps):
+    global _fps
+    _fps = fps
+
+
 def getWidth():
     return _width
 
 
+def setWidth(width):
+    global _width, _scene
+    _width = width
+    _scene = pygame.display.set_mode([width, _height])  # Meilleur moyen?
+
+
 def getHeight():
     return _height
+
+
+def setHeight(height):
+    global _height, _scene
+    _height = height
+    _scene = pygame.display.set_mode([_width, height])  # Meilleur moyen?
 
 
 def _readEvents():

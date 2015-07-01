@@ -8,6 +8,7 @@ import game.Registeries.LineRegistery as lineRegistery
 import game.Registeries.RectRegistery as rectRegistery
 import game.Registeries.OvalRegistery as ovalRegistery
 import game.Registeries.PolygonRegistery as polygonRegistery
+import game.gameWindow as gameWindow
 
 
 def _evalArg(arg, evaluation):
@@ -515,3 +516,30 @@ class PrintConsequence(object):
     def eval_update(self, evaluation, *_):
         for foo in self.toPrint:
             print _evalArg(foo, evaluation)
+
+
+class EditGlobalFps(object):
+    def __init__(self, newValue):
+        self.newValue = newValue
+
+    def eval_update(self, evaluation, *_):
+        fps = _evalArg(self.newValue, evaluation)
+        gameWindow.setFps(fps)
+
+
+class EditGlobalWidth(object):
+    def __init__(self, newValue):
+        self.newValue = newValue
+
+    def eval_update(self, evaluation, *_):
+        width = _evalArg(self.newValue, evaluation)
+        gameWindow.setWidth(width)
+
+
+class EditGlobalHeight(object):
+    def __init__(self, newValue):
+        self.newValue = newValue
+
+    def eval_update(self, evaluation, *_):
+        height = _evalArg(self.newValue, evaluation)
+        gameWindow.setHeight(height)

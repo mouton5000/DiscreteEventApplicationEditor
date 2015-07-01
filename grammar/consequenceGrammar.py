@@ -9,7 +9,8 @@ from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequ
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
     RemoveTextConsequence, RemoveLineConsequence, EditLineConsequence, AddLineConsequence, AddRectConsequence, \
     EditRectConsequence, RemoveRectConsequence, AddOvalConsequence, EditOvalConsequence, \
-    RemoveOvalConsequence, AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, PrintConsequence
+    RemoveOvalConsequence, AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, PrintConsequence, \
+    EditGlobalFps, EditGlobalHeight, EditGlobalWidth
 
 
 class ConsequenceParser(lrparsing.Grammar):
@@ -137,11 +138,14 @@ class ConsequenceParser(lrparsing.Grammar):
 
     printExpr = T.printToken + List(arithmExpr, Token(','))
 
+    globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
+    editGlobalsExpr = T.edit + T.globalsKw + '(' + globalsKeyWord + ',' + arithmExpr + ')'
+
     consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
                     editSpriteExpr, addTextExpr, removeTextExpr, editTextExpr, addLineExpr, editLineExpr,
                     removeLineExpr, addRectExpr, editRectExpr, removeRectExpr, addOvalExpr, editOvalExpr,
                     removeOvalExpr, addPolygonExpr, editPolygonExpr, removePolygonExpr, addTokenExpr,
-                    editTokenExpr, removeTokenExpr, printExpr)
+                    editTokenExpr, removeTokenExpr, printExpr, editGlobalsExpr)
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     # linkedListExpr = 'll' + listExpr
@@ -167,7 +171,6 @@ class ConsequenceParser(lrparsing.Grammar):
     # insertExpr = T.insertf + '(' + arithmExpr + ',' + arithmExpr + ',' + Opt(arithmExpr) + ')'
     # removeExpr = T.popf + '(' + arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
 
-    globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
     globalsExpr = T.globalsKw + '(' + globalsKeyWord + ')'
 
     arithmExpr = Prio(T.integer, T.float, T.variable, T.selfvariable, T.string, constantExpr,
@@ -403,6 +406,11 @@ class ConsequenceParser(lrparsing.Grammar):
             toPrint = [cls.buildExpression(arg) for arg in tree[2::2]]
             return PrintConsequence(toPrint)
 
+        def buildEditGlobals():
+            keywordClass = cls.buildSpecialExpression(tree[4])
+            newValue = cls.buildArithmeticExpression(tree[6])
+            return keywordClass(newValue)
+
         exprSymbols = {
             ConsequenceParser.START: buildNext,
             ConsequenceParser.consExpr: buildNext,
@@ -442,6 +450,7 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.editTokenExpr: buildEditToken,
             ConsequenceParser.removeTokenExpr: buildRemoveToken,
             ConsequenceParser.printExpr: buildPrintExpr,
+            ConsequenceParser.editGlobalsExpr: buildEditGlobals,
             ConsequenceParser.arithmExpr: buildArithmetic
         }
 
@@ -674,6 +683,30 @@ class ConsequenceParser(lrparsing.Grammar):
 
         return arithmeticSymbols[rootName]()
 
+    @classmethod
+    def buildSpecialExpression(cls, tree):
+        rootName = tree[0]
+
+        def buildNext():
+            return cls.buildSpecialExpression(tree[1])
+
+        def buildGlobalFpsKeyWord():
+            return EditGlobalFps
+
+        def buildGlobalHeightKeyWord():
+            return EditGlobalHeight
+
+        def buildGlobalWidthKeyWord():
+            return EditGlobalWidth
+
+        specialSymbols = {
+            ConsequenceParser.globalsKeyWord: buildNext,
+            ConsequenceParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
+            ConsequenceParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
+            ConsequenceParser.T.globalsWidthKw: buildGlobalWidthKeyWord
+        }
+
+        return specialSymbols[rootName]()
 
 if __name__ == '__main__':
     print ConsequenceParser.pre_compile_grammar()
