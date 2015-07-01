@@ -451,14 +451,10 @@ class ConsequenceParser(lrparsing.Grammar):
     def buildArithmeticExpression(cls, tree):
         rootName = tree[0]
 
-        def buildNext():
-            return cls.buildArithmeticExpression(tree[1])
-
-        def buildDoubleNext():
-            return cls.buildArithmeticExpression(tree[2])
-
-        def buildTripleNext():
-            return cls.buildArithmeticExpression(tree[3])
+        def buildNext(i):
+            def _buildNext():
+                return cls.buildArithmeticExpression(tree[i])
+            return _buildNext
 
         def stringWithoutQuotes():
             return ALitteral(tree[1][1:-1])
@@ -648,8 +644,8 @@ class ConsequenceParser(lrparsing.Grammar):
             return globalsHeightExpression
 
         arithmeticSymbols = {
-            ConsequenceParser.arithmExpr: buildNext,
-            ConsequenceParser.parArithmExpr: buildDoubleNext,
+            ConsequenceParser.arithmExpr: buildNext(1),
+            ConsequenceParser.parArithmExpr: buildNext(2),
             ConsequenceParser.T.integer: intvalue,
             ConsequenceParser.T.float: floatvalue,
             ConsequenceParser.T.variable: variableValue,
@@ -672,8 +668,8 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
             ConsequenceParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
             ConsequenceParser.T.globalsWidthKw: buildGlobalWidthKeyWord,
-            ConsequenceParser.globalsKeyWord: buildNext,
-            ConsequenceParser.globalsExpr: buildTripleNext
+            ConsequenceParser.globalsKeyWord: buildNext(1),
+            ConsequenceParser.globalsExpr: buildNext(3)
         }
 
         return arithmeticSymbols[rootName]()

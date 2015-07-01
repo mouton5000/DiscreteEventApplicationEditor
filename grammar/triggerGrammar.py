@@ -386,14 +386,10 @@ class TriggerParser(lrparsing.Grammar):
         #             a1 = cls.buildArithmeticExpression(tree[3])
         #             return RemoveExpression(l1, a1, None)
 
-        def buildNext():
-            return cls.buildArithmeticExpression(tree[1])
-
-        def buildDoubleNext():
-            return cls.buildArithmeticExpression(tree[2])
-
-        def buildTripleNext():
-            return cls.buildArithmeticExpression(tree[3])
+        def buildNext(i):
+            def _buildNext():
+                return cls.buildArithmeticExpression(tree[i])
+            return _buildNext
 
         def buildConstant():
             from math import pi, e
@@ -487,8 +483,8 @@ class TriggerParser(lrparsing.Grammar):
             return globalsHeightExpression
 
         arithmeticSymbols = {
-            TriggerParser.arithmExpr: buildNext,
-            TriggerParser.parArithmExpr: buildDoubleNext,
+            TriggerParser.arithmExpr: buildNext(1),
+            TriggerParser.parArithmExpr: buildNext(2),
             TriggerParser.T.integer: intvalue,
             TriggerParser.T.float: floatvalue,
             TriggerParser.T.variable: variableValue,
@@ -510,8 +506,8 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
             TriggerParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
             TriggerParser.T.globalsWidthKw: buildGlobalWidthKeyWord,
-            TriggerParser.globalsKeyWord: buildNext,
-            TriggerParser.globalsExpr: buildTripleNext
+            TriggerParser.globalsKeyWord: buildNext(1),
+            TriggerParser.globalsExpr: buildNext(3)
         }
 
         return arithmeticSymbols[rootName]()
