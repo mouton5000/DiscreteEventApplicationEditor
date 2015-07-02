@@ -69,19 +69,21 @@ class KeyWordId:
     def value(self, _):
         return self
 
-_expressionIDCounter = 0
 KEYWORD_ID = KeyWordId()
 
 
 class NamedExpression(ParameterizedExpression):
     __metaclass__ = abc.ABCMeta
 
+    namedExpressionsById = dict()
+    expressionIDCounter = 0
+
     def __init__(self, name, args, kwargs):
-        global _expressionIDCounter
         super(NamedExpression, self).__init__(args, kwargs)
         self._name = name
-        self._id = _expressionIDCounter
-        _expressionIDCounter += 1
+        self._id = NamedExpression.expressionIDCounter
+        NamedExpression.expressionIDCounter += 1
+        NamedExpression.namedExpressionsById[self._id] = self
 
     @property
     def name(self):
@@ -149,11 +151,23 @@ class Property(NamedExpression):
 
     @staticmethod
     def removeAll(name, args, kwargs):
-        try:
-            Property.properties[name] = set([prop for prop in Property.properties[name]
-                                         if not prop.filter(args, kwargs)])
-        except KeyError:
-            pass
+            if KEYWORD_ID in kwargs:
+                propId = kwargs[KEYWORD_ID]
+                prop = NamedExpression.namedExpressionsById[propId]
+                if prop.filter(args, kwargs):
+                    Property.properties[name].remove(prop)
+                    del NamedExpression.namedExpressionsById[propId]
+            else:
+                try:
+                    def remove(propToRemove):
+                        if propToRemove.filter(args, kwargs):
+                            del NamedExpression.namedExpressionsById[propToRemove.getId()]
+                            return True
+                        return False
+                    Property.properties[name] = set([prop for prop in Property.properties[name]
+                                                     if not remove(prop)])
+                except KeyError:
+                    pass
 
     @staticmethod
     def edit(name, args1, kwargs1, unevaluatedArgs2, unevaluatedKWArgs2, evaluation):
@@ -189,13 +203,17 @@ class Property(NamedExpression):
             prop._args = newArgCommands
             prop._kwargs = newKWArgCommands
 
-        try:
-            props = Property.properties[name]
-        except KeyError:
-            return
-
-        for prop in props:
+        if KEYWORD_ID in kwargs1:
+            prop = NamedExpression.namedExpressionsById[kwargs1[KEYWORD_ID]]
             editProp(prop)
+        else:
+            try:
+                props = Property.properties[name]
+            except KeyError:
+                return
+
+            for prop in props:
+                editProp(prop)
 
     def _getContainer(self):
         return Property.properties
