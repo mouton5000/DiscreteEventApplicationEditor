@@ -3,6 +3,9 @@ __author__ = 'mouton'
 from database import UNDEFINED_PARAMETER
 
 
+DEFAULT_WIDTH = 2
+DEFAULT_COLOR = '000000'
+
 _lineRegs = {}
 
 

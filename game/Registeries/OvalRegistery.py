@@ -2,6 +2,8 @@ __author__ = 'mouton'
 
 from database import UNDEFINED_PARAMETER
 
+DEFAULT_WIDTH = 1
+DEFAULT_COLOR = '000000'
 
 _ovalRegs = {}
 
