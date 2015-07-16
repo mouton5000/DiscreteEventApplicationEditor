@@ -35,10 +35,37 @@ class TriggerParser(lrparsing.Grammar):
         randomEval = Token('randomEval')
         minEvalKw = Token('minEval')
         maxEvalKw = Token('maxEval')
+
+        cosf = Token('cos')
+        sinf = Token('sin')
+        tanf = Token('tan')
+        expf = Token('exp')
+        logf = Token('log')
+        absf = Token('abs')
+        signf = Token('sign')
+        floorf = Token('floor')
+        ceilf = Token('ceil')
+        roundf = Token('round')
+        acosf = Token('acos')
+        asinf = Token('asin')
+        atanf = Token('atan')
+        chf = Token('ch')
+        shf = Token('sh')
+        thf = Token('th')
+        achf = Token('ach')
+        ashf = Token('ash')
+        athf = Token('ath')
+
+        lenf = Token('len')
+
+        minf = Token('min')
+        maxf = Token('max')
+
         globalsKw = Token('globals')
         globalsFpsKw = Token('fps')
         globalsHeightKw = Token('height')
         globalsWidthKw = Token('width')
+
         idkw = Token('id')
 
 
@@ -110,9 +137,10 @@ class TriggerParser(lrparsing.Grammar):
     powerExpr = arithmExpr << Token('**') << arithmExpr
     constantExpr = Token('pi') | Token('e')
 
-    unaryFuncExpr = Token('cos sin tan exp log abs sign floor ceil acos asin atan sh ch th ash ach ath len') \
+    unaryFuncExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf | T.roundf
+                     | T.acosf | T.asinf | T.atanf | T.shf | T.chf | T.thf | T.ashf | T.achf | T.athf | T.lenf) \
                      + parArithmExpr
-    binaryFuncExpr = Token('min max') + '(' + arithmExpr + ',' + arithmExpr + ')'
+    binaryFuncExpr = (T.minf | T.maxf) + '(' + arithmExpr + ',' + arithmExpr + ')'
 
     # getItemExpr = arithmExpr + '[' + arithmExpr + ']'
     # setItemExpr = arithmExpr + '[' + arithmExpr + '<<' + arithmExpr + ']'
@@ -462,6 +490,8 @@ class TriggerParser(lrparsing.Grammar):
                 return Func(a, ceil)
             elif tree[1][1] == 'floor':
                 return Func(a, floor)
+            elif tree[1][1] == 'round':
+                return Func(a, round)
             elif tree[1][1] == 'len':
                 return Func(a, len)
 

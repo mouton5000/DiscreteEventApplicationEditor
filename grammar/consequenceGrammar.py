@@ -53,6 +53,7 @@ class ConsequenceParser(lrparsing.Grammar):
         signf = Token('sign')
         floorf = Token('floor')
         ceilf = Token('ceil')
+        roundf = Token('round')
         acosf = Token('acos')
         asinf = Token('asin')
         atanf = Token('atan')
@@ -178,7 +179,7 @@ class ConsequenceParser(lrparsing.Grammar):
     constantExpr = Token('pi') | Token('e')
     parArithmExpr = '(' + arithmExpr + ')'
 
-    unaryFuncExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf
+    unaryFuncExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf | T.roundf
                      | T.acosf | T.asinf | T.atanf | T.shf | T.chf | T.thf | T.ashf | T.achf | T.athf | T.lenf) \
                      + parArithmExpr
     binaryFuncExpr = (T.minf | T.maxf) + '(' + arithmExpr + ',' + arithmExpr + ')'
@@ -763,6 +764,8 @@ class ConsequenceParser(lrparsing.Grammar):
                 return Func(a, floor)
             elif tree[1][1] == 'len':
                 return Func(a, len)
+            elif tree[1][1] == 'round':
+                return Func(a, round)
 
         def buildBinaryFunctionExpression():
             x1 = cls.buildArithmeticExpression(tree[3])
