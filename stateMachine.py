@@ -72,6 +72,10 @@ def clearNodes():
 
 
 def init():
+    reinit()
+
+
+def reinit():
     clearTokens()
     Property.properties.clear()
     Event.events.clear()

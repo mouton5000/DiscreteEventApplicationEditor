@@ -9,6 +9,10 @@ _polygonRegs = {}
 
 
 def init():
+        reinit()
+
+
+def reinit():
     _polygonRegs.clear()
 
 

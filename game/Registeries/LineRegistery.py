@@ -10,6 +10,10 @@ _lineRegs = {}
 
 
 def init():
+    reinit()
+
+
+def reinit():
     _lineRegs.clear()
 
 

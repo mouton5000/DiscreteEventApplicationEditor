@@ -17,6 +17,10 @@ def init(spritesDictionnary, rootDir):
     global _spritesDictionnary, _rootDir
     _spritesDictionnary = spritesDictionnary
     _rootDir = rootDir
+    reinit()
+
+
+def reinit():
     spritesList.empty()
 
 

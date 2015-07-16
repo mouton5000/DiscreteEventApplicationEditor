@@ -45,6 +45,15 @@ def init(fps, width, height, spritesDictionnary, rootDir):
     pygame.display.flip()
 
 
+def reinit():
+    spriteReg.reinit()
+    textReg.reinit()
+    lineReg.reinit()
+    rectReg.reinit()
+    ovalReg.reinit()
+    polygonReg.reinit()
+
+
 def tick():
     if not _readEvents():
         return False

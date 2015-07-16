@@ -9,6 +9,10 @@ _ovalRegs = {}
 
 
 def init():
+        reinit()
+
+
+def reinit():
     _ovalRegs.clear()
 
 

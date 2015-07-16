@@ -9,6 +9,10 @@ _textRegs = {}
 
 
 def init():
+        reinit()
+
+
+def reinit():
     _textRegs.clear()
 
 

@@ -9,6 +9,10 @@ _rectRegs = {}
 
 
 def init():
+        reinit()
+
+
+def reinit():
     _rectRegs.clear()
 
 
