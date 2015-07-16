@@ -79,10 +79,11 @@ def init():
     NamedExpression.expressionIDCounter = 0
 
 
-def tick():
-    print 'Tokens, properties and events'
-    print _tokens, Property.properties, Event.events
-    print
+def tick(debug=False):
+    if debug:
+        print 'Tokens, properties and events'
+        print _tokens, Property.properties, Event.events
+        print
     from itertools import chain
 
     # bug? la variable token est iteree a partir de la liste tokens
@@ -210,11 +211,13 @@ def tick():
     if len(tokensEvaluations) == 0:
         return False
 
-    print 'Tokens :'
-    for token in tokensEvaluations:
-        print token, tokensEvaluations[token]
+    if debug:
+        print 'Tokens :'
+        for token in tokensEvaluations:
+            print token, tokensEvaluations[token]
 
-    print
+        print
+
     for token in tokensEvaluations:
         tr, evaluations = tokensEvaluations[token]
         token.moveTo(tr.n2)

@@ -306,6 +306,8 @@ class MainWindow(QMainWindow):
         stateMachine.clearNodes()
         stateMachine.clearTokens()
 
+        DEBUG = False
+
         def compileNode(node):
             return stateMachine.addNode(node.num, str(node.num) + ':' + str(node.getLabel()))
 
@@ -340,9 +342,10 @@ class MainWindow(QMainWindow):
         while maxTick <= 0 or tick < maxTick:
             retick = True
             while retick and (maxTick <= 0 or tick < maxTick):
-                print frame, tick
+                if DEBUG:
+                    print frame, tick
                 tick += 1
-                retick = stateMachine.tick()
+                retick = stateMachine.tick(debug=DEBUG)
             frame += 1
             stateMachine.updateTokensNbFrames()
             if not gameWindow.tick():
