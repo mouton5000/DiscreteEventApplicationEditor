@@ -68,12 +68,12 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
         simpleTests.test_evaluation(self, trig, self.eval2, token)
 
     def test_fail_too_many_kwargs_1_with_empty_previous_evaluation(self):
-        trig = PropertyTriggerExpression('Empty', [], {1: UndefinedLitteral()})
+        trig = PropertyTriggerExpression('Empty', [], {ALitteral(1): UndefinedLitteral()})
         token = None
         simpleTests.test_evaluation(self, trig, self.eval1, token)
 
     def test_fail_too_many_kwargs_1_with_non_empty_previous_evaluation(self):
-        trig = PropertyTriggerExpression('Empty', [], {2: UndefinedLitteral()})
+        trig = PropertyTriggerExpression('Empty', [], {ALitteral(2): UndefinedLitteral()})
         token = None
         simpleTests.test_evaluation(self, trig, self.eval2, token)
 
