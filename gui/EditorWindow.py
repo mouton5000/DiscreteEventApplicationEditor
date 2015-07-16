@@ -187,7 +187,8 @@ class MainWindow(QMainWindow):
 
         setW = self.settingsWidget()
         settingsDict = {"fps": int(setW.getFPS()), "maxTick": int(setW.getMaxTick()), "width": int(setW.getWidth()),
-                        "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites()}
+                        "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites(),
+                        "soundsRegistery": setW.getSounds()}
 
         d = {"nodeId": nig.getNodeId(),
              "nextIds": list(nig.getNextIds()),
@@ -277,6 +278,7 @@ class MainWindow(QMainWindow):
             setW.setWidth(settingsDict['width'])
             setW.setHeight(settingsDict['height'])
             setW.setSprites(settingsDict['spritesRegistery'])
+            setW.setSounds(settingsDict['soundsRegistery'])
 
             self.stack.clear()
 
@@ -333,9 +335,10 @@ class MainWindow(QMainWindow):
         width = setW.getWidth()
         height = setW.getHeight()
         spritesDictionnary = setW.getSpritesDictionnary()
+        soundsDictionnary = setW.getSoundsDictionnary()
         rootDir = self._lastSaveOpenFileDirectory
 
-        gameWindow.init(fps, width, height, spritesDictionnary, rootDir)
+        gameWindow.init(fps, width, height, spritesDictionnary, soundsDictionnary, rootDir)
 
         frame = 0
         tick = 0

@@ -2,6 +2,7 @@ __author__ = 'mouton'
 
 from database import Property, Event
 import stateMachine
+import game.Registeries.SoundRegistery as soundRegistery
 import game.Registeries.SpriteRegistery as spriteRegistery
 import game.Registeries.TextRegistery as textRegistery
 import game.Registeries.LineRegistery as lineRegistery
@@ -564,3 +565,25 @@ class ClearAll(object):
         gameWindow.reinit()
 
 
+class AddSoundConsequence():
+    def __init__(self, num):
+        self._num = num
+
+    def eval_update(self, evaluation, *_):
+        try:
+            num = int(_evalArg(self._num, evaluation))
+            soundRegistery.playSound(num)
+        except (ArithmeticError, TypeError, ValueError):
+            pass
+
+    @property
+    def num(self):
+        return self._num
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def y(self):
+        return self._y

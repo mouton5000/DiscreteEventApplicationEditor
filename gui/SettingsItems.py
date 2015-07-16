@@ -14,11 +14,6 @@ class SettingsWidget(QWidget):
         super(SettingsWidget, self).__init__(parent)
         self.mainWindow = mainWindow
 
-        # self._fps = 60
-        # self._registery = []
-        # self._width = 800
-        # self._height = 640
-
         vbox = QVBoxLayout()
 
         self._spriteWidgets = []
@@ -46,6 +41,11 @@ class SettingsWidget(QWidget):
 
         vbox.addWidget(self._spritesTE)
 
+        self._soundsTE = QTextEdit(self)
+        self._soundsTE.setUndoRedoEnabled(True)
+
+        vbox.addWidget(self._soundsTE)
+
         self.init()
 
         self._fpsTE.textChanged.connect(self.window().setModified)
@@ -53,6 +53,7 @@ class SettingsWidget(QWidget):
         self._widthTE.textChanged.connect(self.window().setModified)
         self._heightTE.textChanged.connect(self.window().setModified)
         self._spritesTE.textChanged.connect(self.window().setModified)
+        self._soundsTE.textChanged.connect(self.window().setModified)
 
         self.setLayout(vbox)
 
@@ -69,6 +70,22 @@ class SettingsWidget(QWidget):
             listOfSprites = sprites.split('\n')
             for sprStr in listOfSprites:
                     num, filePath = sprStr.split()
+                    dic[int(num)] = str(filePath)
+        return dic
+
+    def setSounds(self, sounds):
+        self._soundsTE.setText(sounds)
+
+    def getSounds(self):
+        return str(self._soundsTE.toPlainText())
+
+    def getSoundsDictionnary(self):
+        dic = {}
+        sounds = self.getSounds()
+        if sounds != '':
+            listOfSounds = sounds.split('\n')
+            for sndStr in listOfSounds:
+                    num, filePath = sndStr.split()
                     dic[int(num)] = str(filePath)
         return dic
 

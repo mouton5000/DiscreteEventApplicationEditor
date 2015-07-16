@@ -6,6 +6,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
 from database import Variable, KEYWORD_ID
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
+    AddSoundConsequence, \
     AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, RemoveAllTokenConsequence, \
     AddTextConsequence, EditTextConsequence, RemoveTextConsequence, \
     RemoveLineConsequence, EditLineConsequence, AddLineConsequence, \
@@ -32,6 +33,7 @@ class ConsequenceParser(lrparsing.Grammar):
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
         sprite = Token('s')
         text = Token('t')
+        sound = Token('sound')
         token = Token('token')
         add = Token('add')
         remove = Token('remove')
@@ -109,6 +111,8 @@ class ConsequenceParser(lrparsing.Grammar):
                     (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ')'
     removeSpriteExpr = T.remove + T.sprite + '(' + arithmExpr + ')'
 
+    addSoundExpr = T.add + T.sound + '(' + arithmExpr + ')'
+
     addTextExpr = T.add + T.text + '(' + arithmExpr + ',' + arithmExpr + ',' + \
                   arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ')'
     editTextExpr = T.edit + T.text + '(' + arithmExpr + ',' + (arithmExpr, T.uvariable) + ',' + \
@@ -160,6 +164,7 @@ class ConsequenceParser(lrparsing.Grammar):
                     addPropExpr, removePropExpr, editPropExpr,
                     addEventExpr,
                     addSpriteExpr, removeSpriteExpr, editSpriteExpr,
+                    addSoundExpr,
                     addTextExpr, removeTextExpr, editTextExpr,
                     addLineExpr, editLineExpr, removeLineExpr,
                     addRectExpr, editRectExpr, removeRectExpr,
@@ -260,6 +265,10 @@ class ConsequenceParser(lrparsing.Grammar):
         def buildRemoveSprite():
             name = cls.buildExpression(tree[4])
             return RemoveSpriteConsequence(name)
+
+        def buildAddSound():
+            num = cls.buildExpression(tree[4])
+            return AddSoundConsequence(num)
 
         def buildAddText():
             name = cls.buildExpression(tree[4])
@@ -553,6 +562,7 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.addSpriteExpr: buildAddSprite,
             ConsequenceParser.removeSpriteExpr: buildRemoveSprite,
             ConsequenceParser.editSpriteExpr: buildEditSprite,
+            ConsequenceParser.addSoundExpr: buildAddSound,
             ConsequenceParser.addTextExpr: buildAddText,
             ConsequenceParser.removeTextExpr: buildRemoveText,
             ConsequenceParser.editTextExpr: buildEditText,

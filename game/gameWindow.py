@@ -5,6 +5,7 @@ from pygame import Color
 from pygame.rect import Rect
 
 from database import Event
+import game.Registeries.SoundRegistery as soundReg
 import game.Registeries.SpriteRegistery as spriteReg
 import game.Registeries.TextRegistery as textReg
 import game.Registeries.LineRegistery as lineReg
@@ -15,6 +16,7 @@ import game.Registeries.PolygonRegistery as polygonReg
 pygame.init()
 pygame.display.init()
 pygame.joystick.init()
+pygame.mixer.init()
 
 
 _scene = None
@@ -26,7 +28,7 @@ _height = 0
 _clock = pygame.time.Clock()
 
 
-def init(fps, width, height, spritesDictionnary, rootDir):
+def init(fps, width, height, spritesDictionnary, soundsDictionnary, rootDir):
     global _scene, _fps, _width, _height
     _scene = pygame.display.set_mode([width, height])
     _scene.fill((255, 255, 255))
@@ -35,6 +37,7 @@ def init(fps, width, height, spritesDictionnary, rootDir):
     _height = height
     spriteReg.init(spritesDictionnary, rootDir)
     spriteReg.spritesList.draw(_scene)
+    soundReg.init(soundsDictionnary, rootDir)
 
     textReg.init()
     lineReg.init()
@@ -52,6 +55,7 @@ def reinit():
     rectReg.reinit()
     ovalReg.reinit()
     polygonReg.reinit()
+    soundReg.reinit()
 
 
 def tick():
