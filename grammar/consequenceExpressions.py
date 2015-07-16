@@ -522,8 +522,10 @@ class PrintConsequence(object):
         self.toPrint = toPrint
 
     def eval_update(self, evaluation, *_):
-        for foo in self.toPrint:
-            print _evalArg(foo, evaluation)
+        try:
+            print ' '.join(str(_evalArg(foo, evaluation)) for foo in self.toPrint)
+        except (ArithmeticError, TypeError, ValueError):
+            pass
 
 
 class EditGlobalFps(object):
