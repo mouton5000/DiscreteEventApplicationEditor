@@ -6,11 +6,13 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
 from database import Variable, KEYWORD_ID
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
-    AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, AddTextConsequence, EditTextConsequence, \
-    RemoveTextConsequence, RemoveLineConsequence, EditLineConsequence, AddLineConsequence, AddRectConsequence, \
-    EditRectConsequence, RemoveRectConsequence, AddOvalConsequence, EditOvalConsequence, \
-    RemoveOvalConsequence, AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, PrintConsequence, \
-    EditGlobalFps, EditGlobalHeight, EditGlobalWidth
+    AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, RemoveAllTokenConsequence, \
+    AddTextConsequence, EditTextConsequence, RemoveTextConsequence, \
+    RemoveLineConsequence, EditLineConsequence, AddLineConsequence, \
+    AddRectConsequence, EditRectConsequence, RemoveRectConsequence, \
+    AddOvalConsequence, EditOvalConsequence, RemoveOvalConsequence, \
+    AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, \
+    PrintConsequence, EditGlobalFps, EditGlobalHeight, EditGlobalWidth, ClearAll
 from game.Registeries.LineRegistery import DEFAULT_COLOR as DEFAULT_LINE_COLOR, DEFAULT_WIDTH as DEFAULT_LINE_WIDTH
 from game.Registeries.RectRegistery import DEFAULT_COLOR as DEFAULT_RECT_COLOR, DEFAULT_WIDTH as DEFAULT_RECT_WIDTH
 from game.Registeries.OvalRegistery import DEFAULT_COLOR as DEFAULT_OVAL_COLOR, DEFAULT_WIDTH as DEFAULT_OVAL_WIDTH
@@ -33,7 +35,7 @@ class ConsequenceParser(lrparsing.Grammar):
         token = Token('token')
         add = Token('add')
         remove = Token('remove')
-        move = Token('move')
+        clear = Token('clear')
         all = Token('all')
         edit = Token('edit')
         printToken = Token('print')
@@ -87,6 +89,8 @@ class ConsequenceParser(lrparsing.Grammar):
     incompleteParameters = \
         Prio(List((arithmExpr, T.uvariable), Token(',')) + Opt(',' + List(incompleteNamedParameter, Token(','))),
              List(incompleteNamedParameter, Token(',')))
+
+    clearAllExpr = T.clear + T.all
 
     addPropExpr = T.add + T.prop + '(' + parameters + ')'
     removePropExpr = T.remove + T.prop + '(' + incompleteParameters + ')'
@@ -151,7 +155,7 @@ class ConsequenceParser(lrparsing.Grammar):
     globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
     editGlobalsExpr = T.edit + T.globalsKw + '(' + globalsKeyWord + ',' + arithmExpr + ')'
 
-    consExpr = Prio(
+    consExpr = Prio(clearAllExpr,
                     addPropExpr, removePropExpr, editPropExpr,
                     addEventExpr,
                     addSpriteExpr, removeSpriteExpr, editSpriteExpr,
@@ -213,6 +217,9 @@ class ConsequenceParser(lrparsing.Grammar):
 
         def buildNext():
             return cls.buildExpression(tree[1])
+
+        def clearAll():
+            return ClearAll()
 
         def buildAddProperty():
             name = cls.buildExpression(tree[2])[1:]
@@ -529,6 +536,7 @@ class ConsequenceParser(lrparsing.Grammar):
         exprSymbols = {
             ConsequenceParser.START: buildNext,
             ConsequenceParser.consExpr: buildNext,
+            ConsequenceParser.clearAllExpr: clearAll,
             ConsequenceParser.addPropExpr: buildAddProperty,
             ConsequenceParser.removePropExpr: buildRemoveProperty,
             ConsequenceParser.editPropExpr: buildEditProperty,

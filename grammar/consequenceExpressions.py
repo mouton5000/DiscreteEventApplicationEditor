@@ -553,3 +553,14 @@ class EditGlobalHeight(object):
     def eval_update(self, evaluation, *_):
         height = _evalArg(self.newValue, evaluation)
         gameWindow.setHeight(height)
+
+
+class ClearAll(object):
+    def __init__(self):
+        pass
+
+    def eval_update(self, evaluation, *_):
+        stateMachine.reinit()
+        gameWindow.reinit()
+
+
