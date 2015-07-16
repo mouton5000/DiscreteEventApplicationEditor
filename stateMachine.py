@@ -48,6 +48,10 @@ def removeToken(token):
     _tokens.remove(token)
 
 
+def removeAllToken():
+    _tokens.clear()
+
+
 def clearTokens():
     _tokens.clear()
 

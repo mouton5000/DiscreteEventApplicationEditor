@@ -509,6 +509,14 @@ class RemoveTokenConsequence(object):
         stateMachine.removeToken(token)
 
 
+class RemoveAllTokenConsequence(object):
+    def __init__(self):
+        pass
+
+    def eval_update(self, *_):
+        stateMachine.removeAllToken()
+
+
 class PrintConsequence(object):
     def __init__(self, toPrint):
         self.toPrint = toPrint
