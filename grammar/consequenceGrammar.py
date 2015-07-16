@@ -34,6 +34,7 @@ class ConsequenceParser(lrparsing.Grammar):
         add = Token('add')
         remove = Token('remove')
         move = Token('move')
+        all = Token('all')
         edit = Token('edit')
         printToken = Token('print')
         shapeLine = Token('shpL')
@@ -95,6 +96,7 @@ class ConsequenceParser(lrparsing.Grammar):
     addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
     editTokenExpr = T.edit + T.token + '(' + Opt(incompleteParameters) + ')'
     removeTokenExpr = T.remove + T.token
+    removeAllTokenExpr = T.remove + T.all + T.token
 
     addSpriteExpr = T.add + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
                     arithmExpr + ',' + arithmExpr + ')'
@@ -149,11 +151,17 @@ class ConsequenceParser(lrparsing.Grammar):
     globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
     editGlobalsExpr = T.edit + T.globalsKw + '(' + globalsKeyWord + ',' + arithmExpr + ')'
 
-    consExpr = Prio(addPropExpr, removePropExpr, editPropExpr, addEventExpr, addSpriteExpr, removeSpriteExpr,
-                    editSpriteExpr, addTextExpr, removeTextExpr, editTextExpr, addLineExpr, editLineExpr,
-                    removeLineExpr, addRectExpr, editRectExpr, removeRectExpr, addOvalExpr, editOvalExpr,
-                    removeOvalExpr, addPolygonExpr, editPolygonExpr, removePolygonExpr, addTokenExpr,
-                    editTokenExpr, removeTokenExpr, printExpr, editGlobalsExpr)
+    consExpr = Prio(
+                    addPropExpr, removePropExpr, editPropExpr,
+                    addEventExpr,
+                    addSpriteExpr, removeSpriteExpr, editSpriteExpr,
+                    addTextExpr, removeTextExpr, editTextExpr,
+                    addLineExpr, editLineExpr, removeLineExpr,
+                    addRectExpr, editRectExpr, removeRectExpr,
+                    addOvalExpr, editOvalExpr, removeOvalExpr,
+                    addPolygonExpr, editPolygonExpr, removePolygonExpr,
+                    addTokenExpr, editTokenExpr, removeTokenExpr, removeAllTokenExpr,
+                    printExpr, editGlobalsExpr)
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
     # linkedListExpr = 'll' + listExpr
@@ -483,6 +491,9 @@ class ConsequenceParser(lrparsing.Grammar):
         def buildRemoveToken():
             return RemoveTokenConsequence()
 
+        def buildRemoveAllToken():
+            return RemoveAllTokenConsequence()
+
         def value():
             return tree[1]
 
@@ -558,6 +569,7 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.addTokenExpr: buildAddToken,
             ConsequenceParser.editTokenExpr: buildEditToken,
             ConsequenceParser.removeTokenExpr: buildRemoveToken,
+            ConsequenceParser.removeAllTokenExpr: buildRemoveAllToken,
             ConsequenceParser.printExpr: buildPrintExpr,
             ConsequenceParser.editGlobalsExpr: buildEditGlobals,
             ConsequenceParser.arithmExpr: buildArithmetic
