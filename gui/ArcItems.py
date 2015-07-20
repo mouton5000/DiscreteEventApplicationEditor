@@ -9,7 +9,7 @@ from math import pi, cos, degrees, atan
 from random import uniform
 from undoRedoActions import *
 from NodeItems import NodeItem
-from gui.LabelItems import LabelItem
+from gui.LabelItems import ArcLabelItem
 
 
 class ArcItem(QGraphicsPathItem):
@@ -73,7 +73,7 @@ class ArcItem(QGraphicsPathItem):
 
     def getLabelItem(self):
         if self._labelItem is None:
-            self.setLabelItem(LabelItem(scene=self.scene()))
+            self.setLabelItem(ArcLabelItem(scene=self.scene()))
         return self._labelItem
 
     def setLabelItem(self, labelItem):
@@ -414,10 +414,10 @@ class ArcItem(QGraphicsPathItem):
                            2 * NodeItem.NodeWidth, 2 * NodeItem.NodeWidth, 0, 360)
         self.setPath(path)
 
-        textCenter = v1 + u / 2 + (0.5 * cl) * n  # position normale
+        textCenter = v1 + u / 2  # position normale
         labelItem = self.getLabelItem()
-        labelItem.setCenter(textCenter)
-        labelItem.setOffset(10 * w * n)  # position du texte déplacé
+        offset = 0.5 * cl * n
+        labelItem.setArcVectorCenterAndOffset(u, textCenter, offset)
 
     def drawCyclePath(self, v1, sepInput, v2, sepOutput, delta, cl):
         """
@@ -525,4 +525,4 @@ class ArcItem(QGraphicsPathItem):
 
         textCenter = o  # v1 + cl * u
         labelItem = self.getLabelItem()
-        labelItem.setCenter(textCenter)
+        labelItem.setArcVectorCenterAndOffset(u, textCenter, Vector2(0, 0))

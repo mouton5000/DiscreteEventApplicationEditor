@@ -5,7 +5,7 @@ from PyQt4 import QtCore
 from PyQt4.QtGui import QGraphicsEllipseItem, QBrush
 from euclid import Vector2
 from undoRedoActions import *
-from gui.LabelItems import LabelItem
+from gui.LabelItems import NodeLabelItem
 
 
 class NodeItem(QGraphicsEllipseItem):
@@ -39,7 +39,7 @@ class NodeItem(QGraphicsEllipseItem):
 
     def getLabelItem(self):
         if self._labelItem is None:
-            self.setLabelItem(LabelItem(scene=self.scene()))
+            self.setLabelItem(NodeLabelItem(scene=self.scene()))
         return self._labelItem
 
     def setLabelItem(self, labelItem):

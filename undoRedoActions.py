@@ -142,9 +142,9 @@ class ChangeInputOrOuputCommand(QUndoCommand):
             self._arc.changeOutputWithoutStack(self._newNode)
 
 
-class MoveLabelItemCommand(QUndoCommand):
+class MoveNodeLabelItemCommand(QUndoCommand):
     def __init__(self, scene, labelItem, prevOffset, newOffset, parent=None):
-        super(MoveLabelItemCommand, self).__init__(parent)
+        super(MoveNodeLabelItemCommand, self).__init__(parent)
         self._scene = scene
         self._labelItem = labelItem
         self._prevOffset = prevOffset
@@ -155,6 +155,23 @@ class MoveLabelItemCommand(QUndoCommand):
 
     def redo(self):
         self._labelItem.moveWithoutStack(self._newOffset)
+
+
+class MoveArcLabelItemCommand(QUndoCommand):
+    def __init__(self, scene, labelItem, prevAngle, prevRatio, newAngle, newRatio, parent=None):
+        super(MoveArcLabelItemCommand, self).__init__(parent)
+        self._scene = scene
+        self._labelItem = labelItem
+        self._prevAngle = prevAngle
+        self._prevRatio = prevRatio
+        self._newAngle = newAngle
+        self._newRatio = newRatio
+
+    def undo(self):
+        self._labelItem.moveWithoutStack(self._prevAngle, self._prevRatio)
+
+    def redo(self):
+        self._labelItem.moveWithoutStack(self._newAngle, self._newRatio)
 
 
 class MoveConnectedComponentCommand(QUndoCommand):
