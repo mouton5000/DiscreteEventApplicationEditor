@@ -80,7 +80,7 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
     def test_success_integer_property_with_empty_previous_evaluation(self):
         trig = PropertyTriggerExpression('I', [UndefinedLitteral()], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1)
+        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1, self.eval1)
 
     def test_fail_wrong_name_2_with_empty_previous_evaluation(self):
         trig = PropertyTriggerExpression('J', [UndefinedLitteral()], {})
@@ -95,17 +95,17 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
     def test_success_two_args(self):
         trig = PropertyTriggerExpression('IF', [ALitteral(1), UndefinedLitteral()], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1)
+        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1, self.eval1)
 
     def test_success_two_args_2(self):
         trig = PropertyTriggerExpression('IF', [UndefinedLitteral(), UndefinedLitteral()], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1)
+        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1, self.eval1, self.eval1)
 
     def test_success_two_args_3(self):
         trig = PropertyTriggerExpression('IF', [UndefinedLitteral(), ALitteral(pi)], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1)
+        simpleTests.test_evaluation(self, trig, self.eval1, token, self.eval1, self.eval1)
 
     def test_fail_wrong_args_1(self):
         trig = PropertyTriggerExpression('IF', [ALitteral(3), UndefinedLitteral()], {})
@@ -125,7 +125,7 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
     def test_success_three_args_2(self):
         trig = PropertyTriggerExpression('SSI', [ALitteral('machin'), UndefinedLitteral(), ALitteral(1)], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_success_three_args_3(self):
         trig = PropertyTriggerExpression('SSI', [UndefinedLitteral(), ALitteral('truc'), ALitteral(1)], {})
@@ -135,17 +135,17 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
     def test_success_three_args_4(self):
         trig = PropertyTriggerExpression('SSI', [ALitteral('machin'), UndefinedLitteral(), UndefinedLitteral()], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_success_three_args_5(self):
         trig = PropertyTriggerExpression('SSI', [UndefinedLitteral(), UndefinedLitteral(), ALitteral(1)], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_success_three_args_6(self):
         trig = PropertyTriggerExpression('SSI', [UndefinedLitteral(), UndefinedLitteral(), UndefinedLitteral()], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_fail_not_enough_args_1(self):
         trig = PropertyTriggerExpression('SSI', [UndefinedLitteral(), UndefinedLitteral()], {})
@@ -177,7 +177,7 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
     def test_success_multiple_types_property_with_non_empty_previous_evaluation(self):
         trig = PropertyTriggerExpression('MultipleTypes', [UndefinedLitteral()], {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2, self.eval2)
 
     def test_success_kwargs_integer_integer(self):
         trig = PropertyTriggerExpression('EII', [], {ALitteral(1): UndefinedLitteral()})
@@ -224,23 +224,23 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
         trig = PropertyTriggerExpression('ETwoKW', [], {ALitteral('abc'): UndefinedLitteral(),
                                                         ALitteral(1): ALitteral(12)})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_success_two_kwargs_2(self):
         trig = PropertyTriggerExpression('ETwoKW', [], {ALitteral(1): UndefinedLitteral(),
                                                         ALitteral('abc'): UndefinedLitteral()})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_success_two_kwargs_not_enough_kwargs(self):
         trig = PropertyTriggerExpression('ETwoKW', [], {ALitteral(1): UndefinedLitteral()})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2, self.eval2)
 
     def test_success_two_kwargs_not_enough_kwargs_2(self):
         trig = PropertyTriggerExpression('ETwoKW', [], {ALitteral('abc'): UndefinedLitteral()})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_success_two_kwargs_not_enough_kwargs_3(self):
         trig = PropertyTriggerExpression('ETwoKW', [], {ALitteral('def'): UndefinedLitteral()})
@@ -256,19 +256,19 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
         trig = PropertyTriggerExpression('Any', [UndefinedLitteral(), UndefinedLitteral()],
                                          {ALitteral(1): ALitteral(12)})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2, self.eval2)
 
     def test_success_any_args_kwargs_3(self):
         trig = PropertyTriggerExpression('Any', [UndefinedLitteral(), UndefinedLitteral()],
                                          {})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2, self.eval2)
 
     def test_success_any_args_kwargs_4(self):
         trig = PropertyTriggerExpression('Any', [UndefinedLitteral(), UndefinedLitteral()],
                                          {ALitteral(1): ALitteral(12), ALitteral('abc'): ALitteral(12)})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2, self.eval2)
 
     def test_success_any_args_kwargs_5(self):
         trig = PropertyTriggerExpression('Any', [UndefinedLitteral(), ALitteral(pi), UndefinedLitteral()],
@@ -280,7 +280,7 @@ class TestUndefinedPropertyTriggerExpression(TestCase):
         trig = PropertyTriggerExpression('Any', [UndefinedLitteral(), UndefinedLitteral(), UndefinedLitteral()],
                                          {ALitteral(4): UndefinedLitteral()})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2)
 
     def test_fail_any_args_kwargs_6(self):
         trig = PropertyTriggerExpression('Any', [UndefinedLitteral(), UndefinedLitteral(), UndefinedLitteral()],

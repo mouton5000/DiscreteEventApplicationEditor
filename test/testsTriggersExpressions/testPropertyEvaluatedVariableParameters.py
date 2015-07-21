@@ -129,7 +129,7 @@ class TestPropertyTriggerExpression(TestCase):
     def test_success_kwargs_1(self):
         trig = PropertyTriggerExpression('ETwoKW', [], {ALitteral(Variable('X1')): ALitteral(Variable('Z1'))})
         token = None
-        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2)
+        simpleTests.test_evaluation(self, trig, self.eval2, token, self.eval2, self.eval2, self.eval2)
 
     def test_success_kwargs_2(self):
         trig = PropertyTriggerExpression('ETwoKW', [], {ALitteral(Variable('Y')): ALitteral(Variable('Z1'))})

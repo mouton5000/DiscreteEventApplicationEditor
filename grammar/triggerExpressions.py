@@ -454,7 +454,6 @@ class NamedExpression(ParameterizedExpression):
         return
 
     def eval(self, _, previousEvaluation):
-        dc = DictContainer()
         try:
             expressions = self.container[self.name]
         except KeyError:
@@ -463,7 +462,7 @@ class NamedExpression(ParameterizedExpression):
             if not self.weakCompare(namedExpr):
                 continue
             neval = self.unify(namedExpr, previousEvaluation)
-            if neval is not None and dc.add(neval.variables):
+            if neval is not None:
                 yield neval
 
     def __hash__(self):
@@ -614,10 +613,19 @@ class SelectMaxEval(SelectEval):
         return 'SelectMaxEval(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
 
 
+class UniqueEval(object):
+    def __init__(self, expr):
+        super(UniqueEval, self).__init__()
+        self._expr = expr
 
     def __str__(self):
+        return 'UniqueEval(' + str(self._expr) + ')'
 
     def __repr__(self):
+        return 'UniqueEval(' + str(self._expr) + ')'
 
-if __name__ == '__main__':
-    pass
+    def eval(self, token, previousEvaluation):
+        dc = DictContainer()
+        for evaluation in self._expr.eval(token, previousEvaluation):
+            if dc.add(evaluation.variables):
+                yield evaluation

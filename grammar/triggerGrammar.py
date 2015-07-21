@@ -4,7 +4,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
     Power, Func, UndefinedLitteral, Min, Max, globalsHeightExpression, globalsWidthExpression, globalsFpsExpression
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
-    NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEval, SelectMaxEval
+    NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEval, SelectMaxEval, UniqueEval
 from database import Variable, KEYWORD_ID
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
@@ -31,10 +31,12 @@ class TriggerParser(lrparsing.Grammar):
         notkw = Token('not')
         token = Token('token')
         elock = Keyword('eLock')
+
         anyEval = Token('anyEval')
         randomEval = Token('randomEval')
         minEvalKw = Token('minEval')
         maxEvalKw = Token('maxEval')
+        uniqueEval = Token('uniqueEval')
 
         cosf = Token('cos')
         sinf = Token('sin')
@@ -105,6 +107,7 @@ class TriggerParser(lrparsing.Grammar):
     randomEvalExpr = T.randomEval + parExpr
     minEvalExpr = T.minEvalKw + '[' + arithmExpr + ']' + parExpr
     maxEvalExpr = T.maxEvalKw + '[' + arithmExpr + ']' + parExpr
+    uniqueEvalExpr = T.uniqueEval + parExpr
 
     boolExpr = Prio(litExpr,
                     timerExpr,
@@ -124,7 +127,8 @@ class TriggerParser(lrparsing.Grammar):
                     anyEvalExpr,
                     randomEvalExpr,
                     minEvalExpr,
-                    maxEvalExpr
+                    maxEvalExpr,
+                    uniqueEvalExpr
     )
 
     # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
@@ -300,6 +304,10 @@ class TriggerParser(lrparsing.Grammar):
             expr = cls.buildExpression(tree[5])
             return SelectMaxEval(expr, arithmExpr)
 
+        def buildUniqueEvalExpr():
+            expr = cls.buildExpression(tree[2])
+            return UniqueEval(expr)
+
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)
 
@@ -334,6 +342,7 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.randomEvalExpr: buildRandomEval,
             TriggerParser.minEvalExpr: buildMinEvalExpr,
             TriggerParser.maxEvalExpr: buildMaxEvalExpr,
+            TriggerParser.uniqueEvalExpr: buildUniqueEvalExpr,
             TriggerParser.arithmExpr: buildArithmetic,
             TriggerParser.parArithmExpr: buildArithmetic,
         }
