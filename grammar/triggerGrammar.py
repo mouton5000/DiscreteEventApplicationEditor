@@ -4,7 +4,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
     Power, Func, UndefinedLitteral, Min, Max, globalsHeightExpression, globalsWidthExpression, globalsFpsExpression
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
-    NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEvaluation, SelectMaxEvaluation
+    NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEval, SelectMaxEval
 from database import Variable, KEYWORD_ID
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
@@ -293,12 +293,12 @@ class TriggerParser(lrparsing.Grammar):
         def buildMinEvalExpr():
             arithmExpr = cls.buildExpression(tree[3])
             expr = cls.buildExpression(tree[5])
-            return SelectMinEvaluation(expr, arithmExpr)
+            return SelectMinEval(expr, arithmExpr)
 
         def buildMaxEvalExpr():
             arithmExpr = cls.buildExpression(tree[3])
             expr = cls.buildExpression(tree[5])
-            return SelectMaxEvaluation(expr, arithmExpr)
+            return SelectMaxEval(expr, arithmExpr)
 
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)

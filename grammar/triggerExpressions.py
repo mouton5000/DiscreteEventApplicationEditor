@@ -561,9 +561,9 @@ class RandomEval(object):
             yield selectedEvaluation
 
 
-class SelectEvaluation(object):
+class SelectEval(object):
     def __init__(self, expr, arithmExpr, selectFunction):
-        super(SelectEvaluation, self).__init__()
+        super(SelectEval, self).__init__()
         self._expr = expr
         self._arithmExpr = arithmExpr
         self._selectFunction = selectFunction
@@ -588,30 +588,36 @@ class SelectEvaluation(object):
             yield selectedEvaluation
 
 
-class SelectMinEvaluation(SelectEvaluation):
+class SelectMinEval(SelectEval):
     def __init__(self, expr, arithmExpr):
         def selectFunction(challenger, best):
                 return challenger < best
-        super(SelectMinEvaluation, self).__init__(expr, arithmExpr, selectFunction)
+        super(SelectMinEval, self).__init__(expr, arithmExpr, selectFunction)
 
     def __str__(self):
-        return 'SelectMinEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+        return 'SelectMinEval(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
 
     def __repr__(self):
-        return 'SelectMinEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+        return 'SelectMinEval(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
 
 
-class SelectMaxEvaluation(SelectEvaluation):
+class SelectMaxEval(SelectEval):
     def __init__(self, expr, arithmExpr):
         def selectFunction(challenger, best):
                 return challenger > best
-        super(SelectMaxEvaluation, self).__init__(expr, arithmExpr, selectFunction)
+        super(SelectMaxEval, self).__init__(expr, arithmExpr, selectFunction)
 
     def __str__(self):
-        return 'SelectMaxEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+        return 'SelectMaxEval(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
 
     def __repr__(self):
-        return 'SelectMaxEvaluation(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+        return 'SelectMaxEval(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+
+
+
+    def __str__(self):
+
+    def __repr__(self):
 
 if __name__ == '__main__':
     pass

@@ -88,7 +88,7 @@ class TestTriggerGrammarParser(TestCase):
         toParse = 'minEval[X](true)'
         expr = TriggerParser.parse(toParse)
 
-        self.assertIsInstance(expr, SelectMinEvaluation)
+        self.assertIsInstance(expr, SelectMinEval)
         self.assertIsInstance(expr._arithmExpr, ALitteral)
         self.assertIsInstance(expr._arithmExpr._value, Variable)
         self.assertEqual(expr._arithmExpr._value._name, 'X')
@@ -99,7 +99,7 @@ class TestTriggerGrammarParser(TestCase):
         toParse = 'maxEval[X](true)'
         expr = TriggerParser.parse(toParse)
 
-        self.assertIsInstance(expr, SelectMaxEvaluation)
+        self.assertIsInstance(expr, SelectMaxEval)
         self.assertIsInstance(expr._arithmExpr, ALitteral)
         self.assertIsInstance(expr._arithmExpr._value, Variable)
         self.assertEqual(expr._arithmExpr._value._name, 'X')
