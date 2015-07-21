@@ -171,8 +171,8 @@ class MainWindow(QMainWindow):
             d['label'] = arc.getLabel()
             d['formula'] = arc.getFormula()
             d['consequences'] = arc.getConsequences()
-            offset = arc.getLabelItem().getOffset()
-            d['labelItemOffset'] = [offset.x, offset.y]
+            d['labelItemAngle'] = arc.getLabelItem().getAngle()
+            d['labelItemRatio'] = arc.getLabelItem().getRatio()
             return d
 
         def sceneDict(scene):
@@ -241,8 +241,9 @@ class MainWindow(QMainWindow):
             a.setLabel(arc['label'])
             a.setFormula(arc['formula'])
             a.setConsequences(arc['consequences'])
-            lioff = arc['labelItemOffset']
-            a.getLabelItem().setOffset(Vector2(lioff[0], lioff[1]))
+            angle = arc['labelItemAngle']
+            ratio = arc['labelItemRatio']
+            a.getLabelItem().setAngleAndRatio(angle, ratio)
             a.drawPath()
 
         class LoadingWith():
