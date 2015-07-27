@@ -434,7 +434,6 @@ class PropertyTriggerExpression(NamedExpression):
 
 
 class EventTriggerExpression(NamedExpression):
-    events = set([])
 
     def __init__(self, name, args, kwargs):
         super(EventTriggerExpression, self).__init__(name, args, kwargs)
