@@ -3,7 +3,10 @@ from grammar.triggerExpressions import BExpression
 from grammar.consequenceGrammar import ConsequenceParser
 from grammar.tokenGrammar import TokenParametersParser
 import database
-from database import Property, Event, UNDEFINED_PARAMETER, ParameterizedExpression
+from database import Property, Event, \
+    SpriteProperty, TextProperty, LineProperty, \
+    OvalProperty, RectProperty, PolygonProperty, \
+    UNDEFINED_PARAMETER, ParameterizedExpression
 from lrparsing import LrParsingError
 
 
@@ -87,8 +90,15 @@ def reinit():
 
 def tick(debug=False):
     if debug:
-        print 'Tokens, properties and events'
-        print _tokens, Property.properties, Event.events
+        print 'Tokens : ', _tokens
+        print 'Properties : ', Property.properties
+        print 'Events : ', Event.events
+        print 'Sprites : ', SpriteProperty.sprites
+        print 'Texts : ', TextProperty.texts
+        print 'Lines : ', LineProperty.lines
+        print 'Ovals : ', OvalProperty.ovals
+        print 'Rects : ', RectProperty.rects
+        print 'Polygons : ', PolygonProperty.polygons
         print
     from itertools import chain
 

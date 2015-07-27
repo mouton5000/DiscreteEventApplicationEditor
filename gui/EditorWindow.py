@@ -309,7 +309,7 @@ class MainWindow(QMainWindow):
         stateMachine.clearNodes()
         stateMachine.clearTokens()
 
-        DEBUG = False
+        DEBUG = True
 
         def compileNode(node):
             return stateMachine.addNode(node.num, str(node.num) + ':' + str(node.getLabel()))
