@@ -2,12 +2,13 @@ import lrparsing
 from lrparsing import Keyword, List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, UndefinedLitteral, Min, Max, globalsHeightExpression, globalsWidthExpression, globalsFpsExpression
-from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
+from triggerExpressions import BLitteral, Timer, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEval, SelectMaxEval, UniqueEval
 from database import Variable
 from Keywords import KEYWORD_ID, KEYWORD_X, KEYWORD_Y, KEYWORD_CODE
 from utils.mathutils import sign
+from random import random, randint
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
 
 
@@ -58,6 +59,8 @@ class TriggerParser(lrparsing.Grammar):
         achf = Token('ach')
         ashf = Token('ash')
         athf = Token('ath')
+        rand = Token('rand')
+        randint = Token('randint')
 
         lenf = Token('len')
 
@@ -79,8 +82,6 @@ class TriggerParser(lrparsing.Grammar):
     parExpr = '(' + boolExpr + ')'
 
     timerExpr = T.timer + '(' + arithmExpr + ')'
-    randExpr = T.rand + '(' + arithmExpr + ')'
-    randIntExpr = T.randInt + '(' + Prio(T.variable, arithmExpr) + ',' + arithmExpr + ')'
 
     eLockParameters = List(arithmExpr, Token(','), min=1)
     eLockExpr = T.elock + '(' + arithmExpr + Opt(',' + eLockParameters) + ')'
@@ -112,8 +113,6 @@ class TriggerParser(lrparsing.Grammar):
 
     boolExpr = Prio(litExpr,
                     timerExpr,
-                    randExpr,
-                    randIntExpr,
                     eLockExpr,
                     propExpr,
                     eventExpr,
@@ -130,42 +129,29 @@ class TriggerParser(lrparsing.Grammar):
                     minEvalExpr,
                     maxEvalExpr,
                     uniqueEvalExpr
-    )
+                    )
 
-    # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
-    # linkedListExpr = 'll' + listExpr
-    # setExpr = 'set' + listExpr
+    addArithmExpr = arithmExpr << Token('+') << arithmExpr
+    minusArithmExpr = Opt(arithmExpr) << Token('-') << arithmExpr
+    multArithmExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
+    powerArithmExpr = arithmExpr << Token('**') << arithmExpr
+    constantArithmExpr = Token('pi') | Token('e')
 
-    addExpr = arithmExpr << Token('+') << arithmExpr
-    minusExpr = Opt(arithmExpr) << Token('-') << arithmExpr
-    multExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
-    powerExpr = arithmExpr << Token('**') << arithmExpr
-    constantExpr = Token('pi') | Token('e')
+    parArithmExpr = '(' + arithmExpr + ')'
 
-    unaryFuncExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf | T.roundf
-                     | T.acosf | T.asinf | T.atanf | T.shf | T.chf | T.thf | T.ashf | T.achf | T.athf | T.lenf) \
-                     + parArithmExpr
-    binaryFuncExpr = (T.minf | T.maxf) + '(' + arithmExpr + ',' + arithmExpr + ')'
-
-    # getItemExpr = arithmExpr + '[' + arithmExpr + ']'
-    # setItemExpr = arithmExpr + '[' + arithmExpr + '<<' + arithmExpr + ']'
-    # insertExpr = T.insertf + '(' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ')'
-    # popExpr = T.popf + '(' + arithmExpr + Opt(',' + arithmExpr) + ')'
-    # getSublistExpr = arithmExpr + '[' + Opt(arithmExpr) + ':' + Opt(arithmExpr) + ']'
-    # insertExpr = T.insertf + '(' + arithmExpr + ',' + arithmExpr + ',' + Opt(arithmExpr) + ')'
-    # removeExpr = T.popf + '(' + arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
+    unaryFuncArithmExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf | T.roundf
+                           | T.acosf | T.asinf | T.atanf | T.shf | T.chf | T.thf | T.ashf | T.achf | T.athf | T.lenf
+                           | T.rand | T.randint) \
+                           + parArithmExpr
+    binaryFuncArithmExpr = (T.minf | T.maxf) + '(' + arithmExpr + ',' + arithmExpr + ')'
 
     globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
     globalsExpr = T.globalsKw + '(' + globalsKeyWord + ')'
 
-    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr,
-                      globalsExpr,
-                      # listExpr,
-                      # linkedListExpr,
-                      # setExpr,
-                      parArithmExpr,
-                      # getItemExpr, getSublistExpr, insertExpr, removeExpr,
-                      unaryFuncExpr, binaryFuncExpr, powerExpr, multExpr, minusExpr, addExpr)
+    arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantArithmExpr,
+                      globalsExpr, parArithmExpr,
+                      unaryFuncArithmExpr, binaryFuncArithmExpr,
+                      powerArithmExpr, multArithmExpr, minusArithmExpr, addArithmExpr)
 
     START = boolExpr
 
@@ -202,15 +188,6 @@ class TriggerParser(lrparsing.Grammar):
         def buildTimer():
             nbFrames = cls.buildExpression((tree[3]))
             return Timer(nbFrames)
-
-        def buildRand():
-            prob = cls.buildExpression((tree[3]))
-            return Rand(prob)
-
-        def buildRandInt():
-            var = cls.buildExpression((tree[3]))
-            max = cls.buildExpression((tree[5]))
-            return RandInt(var, max)
 
         def buildNamedParameter():
             name = cls.buildExpression(tree[1])
@@ -323,8 +300,6 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.T.idkw: keywordIdValue,
             TriggerParser.litExpr: buildLitteral,
             TriggerParser.timerExpr: buildTimer,
-            TriggerParser.randExpr: buildRand,
-            TriggerParser.randIntExpr: buildRandInt,
             TriggerParser.parameter: buildNext,
             TriggerParser.namedParameter: buildNamedParameter,
             TriggerParser.parameters: buildParameters,
@@ -365,64 +340,6 @@ class TriggerParser(lrparsing.Grammar):
 
         def variableValue():
             return ALitteral(Variable(tree[1]))
-
-        # def listValue():
-        #     args = [cls.buildArithmeticExpression(arg) for arg in tree[2:-1:2]]
-        #     return ListLitteral(args)
-        #
-        # def linkedListValue():
-        #     args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-        #     return LinkedListLitteral(args)
-        #
-        # def setValue():
-        #     args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-        #     return SetLitteral(args)
-        #
-        # def buildGetItemExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     a2 = cls.buildArithmeticExpression(tree[3])
-        #     return GetItemExpression(l1, a2)
-        #
-        # def buildGetSublistExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     s = len(tree)
-        #     if s == 7:
-        #         a1 = cls.buildArithmeticExpression(tree[3])
-        #         a2 = cls.buildArithmeticExpression(tree[5])
-        #     elif s == 5:
-        #         a1 = None
-        #         a2 = None
-        #     elif tree[3][1] == ':':
-        #         a1 = None
-        #         a2 = cls.buildArithmeticExpression(tree[4])
-        #     else:
-        #         a1 = cls.buildArithmeticExpression(tree[3])
-        #         a2 = None
-        #     return GetSublistExpression(l1, a1, a2)
-        #
-        # def buildInsertExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     a2 = cls.buildArithmeticExpression(tree[-1])
-        #     s = len(tree)
-        #     if s == 6:
-        #         a1 = cls.buildArithmeticExpression(tree[3])
-        #     else:
-        #         a1 = None
-        #     return InsertExpression(l1, a1, a2)
-        #
-        # def buildRemoveExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     s = len(tree)
-        #     if s == 6:
-        #         a2 = cls.buildArithmeticExpression(tree[-1])
-        #         return RemoveAllExpression(l1, a2)
-        #     else:
-        #         if tree[3][1] == '>':
-        #             a2 = cls.buildArithmeticExpression(tree[-1])
-        #             return RemoveExpression(l1, None, a2)
-        #         else:
-        #             a1 = cls.buildArithmeticExpression(tree[3])
-        #             return RemoveExpression(l1, a1, None)
 
         def buildNext(i):
             def _buildNext():
@@ -504,6 +421,14 @@ class TriggerParser(lrparsing.Grammar):
                 return Func(a, round)
             elif tree[1][1] == 'len':
                 return Func(a, len)
+            elif tree[1][1] == 'rand':
+                def _random(x):
+                    return random() * x
+                return Func(a, _random)
+            elif tree[1][1] == 'randint':
+                def _randint(x):
+                    return randint(0, x - 1)
+                return Func(a, _randint)
 
         def buildBinaryFunctionExpression():
             x1 = cls.buildArithmeticExpression(tree[3])
@@ -529,20 +454,13 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.T.float: floatvalue,
             TriggerParser.T.variable: variableValue,
             TriggerParser.T.string: stringWithoutQuotes,
-            # TriggerParser.listExpr: listValue,
-            # TriggerParser.linkedListExpr: linkedListValue,
-            # TriggerParser.setExpr: setValue,
-            # TriggerParser.getItemExpr: buildGetItemExpression,
-            # TriggerParser.getSublistExpr: buildGetSublistExpression,
-            # TriggerParser.insertExpr: buildInsertExpression,
-            # TriggerParser.removeExpr: buildRemoveExpression,
-            TriggerParser.addExpr: buildBinaryExpression,
-            TriggerParser.minusExpr: buildMinusExpression,
-            TriggerParser.multExpr: buildBinaryExpression,
-            TriggerParser.powerExpr: buildBinaryExpression,
-            TriggerParser.constantExpr: buildConstant,
-            TriggerParser.unaryFuncExpr: buildUnaryFunctionExpression,
-            TriggerParser.binaryFuncExpr: buildBinaryFunctionExpression,
+            TriggerParser.addArithmExpr: buildBinaryExpression,
+            TriggerParser.minusArithmExpr: buildMinusExpression,
+            TriggerParser.multArithmExpr: buildBinaryExpression,
+            TriggerParser.powerArithmExpr: buildBinaryExpression,
+            TriggerParser.constantArithmExpr: buildConstant,
+            TriggerParser.unaryFuncArithmExpr: buildUnaryFunctionExpression,
+            TriggerParser.binaryFuncArithmExpr: buildBinaryFunctionExpression,
             TriggerParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
             TriggerParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
             TriggerParser.T.globalsWidthKw: buildGlobalWidthKeyWord,
