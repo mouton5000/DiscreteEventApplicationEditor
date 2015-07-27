@@ -74,8 +74,8 @@ def tick():
 
     for ovalItem in ovalReg.ovalItemsIterator():
         color = Color('#' + ovalItem.colorName)
-        pygame.draw.ellipse(_scene, color, Rect(ovalItem.x - ovalItem.a, ovalItem.y - ovalItem.b,
-                                                     2 * ovalItem.a, 2 * ovalItem.b), ovalItem.width)
+        pygame.draw.ellipse(_scene, color, Rect(ovalItem.x - ovalItem.w / 2, ovalItem.y - ovalItem.h / 2,
+                                                     ovalItem.w, ovalItem.h), ovalItem.width)
 
     for polygonItem in polygonReg.polygonItemsIterator():
         color = Color('#' + polygonItem.colorName)

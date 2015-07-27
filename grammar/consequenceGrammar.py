@@ -3,7 +3,10 @@ from lrparsing import List, Prio, Ref, Token, Opt, Sequence
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, UndefinedLitteral, SelfLitteral, Min, Max, globalsFpsExpression, globalsHeightExpression, \
     globalsWidthExpression
-from database import Variable, KEYWORD_ID
+from database import Variable
+from grammar.Keywords import KEYWORD_ID, KEYWORD_CODE, \
+    KEYWORD_Y, KEYWORD_X, KEYWORD_X_INT, KEYWORD_Y_INT, \
+    KEYWORD_W, KEYWORD_H, KEYWORD_WIDTH, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_TEXT
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddSoundConsequence, \
@@ -14,11 +17,6 @@ from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequ
     AddOvalConsequence, EditOvalConsequence, RemoveOvalConsequence, \
     AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, \
     PrintConsequence, EditGlobalFps, EditGlobalHeight, EditGlobalWidth, ClearAll
-from game.Registeries.LineRegistery import DEFAULT_COLOR as DEFAULT_LINE_COLOR, DEFAULT_WIDTH as DEFAULT_LINE_WIDTH
-from game.Registeries.RectRegistery import DEFAULT_COLOR as DEFAULT_RECT_COLOR, DEFAULT_WIDTH as DEFAULT_RECT_WIDTH
-from game.Registeries.OvalRegistery import DEFAULT_COLOR as DEFAULT_OVAL_COLOR, DEFAULT_WIDTH as DEFAULT_OVAL_WIDTH
-from game.Registeries.PolygonRegistery import DEFAULT_COLOR as DEFAULT_POLYGON_COLOR, \
-    DEFAULT_WIDTH as DEFAULT_POLYGON_WIDTH
 
 
 class ConsequenceParser(lrparsing.Grammar):
@@ -31,8 +29,12 @@ class ConsequenceParser(lrparsing.Grammar):
         selfvariable = Token('@')
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
-        sprite = Token('s')
-        text = Token('t')
+        graphicsSprite = Token(re='gs[A-Z][A-Za-z_0-9]*')
+        graphicsLine = Token(re='gl[A-Z][A-Za-z_0-9]*')
+        graphicsOval = Token(re='go[A-Z][A-Za-z_0-9]*')
+        graphicsRect = Token(re='gr[A-Z][A-Za-z_0-9]*')
+        graphicsPolygon = Token(re='gp[A-Z][A-Za-z_0-9]*')
+        graphicsText = Token(re='gt[A-Z][A-Za-z_0-9]*')
         sound = Token('sound')
         token = Token('token')
         add = Token('add')
@@ -41,10 +43,26 @@ class ConsequenceParser(lrparsing.Grammar):
         all = Token('all')
         edit = Token('edit')
         printToken = Token('print')
-        shapeLine = Token('shpL')
-        shapeRect = Token('shpR')
-        shapeOval = Token('shpO')
         shapePolygon = Token('shpP')
+
+        coordX = Token('x')
+        coordY = Token('y')
+        coordXInt = Token(re='x[1-9][0-9]*')
+        coordYInt = Token(re='y[1-9][0-9]*')
+        coordH = Token('h')
+        coordW = Token('w')
+        coords = Token('coords')
+
+        code = Token('code')
+        color = Token('color')
+        width = Token('width')
+
+        text = Token('text')
+        fontName = Token('fontName')
+        fontSize = Token('fontSize')
+
+        shapeWidthKw = Token('width1')
+        shapeColorKw = Token('color1')
 
         cosf = Token('cos')
         sinf = Token('sin')
@@ -76,84 +94,52 @@ class ConsequenceParser(lrparsing.Grammar):
         globalsHeightKw = Token('screenHeight')
         globalsWidthKw = Token('screenWidth')
 
-        shapeColorKw = Token('color')
-        shapeWidthKw = Token('width')
-
         idkw = Token('id')
 
     consExpr = Ref('consExpr')
     arithmExpr = Ref('arithmExpr')
 
-    namedParameter = arithmExpr + '=' + arithmExpr
+    namedParameterKW = arithmExpr | \
+                       T.coordX | T.coordY | \
+                       T.coordXInt | T.coordYInt | \
+                       T.coordH | T.coordW | \
+                       T.code | \
+                       T.color | T.width | \
+                       T.text | T.fontName | T.fontSize
+
+    namedParameter = namedParameterKW + '=' + arithmExpr
     parameters = \
         Prio(List(arithmExpr, Token(',')) + Opt(',' + List(namedParameter, Token(','))),
              List(namedParameter, Token(',')))
-    incompleteNamedParameter = (arithmExpr | T.idkw) + Token('=') + (arithmExpr, T.uvariable)
+
+    incompleteNamedParameter = namedParameterKW + '=' + (T.uvariable | arithmExpr)
     incompleteParameters = \
         Prio(List((arithmExpr, T.uvariable), Token(',')) + Opt(',' + List(incompleteNamedParameter, Token(','))),
              List(incompleteNamedParameter, Token(',')))
 
     clearAllExpr = T.clear + T.all
 
-    addPropExpr = T.add + T.prop + '(' + parameters + ')'
-    removePropExpr = T.remove + T.prop + '(' + incompleteParameters + ')'
-    editPropExpr = T.edit + T.prop + '(' + incompleteParameters + '|' + incompleteParameters + ')'
-    addEventExpr = T.add + T.event + '(' + parameters + ')'
+    addType = T.prop | T.event | \
+              T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
+              T.graphicsText
+    editType = T.prop | \
+               T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
+               T.graphicsText
+    removeType = T.prop | \
+                 T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
+                 T.graphicsText
+
+    addExpr = T.add + addType +\
+              '(' + parameters + ')'
+    removeExpr = T.remove + removeType + '(' + incompleteParameters + ')'
+    editExpr = T.edit + editType + '(' + incompleteParameters + '|' + incompleteParameters + ')'
 
     addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
     editTokenExpr = T.edit + T.token + '(' + Opt(incompleteParameters) + ')'
     removeTokenExpr = T.remove + T.token
     removeAllTokenExpr = T.remove + T.all + T.token
 
-    addSpriteExpr = T.add + T.sprite + '(' + arithmExpr + ',' + arithmExpr + ',' + \
-                    arithmExpr + ',' + arithmExpr + ')'
-    editSpriteExpr = T.edit + T.sprite + '(' + arithmExpr + ',' + (arithmExpr, T.uvariable) + ',' + \
-                    (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ')'
-    removeSpriteExpr = T.remove + T.sprite + '(' + arithmExpr + ')'
-
     addSoundExpr = T.add + T.sound + '(' + arithmExpr + ')'
-
-    addTextExpr = T.add + T.text + '(' + arithmExpr + ',' + arithmExpr + ',' + \
-                  arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ')'
-    editTextExpr = T.edit + T.text + '(' + arithmExpr + ',' + (arithmExpr, T.uvariable) + ',' + \
-                   (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' + \
-                   (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ')'
-    removeTextExpr = T.remove + T.text + '(' + arithmExpr + ')'
-
-    widthNamedParameter = T.shapeWidthKw + '=' + arithmExpr
-    colorNamedParameter = T.shapeColorKw + '=' + arithmExpr
-    shapeNamedParameters = List((widthNamedParameter | colorNamedParameter), ',', 1, 2)
-
-    addLineExpr = T.add + T.shapeLine + '(' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + \
-                  arithmExpr + ',' + arithmExpr + Opt(',' + shapeNamedParameters) + ')'
-    editLineExpr = T.edit + T.shapeLine + '(' + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
-                   + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ','\
-                   + (arithmExpr, T.uvariable) + Opt(',' + shapeNamedParameters) + ')'
-    removeLineExpr = T.remove + T.shapeLine + '(' + arithmExpr + ')'
-
-    addRectExpr = T.add + T.shapeRect + '(' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + \
-                  arithmExpr + ',' + arithmExpr + Opt(',' + shapeNamedParameters) + ')'
-    editRectExpr = T.edit + T.shapeRect + '(' + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
-                   + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ','\
-                   + (arithmExpr, T.uvariable) + Opt(',' + shapeNamedParameters) + ')'
-    removeRectExpr = T.remove + T.shapeRect + '(' + arithmExpr + ')'
-
-    addOvalExpr = T.add + T.shapeOval + '(' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ',' + \
-                  arithmExpr + ',' + arithmExpr + Opt(',' + shapeNamedParameters) + ')'
-    editOvalExpr = T.edit + T.shapeOval + '(' + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ',' \
-                   + (arithmExpr, T.uvariable) + ',' + (arithmExpr, T.uvariable) + ','\
-                   + (arithmExpr, T.uvariable) + Opt(',' + shapeNamedParameters) + ')'
-    removeOvalExpr = T.remove + T.shapeOval + '(' + arithmExpr + ')'
-
-    listPoint = List('(' + arithmExpr + ',' + arithmExpr + ')', Token(','), min=2)
-    addPolygonExpr = T.add + T.shapePolygon + '(' + arithmExpr + ',' + '[' + listPoint + ']' + \
-                     Opt(',' + shapeNamedParameters) + ')'
-
-    listEditPoint = List(Sequence('(', (arithmExpr, T.uvariable)) + ',' + (arithmExpr, T.uvariable) + ')', Token(','),
-                         min=2)
-    editPolygonExpr = T.edit + T.shapePolygon + '(' + (arithmExpr, T.uvariable) + ',' + '[' + listEditPoint + ']' + \
-                      Opt(',' + shapeNamedParameters) + ')'
-    removePolygonExpr = T.remove + T.shapePolygon + '(' + arithmExpr + ')'
 
     printExpr = T.printToken + List(arithmExpr, Token(','))
 
@@ -161,15 +147,8 @@ class ConsequenceParser(lrparsing.Grammar):
     editGlobalsExpr = T.edit + T.globalsKw + '(' + globalsKeyWord + ',' + arithmExpr + ')'
 
     consExpr = Prio(clearAllExpr,
-                    addPropExpr, removePropExpr, editPropExpr,
-                    addEventExpr,
-                    addSpriteExpr, removeSpriteExpr, editSpriteExpr,
+                    addExpr, removeExpr, editExpr,
                     addSoundExpr,
-                    addTextExpr, removeTextExpr, editTextExpr,
-                    addLineExpr, editLineExpr, removeLineExpr,
-                    addRectExpr, editRectExpr, removeRectExpr,
-                    addOvalExpr, editOvalExpr, removeOvalExpr,
-                    addPolygonExpr, editPolygonExpr, removePolygonExpr,
                     addTokenExpr, editTokenExpr, removeTokenExpr, removeAllTokenExpr,
                     printExpr, editGlobalsExpr)
 
@@ -227,268 +206,70 @@ class ConsequenceParser(lrparsing.Grammar):
         def clearAll():
             return ClearAll()
 
-        def buildAddProperty():
-            name = cls.buildExpression(tree[2])[1:]
-            args, kwargs = cls.buildExpression(tree[4])
-            return AddPropertyConsequence(name, args, kwargs)
+        def buildMultiTypes():
+            chosenType = tree[1]
+            return chosenType[0], chosenType[1]
 
-        def buildRemoveProperty():
-            name = cls.buildExpression(tree[2])[1:]
-            args, kwargs = cls.buildExpression(tree[4])
-            return RemovePropertyConsequence(name, args, kwargs)
+        def buildAdd():
+            exprType, exprValue = cls.buildExpression(tree[2])
 
-        def buildEditProperty():
-            name = cls.buildExpression(tree[2])[1:]
+            exprTypeAction = {
+                ConsequenceParser.T.prop: (AddPropertyConsequence, 1),
+                ConsequenceParser.T.event: (AddEventConsequence, 1),
+                ConsequenceParser.T.graphicsSprite: (AddSpriteConsequence, 2),
+                ConsequenceParser.T.graphicsLine: (AddLineConsequence, 2),
+                ConsequenceParser.T.graphicsOval: (AddOvalConsequence, 2),
+                ConsequenceParser.T.graphicsRect: (AddRectConsequence, 2),
+                ConsequenceParser.T.graphicsPolygon: (AddPolygonConsequence, 2),
+                ConsequenceParser.T.graphicsText: (AddTextConsequence, 2)
+            }
+
+            clsCons, offset = exprTypeAction[exprType]
+            name = exprValue[offset:]
+            args, kwargs = cls.buildExpression(tree[4])
+            return clsCons(name, args, kwargs)
+
+        def buildRemove():
+            exprType, exprValue = cls.buildExpression(tree[2])
+
+            exprTypeActions = {
+                ConsequenceParser.T.prop: (RemovePropertyConsequence, 1),
+                ConsequenceParser.T.graphicsSprite: (RemoveSpriteConsequence, 2),
+                ConsequenceParser.T.graphicsLine: (RemoveLineConsequence, 2),
+                ConsequenceParser.T.graphicsOval: (RemoveOvalConsequence, 2),
+                ConsequenceParser.T.graphicsRect: (RemoveRectConsequence, 2),
+                ConsequenceParser.T.graphicsPolygon: (RemovePolygonConsequence, 2),
+                ConsequenceParser.T.graphicsText: (RemoveTextConsequence, 2)
+
+            }
+
+            clsCons, offset = exprTypeActions[exprType]
+            name = exprValue[offset:]
+            args, kwargs = cls.buildExpression(tree[4])
+            return clsCons(name, args, kwargs)
+
+        def buildEdit():
+            exprType, exprValue = cls.buildExpression(tree[2])
+
+            exprTypeActions = {
+                ConsequenceParser.T.prop: (EditPropertyConsequence, 1),
+                ConsequenceParser.T.graphicsSprite: (EditSpriteConsequence, 2),
+                ConsequenceParser.T.graphicsLine: (EditLineConsequence, 2),
+                ConsequenceParser.T.graphicsOval: (EditOvalConsequence, 2),
+                ConsequenceParser.T.graphicsRect: (EditRectConsequence, 2),
+                ConsequenceParser.T.graphicsPolygon: (EditPolygonConsequence, 2),
+                ConsequenceParser.T.graphicsText: (EditTextConsequence, 2)
+            }
+
+            clsCons, offset = exprTypeActions[exprType]
+            name = exprValue[offset:]
             args1, kwargs1 = cls.buildExpression(tree[4])
             args2, kwargs2 = cls.buildExpression(tree[6])
-            return EditPropertyConsequence(name, args1, kwargs1, args2, kwargs2)
-
-        def buildAddEvent():
-            name = cls.buildExpression(tree[2])[1:]
-            args, kwargs = cls.buildExpression(tree[4])
-            return AddEventConsequence(name, args, kwargs)
-
-        def buildAddSprite():
-            name = cls.buildExpression(tree[4])
-            num = cls.buildExpression(tree[6])
-            x = cls.buildExpression(tree[8])
-            y = cls.buildExpression(tree[10])
-            return AddSpriteConsequence(name, num, x, y)
-
-        def buildEditSprite():
-            name = cls.buildExpression(tree[4])
-            num = cls.buildExpression(tree[6])
-            x = cls.buildExpression(tree[8])
-            y = cls.buildExpression(tree[10])
-            return EditSpriteConsequence(name, num, x, y)
-
-        def buildRemoveSprite():
-            name = cls.buildExpression(tree[4])
-            return RemoveSpriteConsequence(name)
+            return clsCons(name, args1, kwargs1, args2, kwargs2)
 
         def buildAddSound():
             num = cls.buildExpression(tree[4])
             return AddSoundConsequence(num)
-
-        def buildAddText():
-            name = cls.buildExpression(tree[4])
-            text = cls.buildExpression(tree[6])
-            x = cls.buildExpression(tree[8])
-            y = cls.buildExpression(tree[10])
-            color = cls.buildExpression(tree[12])
-            font = cls.buildExpression(tree[14])
-            fontSize = cls.buildExpression(tree[16])
-            return AddTextConsequence(name, text, x, y, color, font, fontSize)
-
-        def buildEditText():
-            name = cls.buildExpression(tree[4])
-            text = cls.buildExpression(tree[6])
-            x = cls.buildExpression(tree[8])
-            y = cls.buildExpression(tree[10])
-            color = cls.buildExpression(tree[12])
-            font = cls.buildExpression(tree[14])
-            fontSize = cls.buildExpression(tree[16])
-            return EditTextConsequence(name, text, x, y, color, font, fontSize)
-
-        def buildRemoveText():
-            name = cls.buildExpression(tree[4])
-            return RemoveTextConsequence(name)
-
-        def buildShapeNamedParameters():
-            return [cls.buildExpression(namedArg) for namedArg in tree[1::2]]
-
-        def buildShapeColorKw():
-            return ConsequenceParser.T.shapeColorKw
-
-        def buildShapeWidthKw():
-            return ConsequenceParser.T.shapeWidthKw
-
-        def buildAddLine():
-            name = cls.buildExpression(tree[4])
-            x1 = cls.buildExpression(tree[6])
-            y1 = cls.buildExpression(tree[8])
-            x2 = cls.buildExpression(tree[10])
-            y2 = cls.buildExpression(tree[12])
-
-            width = ALitteral(DEFAULT_LINE_WIDTH)
-            colorName = ALitteral(DEFAULT_LINE_COLOR)
-
-            if len(tree) > 14:
-                namedParams = cls.buildExpression(tree[14])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-
-            return AddLineConsequence(name, x1, y1, x2, y2, width, colorName)
-
-        def buildEditLine():
-            name = cls.buildExpression(tree[4])
-            x1 = cls.buildExpression(tree[6])
-            y1 = cls.buildExpression(tree[8])
-            x2 = cls.buildExpression(tree[10])
-            y2 = cls.buildExpression(tree[12])
-
-            width = UndefinedLitteral()
-            colorName = UndefinedLitteral()
-
-            if len(tree) > 14:
-                namedParams = cls.buildExpression(tree[14])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-            return EditLineConsequence(name, x1, y1, x2, y2, width, colorName)
-
-        def buildRemoveLine():
-            name = cls.buildExpression(tree[4])
-            return RemoveLineConsequence(name)
-
-        def buildAddRect():
-            name = cls.buildExpression(tree[4])
-            x = cls.buildExpression(tree[6])
-            y = cls.buildExpression(tree[8])
-            w = cls.buildExpression(tree[10])
-            h = cls.buildExpression(tree[12])
-
-            width = ALitteral(DEFAULT_RECT_WIDTH)
-            colorName = ALitteral(DEFAULT_RECT_COLOR)
-
-            if len(tree) > 14:
-                namedParams = cls.buildExpression(tree[14])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-
-            return AddRectConsequence(name, x, y, w, h, width, colorName)
-
-        def buildEditRect():
-            name = cls.buildExpression(tree[4])
-            x = cls.buildExpression(tree[6])
-            y = cls.buildExpression(tree[8])
-            w = cls.buildExpression(tree[10])
-            h = cls.buildExpression(tree[12])
-
-            width = UndefinedLitteral()
-            colorName = UndefinedLitteral()
-
-            if len(tree) > 14:
-                namedParams = cls.buildExpression(tree[14])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-
-            return EditRectConsequence(name, x, y, w, h, width, colorName)
-
-        def buildRemoveRect():
-            name = cls.buildExpression(tree[4])
-            return RemoveRectConsequence(name)
-
-        def buildAddOval():
-            name = cls.buildExpression(tree[4])
-            x = cls.buildExpression(tree[6])
-            y = cls.buildExpression(tree[8])
-            a = cls.buildExpression(tree[10])
-            b = cls.buildExpression(tree[12])
-
-            width = ALitteral(DEFAULT_OVAL_WIDTH)
-            colorName = ALitteral(DEFAULT_OVAL_COLOR)
-
-            if len(tree) > 14:
-                namedParams = cls.buildExpression(tree[14])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-
-            return AddOvalConsequence(name, x, y, a, b, width, colorName)
-
-        def buildEditOval():
-            name = cls.buildExpression(tree[4])
-            x = cls.buildExpression(tree[6])
-            y = cls.buildExpression(tree[8])
-            a = cls.buildExpression(tree[10])
-            b = cls.buildExpression(tree[12])
-
-            width = UndefinedLitteral()
-            colorName = UndefinedLitteral()
-
-            if len(tree) > 14:
-                namedParams = cls.buildExpression(tree[14])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-
-            return EditOvalConsequence(name, x, y, a, b, width, colorName)
-
-        def buildRemoveOval():
-            name = cls.buildExpression(tree[4])
-            return RemoveOvalConsequence(name)
-
-        def buildListPoint():
-            argsX = [cls.buildExpression(arg) for arg in tree[2::6]]
-            argsY = [cls.buildExpression(arg) for arg in tree[4::6]]
-            return zip(argsX, argsY)
-
-        def buildAddPolygon():
-            name = cls.buildExpression(tree[4])
-            listPoint = cls.buildExpression(tree[7])
-
-            width = ALitteral(DEFAULT_POLYGON_WIDTH)
-            colorName = ALitteral(DEFAULT_POLYGON_COLOR)
-
-            if len(tree) > 10:
-                namedParams = cls.buildExpression(tree[10])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-
-            return AddPolygonConsequence(name, listPoint, width, colorName)
-
-        def buildListEditPoint():
-            argsX = [cls.buildExpression(arg) for arg in tree[2::6]]
-            argsY = [cls.buildExpression(arg) for arg in tree[4::6]]
-            return zip(argsX, argsY)
-
-        def buildEditPolygon():
-            name = cls.buildExpression(tree[4])
-            listEditPoint = cls.buildExpression(tree[7])
-
-            width = UndefinedLitteral()
-            colorName = UndefinedLitteral()
-
-            if len(tree) > 10:
-                namedParams = cls.buildExpression(tree[10])
-
-                for key, param in namedParams:
-                    if key == ConsequenceParser.T.shapeWidthKw:
-                        width = param
-                    elif key == ConsequenceParser.T.shapeColorKw:
-                        colorName = param
-
-            return EditPolygonConsequence(name, listEditPoint, width, colorName)
-
-        def buildRemovePolygon():
-            name = cls.buildExpression(tree[4])
-            return RemovePolygonConsequence(name)
 
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
@@ -511,14 +292,49 @@ class ConsequenceParser(lrparsing.Grammar):
         def buildRemoveAllToken():
             return RemoveAllTokenConsequence()
 
-        def value():
-            return tree[1]
-
         def unnamedVariableValue():
             return UndefinedLitteral()
 
         def keywordIdValue():
             return KEYWORD_ID
+
+        def keywordCodeValue():
+            return KEYWORD_CODE
+
+        def keywordXValue():
+            return KEYWORD_X
+
+        def keywordYValue():
+            return KEYWORD_Y
+
+        def keywordXIntValue():
+            value = int(tree[1][1:])
+            return KEYWORD_X_INT[value]
+
+        def keywordYIntValue():
+            value = int(tree[1][1:])
+            return KEYWORD_Y_INT[value]
+
+        def keywordHValue():
+            return KEYWORD_H
+
+        def keywordWValue():
+            return KEYWORD_W
+
+        def keywordColorValue():
+            return KEYWORD_COLOR
+
+        def keywordTextValue():
+            return KEYWORD_TEXT
+
+        def keywordFontNameValue():
+            return KEYWORD_FONT_NAME
+
+        def keywordFontSizeValue():
+            return KEYWORD_FONT_SIZE
+
+        def keywordWidthValue():
+            return KEYWORD_WIDTH
 
         def buildNamedParameter():
             name = cls.buildExpression(tree[1])
@@ -547,44 +363,38 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.START: buildNext,
             ConsequenceParser.consExpr: buildNext,
             ConsequenceParser.clearAllExpr: clearAll,
-            ConsequenceParser.addPropExpr: buildAddProperty,
-            ConsequenceParser.removePropExpr: buildRemoveProperty,
-            ConsequenceParser.editPropExpr: buildEditProperty,
-            ConsequenceParser.addEventExpr: buildAddEvent,
-            ConsequenceParser.T.event: value,
-            ConsequenceParser.T.prop: value,
+
+
+            ConsequenceParser.addType: buildMultiTypes,
+            ConsequenceParser.removeType: buildMultiTypes,
+            ConsequenceParser.editType: buildMultiTypes,
+
             ConsequenceParser.T.uvariable: unnamedVariableValue,
+
             ConsequenceParser.T.idkw: keywordIdValue,
+            ConsequenceParser.T.code: keywordCodeValue,
+            ConsequenceParser.T.coordX: keywordXValue,
+            ConsequenceParser.T.coordY: keywordYValue,
+            ConsequenceParser.T.coordXInt: keywordXIntValue,
+            ConsequenceParser.T.coordYInt: keywordYIntValue,
+            ConsequenceParser.T.coordH: keywordHValue,
+            ConsequenceParser.T.coordW: keywordWValue,
+            ConsequenceParser.T.color: keywordColorValue,
+            ConsequenceParser.T.width: keywordWidthValue,
+            ConsequenceParser.T.text: keywordTextValue,
+            ConsequenceParser.T.fontName: keywordFontNameValue,
+            ConsequenceParser.T.fontSize: keywordFontSizeValue,
+
+            ConsequenceParser.addExpr: buildAdd,
+            ConsequenceParser.removeExpr: buildRemove,
+            ConsequenceParser.editExpr: buildEdit,
+
+            ConsequenceParser.namedParameterKW: buildNext,
             ConsequenceParser.namedParameter: buildNamedParameter,
             ConsequenceParser.parameters: buildParameters,
             ConsequenceParser.incompleteNamedParameter: buildNamedParameter,
             ConsequenceParser.incompleteParameters: buildParameters,
-            ConsequenceParser.addSpriteExpr: buildAddSprite,
-            ConsequenceParser.removeSpriteExpr: buildRemoveSprite,
-            ConsequenceParser.editSpriteExpr: buildEditSprite,
             ConsequenceParser.addSoundExpr: buildAddSound,
-            ConsequenceParser.addTextExpr: buildAddText,
-            ConsequenceParser.removeTextExpr: buildRemoveText,
-            ConsequenceParser.editTextExpr: buildEditText,
-            ConsequenceParser.shapeNamedParameters: buildShapeNamedParameters,
-            ConsequenceParser.T.shapeColorKw: buildShapeColorKw,
-            ConsequenceParser.T.shapeWidthKw: buildShapeWidthKw,
-            ConsequenceParser.colorNamedParameter: buildNamedParameter,
-            ConsequenceParser.widthNamedParameter: buildNamedParameter,
-            ConsequenceParser.addLineExpr: buildAddLine,
-            ConsequenceParser.removeLineExpr: buildRemoveLine,
-            ConsequenceParser.editLineExpr: buildEditLine,
-            ConsequenceParser.addRectExpr: buildAddRect,
-            ConsequenceParser.removeRectExpr: buildRemoveRect,
-            ConsequenceParser.editRectExpr: buildEditRect,
-            ConsequenceParser.addOvalExpr: buildAddOval,
-            ConsequenceParser.removeOvalExpr: buildRemoveOval,
-            ConsequenceParser.editOvalExpr: buildEditOval,
-            ConsequenceParser.listPoint: buildListPoint,
-            ConsequenceParser.addPolygonExpr: buildAddPolygon,
-            ConsequenceParser.removePolygonExpr: buildRemovePolygon,
-            ConsequenceParser.listEditPoint: buildListEditPoint,
-            ConsequenceParser.editPolygonExpr: buildEditPolygon,
             ConsequenceParser.addTokenExpr: buildAddToken,
             ConsequenceParser.editTokenExpr: buildEditToken,
             ConsequenceParser.removeTokenExpr: buildRemoveToken,

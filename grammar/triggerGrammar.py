@@ -5,7 +5,8 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
 from triggerExpressions import BLitteral, Timer, Rand, RandInt, eLock, PropertyTriggerExpression, \
     EventTriggerExpression, TokenExpression, Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, SelectMinEval, SelectMaxEval, UniqueEval
-from database import Variable, KEYWORD_ID
+from database import Variable
+from Keywords import KEYWORD_ID, KEYWORD_X, KEYWORD_Y, KEYWORD_CODE
 from utils.mathutils import sign
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
 

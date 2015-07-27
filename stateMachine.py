@@ -2,7 +2,8 @@ from grammar.triggerGrammar import TriggerParser
 from grammar.triggerExpressions import BExpression
 from grammar.consequenceGrammar import ConsequenceParser
 from grammar.tokenGrammar import TokenParametersParser
-from database import NamedExpression, Property, Event, UNDEFINED_PARAMETER, ParameterizedExpression
+import database
+from database import Property, Event, UNDEFINED_PARAMETER, ParameterizedExpression
 from lrparsing import LrParsingError
 
 
@@ -81,10 +82,7 @@ def init():
 
 def reinit():
     clearTokens()
-    Property.properties.clear()
-    Event.events.clear()
-    NamedExpression.namedExpressionsById.clear()
-    NamedExpression.expressionIDCounter = 0
+    database.reinit()
 
 
 def tick(debug=False):
