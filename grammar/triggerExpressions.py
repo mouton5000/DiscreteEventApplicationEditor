@@ -3,7 +3,11 @@ from random import randint
 from itertools import chain
 
 from utils.dictSet import DictContainer
-from database import Variable, Property, Event, UNDEFINED_PARAMETER, KEYWORD_ID
+from database import Variable, \
+    Property, Event, \
+    SpriteProperty, TextProperty, LineProperty, \
+    OvalProperty, RectProperty, PolygonProperty, \
+    UNDEFINED_PARAMETER, KEYWORD_ID
 
 
 class BExpression(object):
@@ -440,6 +444,60 @@ class EventTriggerExpression(NamedExpression):
 
     def _getContainer(self):
         return Event.events
+
+
+class SpriteTriggerExpression(NamedExpression):
+
+    def __init__(self, name, args, kwargs):
+        super(SpriteTriggerExpression, self).__init__(name, args, kwargs)
+
+    def _getContainer(self):
+        return SpriteProperty.sprites
+
+
+class TextTriggerExpression(NamedExpression):
+
+    def __init__(self, name, args, kwargs):
+        super(TextTriggerExpression, self).__init__(name, args, kwargs)
+
+    def _getContainer(self):
+        return TextProperty.texts
+
+
+class LineTriggerExpression(NamedExpression):
+
+    def __init__(self, name, args, kwargs):
+        super(LineTriggerExpression, self).__init__(name, args, kwargs)
+
+    def _getContainer(self):
+        return LineProperty.lines
+
+
+class OvalTriggerExpression(NamedExpression):
+
+    def __init__(self, name, args, kwargs):
+        super(OvalTriggerExpression, self).__init__(name, args, kwargs)
+
+    def _getContainer(self):
+        return OvalProperty.ovals
+
+
+class RectTriggerExpression(NamedExpression):
+
+    def __init__(self, name, args, kwargs):
+        super(RectTriggerExpression, self).__init__(name, args, kwargs)
+
+    def _getContainer(self):
+        return RectProperty.rects
+
+
+class PolygonTriggerExpression(NamedExpression):
+
+    def __init__(self, name, args, kwargs):
+        super(PolygonTriggerExpression, self).__init__(name, args, kwargs)
+
+    def _getContainer(self):
+        return PolygonProperty.polygons
 
 
 class TokenExpression(ParameterizedExpression):
