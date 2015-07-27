@@ -164,36 +164,40 @@ class NamedExpression(ParameterizedExpression):
         if KEYWORD_ID in kwargs:
             elemId = kwargs[KEYWORD_ID]
             elem = NamedExpression.namedExpressionsById[elemId]
-            if elem.filter(args, kwargs):
-                beforeRemove(elem)
-                container[name].remove(elem)
-                del NamedExpression.namedExpressionsById[elemId]
-                afterRemove(elem)
-        else:
-            try:
-                def remove(elemToRemove):
-                    if elemToRemove.filter(args, kwargs):
-                        beforeRemove(elemToRemove)
-                        del NamedExpression.namedExpressionsById[elemToRemove.getId()]
-                        afterRemove(elemToRemove)
-                        return True
-                    return False
-                typ = container.default_factory
-                container[name] = typ([elem for elem in container[name]
-                                                 if not remove(elem)])
-            except KeyError:
-                pass
+            if elem not in container[name]:
+                return
+            beforeRemove(elem)
+            container[name].remove(elem)
+            del NamedExpression.namedExpressionsById[elemId]
+            afterRemove(elem)
+            return
+
+        try:
+            def remove(elemToRemove):
+                if elemToRemove.filter(args, kwargs):
+                    beforeRemove(elemToRemove)
+                    del NamedExpression.namedExpressionsById[elemToRemove.getId()]
+                    afterRemove(elemToRemove)
+                    return True
+                return False
+            typ = container.default_factory
+            container[name] = typ([elem for elem in container[name]
+                                             if not remove(elem)])
+        except KeyError:
+            pass
 
 
     @staticmethod
     def _edit(name, args1, kwargs1, unevaluatedArgs2, unevaluatedKWArgs2, evaluation, container, beforeEdit, afterEdit):
+
         size = len(args1)
 
-        if size != len(unevaluatedArgs2):
+        print kwargs1
+        if size != len(unevaluatedArgs2) and KEYWORD_ID not in kwargs1:
             return
 
-        def editElem(elem):
-            if not elem.filter(args1, kwargs1):
+        def editElem(elem, doFilter=True):
+            if doFilter and not elem.filter(args1, kwargs1):
                 return
 
             keys2 = [(unevaluatedKey2, unevaluatedKey2.value(evaluation)) for unevaluatedKey2 in unevaluatedKWArgs2]
@@ -221,19 +225,22 @@ class NamedExpression(ParameterizedExpression):
 
         if KEYWORD_ID in kwargs1:
             elem = NamedExpression.namedExpressionsById[kwargs1[KEYWORD_ID]]
+            if elem not in container[name]:
+                return
+            beforeEdit(elem)
+            editElem(elem, False)
+            afterEdit(elem)
+            return
+
+        try:
+            elems = container[name]
+        except KeyError:
+            return
+
+        for elem in elems:
             beforeEdit(elem)
             editElem(elem)
             afterEdit(elem)
-        else:
-            try:
-                elems = container[name]
-            except KeyError:
-                return
-
-            for elem in elems:
-                beforeEdit(elem)
-                editElem(elem)
-                afterEdit(elem)
 
 
 class Property(NamedExpression):

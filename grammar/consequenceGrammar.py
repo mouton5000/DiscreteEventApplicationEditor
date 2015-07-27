@@ -40,12 +40,6 @@ class ConsequenceParser(lrparsing.Grammar):
         sound = Token('sound')
         token = Token('token')
 
-        add = Token('add')
-        remove = Token('remove')
-        clear = Token('clear')
-        edit = Token('edit')
-        printToken = Token('print')
-
         all = Token('all')
 
         idkw = Token('id')
@@ -93,6 +87,12 @@ class ConsequenceParser(lrparsing.Grammar):
         globalsHeightKw = Token('screenHeight')
         globalsWidthKw = Token('screenWidth')
 
+        add = Token('add')
+        remove = Token('remove')
+        clear = Token('clear')
+        edit = Token('edit')
+        printToken = Token('print')
+
 
     consExpr = Ref('consExpr')
     arithmExpr = Ref('arithmExpr')
@@ -114,6 +114,7 @@ class ConsequenceParser(lrparsing.Grammar):
     incompleteParameters = \
         Prio(List((arithmExpr, T.uvariable), Token(',')) + Opt(',' + List(incompleteNamedParameter, Token(','))),
              List(incompleteNamedParameter, Token(',')))
+    idNamedParameter = T.idkw + '=' + arithmExpr
 
     addType = T.prop | T.event | \
               T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
@@ -127,8 +128,8 @@ class ConsequenceParser(lrparsing.Grammar):
 
     addExpr = T.add + addType +\
               '(' + parameters + ')'
-    removeExpr = T.remove + removeType + '(' + incompleteParameters + ')'
-    editExpr = T.edit + editType + '(' + incompleteParameters + '|' + incompleteParameters + ')'
+    removeExpr = T.remove + removeType + '(' + (incompleteParameters | idNamedParameter) + ')'
+    editExpr = T.edit + editType + '(' + (incompleteParameters | idNamedParameter) + '|' + incompleteParameters + ')'
 
     addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
     removeTokenExpr = T.remove + T.token
@@ -243,6 +244,11 @@ class ConsequenceParser(lrparsing.Grammar):
             else:
                 args, kwargs = cls.buildExpression(tree[4])
                 return EditTokenConsequence(args, kwargs)
+
+        def buildIdNamedParameter():
+            keywordId = cls.buildExpression(tree[1])
+            idValue = cls.buildExpression(tree[3])
+            return [], {keywordId: idValue}
 
         def buildMultiTypes():
             chosenType = tree[1]
@@ -364,6 +370,7 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.parameters: buildParameters,
             ConsequenceParser.incompleteNamedParameter: buildNamedParameter,
             ConsequenceParser.incompleteParameters: buildParameters,
+            ConsequenceParser.idNamedParameter: buildIdNamedParameter,
 
             ConsequenceParser.addType: buildMultiTypes,
             ConsequenceParser.removeType: buildMultiTypes,
