@@ -10,6 +10,7 @@ from random import uniform
 from undoRedoActions import *
 from NodeItems import NodeItem
 from gui.LabelItems import ArcLabelItem
+from gui.EditorItem import NODE_GRID
 
 
 class ArcItem(QGraphicsPathItem):
@@ -247,8 +248,8 @@ class ArcItem(QGraphicsPathItem):
             self._moveFromCycleCl = self._cycleCl
             self._moveFromDelta = self._delta
 
-        x = event.scenePos().x()
-        y = event.scenePos().y()
+        x = NODE_GRID(event.scenePos().x())
+        y = NODE_GRID(event.scenePos().y())
         v1 = self.node1.getXY()
         v = Vector2(x, y) - v1
         cycleCl = v.magnitude()
@@ -268,8 +269,8 @@ class ArcItem(QGraphicsPathItem):
             self._isMoving = True
             self._moveFromCl = self._cl
 
-        x = event.scenePos().x()
-        y = event.scenePos().y()
+        x = NODE_GRID(event.scenePos().x())
+        y = NODE_GRID(event.scenePos().y())
         v1 = self.node1.getXY()
         v2 = self.node2.getXY()
         v = Vector2(x, y) - v1
@@ -280,7 +281,8 @@ class ArcItem(QGraphicsPathItem):
         self.drawPath()
 
     def separateInputMouseMoveEvent(self, event):
-        x, y = event.scenePos().x(), event.scenePos().y()
+        x = NODE_GRID(event.scenePos().x())
+        y = NODE_GRID(event.scenePos().y())
         node = self.scene().getCloseNodeOf(x, y)
         if node is None:
             self._separatingInput = Vector2(x, y)
@@ -289,7 +291,8 @@ class ArcItem(QGraphicsPathItem):
         self.drawPath()
 
     def separateOutputMouseMoveEvent(self, event):
-        x, y = event.scenePos().x(), event.scenePos().y()
+        x = NODE_GRID(event.scenePos().x())
+        y = NODE_GRID(event.scenePos().y())
         node = self.scene().getCloseNodeOf(x, y)
         if node is None:
             self._separatingOutput = Vector2(x, y)

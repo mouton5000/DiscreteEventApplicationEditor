@@ -1,17 +1,19 @@
 __author__ = 'mouton'
 
-
 from PyQt4 import QtCore
 from PyQt4.QtGui import QGraphicsEllipseItem, QBrush
 from euclid import Vector2
 from undoRedoActions import *
 from gui.LabelItems import NodeLabelItem
+from gui.EditorItem import NODE_GRID
 
 
 class NodeItem(QGraphicsEllipseItem):
     NodeWidth = 20
 
     def __init__(self, x, y, parent=None, scene=None):
+        x = NODE_GRID(x)
+        y = NODE_GRID(y)
         super(NodeItem, self).__init__(x - NodeItem.NodeWidth, y - NodeItem.NodeWidth, NodeItem.NodeWidth * 2,
                                        NodeItem.NodeWidth * 2, parent, scene)
 
@@ -122,8 +124,8 @@ class NodeItem(QGraphicsEllipseItem):
                 self._isMoving = True
                 self._moveFrom = self._center
 
-            x = event.scenePos().x()
-            y = event.scenePos().y()
+            x = NODE_GRID(event.scenePos().x())
+            y = NODE_GRID(event.scenePos().y())
             self.setXY(x, y)
         elif self.scene().isComponentMode():
             pass

@@ -1,10 +1,15 @@
-from copy import copy
-import itertools
-from gui.LabelItems import LabelItem
-
 __author__ = 'mouton'
 
 
+def _roundToBase(base):
+    def _round(x):
+        return int(base * round(float(x) / base))
+    return _round
+
+NODE_GRID = _roundToBase(5)  # Round each coordinates to the closest multiple of 5.
+
+import itertools
+from gui.LabelItems import LabelItem
 from PyQt4 import QtCore
 from PyQt4.QtCore import QRectF
 from PyQt4.QtGui import QGraphicsView, QGraphicsScene
@@ -21,6 +26,7 @@ class ViewWidget(QGraphicsView):
     DEFAULT_Y = -200
     DEFAULT_W = 400
     DEFAULT_H = 400
+
 
     def __init__(self, parent=None, mainWindow=None, nodesIdsGenerator=None, modeController=None):
         super(ViewWidget, self).__init__(parent)

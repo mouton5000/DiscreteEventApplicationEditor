@@ -3,7 +3,7 @@ from PyQt4.QtGui import QGraphicsSimpleTextItem
 from euclid import Vector2
 from undoRedoActions import MoveNodeLabelItemCommand, MoveArcLabelItemCommand
 from math import pi, cos, copysign
-
+from gui.EditorItem import NODE_GRID
 
 class LabelItem(QGraphicsSimpleTextItem):
     def __init__(self, parent=None, scene=None):
@@ -54,7 +54,9 @@ class NodeLabelItem(LabelItem):
             self._moveFromOffset = self._offset
             self._linkToParentItem.setVisible(True)
 
-        epos = Vector2(event.scenePos().x(), event.scenePos().y())
+        x = NODE_GRID(event.scenePos().x())
+        y = NODE_GRID(event.scenePos().y())
+        epos = Vector2(x, y)
         self.setOffset(epos - self._center)
 
     def commitMove(self):
@@ -102,7 +104,9 @@ class ArcLabelItem(LabelItem):
             self._moveFromRatio = self._ratio
             self._linkToParentItem.setVisible(True)
 
-        epos = Vector2(event.scenePos().x(), event.scenePos().y()) - self._offset
+        x = NODE_GRID(event.scenePos().x())
+        y = NODE_GRID(event.scenePos().y())
+        epos = Vector2(x, y) - self._offset
         eposToCenterVector = epos - self._center
         if eposToCenterVector.magnitude() == 0:
             self.setAngleAndRatio(0, 0)
