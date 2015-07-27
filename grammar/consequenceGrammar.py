@@ -24,9 +24,11 @@ class ConsequenceParser(lrparsing.Grammar):
         integer = Token(re='[0-9]+')
         float = Token(re='-?[0-9]+\.[0-9]+')
         string = Token(re='\'[^\']*\'')
+
         variable = Token(re='[A-Z][A-Z_0-9]*')
         uvariable = Token('_')
         selfvariable = Token('@')
+
         prop = Token(re='p[A-Z][A-Za-z_0-9]*')
         event = Token(re='e[A-Z][A-Za-z_0-9]*')
         graphicsSprite = Token(re='gs[A-Z][A-Za-z_0-9]*')
@@ -37,32 +39,30 @@ class ConsequenceParser(lrparsing.Grammar):
         graphicsText = Token(re='gt[A-Z][A-Za-z_0-9]*')
         sound = Token('sound')
         token = Token('token')
+
         add = Token('add')
         remove = Token('remove')
         clear = Token('clear')
-        all = Token('all')
         edit = Token('edit')
         printToken = Token('print')
-        shapePolygon = Token('shpP')
+
+        all = Token('all')
+
+        idkw = Token('id')
 
         coordX = Token('x')
         coordY = Token('y')
         coordXInt = Token(re='x[1-9][0-9]*')
         coordYInt = Token(re='y[1-9][0-9]*')
-        coordH = Token('h')
         coordW = Token('w')
-        coords = Token('coords')
+        coordH = Token('h')
 
         code = Token('code')
         color = Token('color')
         width = Token('width')
-
         text = Token('text')
         fontName = Token('fontName')
         fontSize = Token('fontSize')
-
-        shapeWidthKw = Token('width1')
-        shapeColorKw = Token('color1')
 
         cosf = Token('cos')
         sinf = Token('sin')
@@ -85,7 +85,6 @@ class ConsequenceParser(lrparsing.Grammar):
         athf = Token('ath')
 
         lenf = Token('len')
-
         minf = Token('min')
         maxf = Token('max')
 
@@ -94,7 +93,6 @@ class ConsequenceParser(lrparsing.Grammar):
         globalsHeightKw = Token('screenHeight')
         globalsWidthKw = Token('screenWidth')
 
-        idkw = Token('id')
 
     consExpr = Ref('consExpr')
     arithmExpr = Ref('arithmExpr')
@@ -117,17 +115,15 @@ class ConsequenceParser(lrparsing.Grammar):
         Prio(List((arithmExpr, T.uvariable), Token(',')) + Opt(',' + List(incompleteNamedParameter, Token(','))),
              List(incompleteNamedParameter, Token(',')))
 
-    clearAllExpr = T.clear + T.all
-
     addType = T.prop | T.event | \
               T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
               T.graphicsText
-    editType = T.prop | \
-               T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
-               T.graphicsText
     removeType = T.prop | \
                  T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
                  T.graphicsText
+    editType = T.prop | \
+               T.graphicsSprite | T.graphicsLine | T.graphicsOval | T.graphicsRect | T.graphicsPolygon | \
+               T.graphicsText
 
     addExpr = T.add + addType +\
               '(' + parameters + ')'
@@ -135,9 +131,9 @@ class ConsequenceParser(lrparsing.Grammar):
     editExpr = T.edit + editType + '(' + incompleteParameters + '|' + incompleteParameters + ')'
 
     addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
-    editTokenExpr = T.edit + T.token + '(' + Opt(incompleteParameters) + ')'
     removeTokenExpr = T.remove + T.token
     removeAllTokenExpr = T.remove + T.all + T.token
+    editTokenExpr = T.edit + T.token + '(' + Opt(incompleteParameters) + ')'
 
     addSoundExpr = T.add + T.sound + '(' + arithmExpr + ')'
 
@@ -146,21 +142,18 @@ class ConsequenceParser(lrparsing.Grammar):
     globalsKeyWord = T.globalsFpsKw | T.globalsHeightKw | T.globalsWidthKw
     editGlobalsExpr = T.edit + T.globalsKw + '(' + globalsKeyWord + ',' + arithmExpr + ')'
 
-    consExpr = Prio(clearAllExpr,
-                    addExpr, removeExpr, editExpr,
-                    addSoundExpr,
-                    addTokenExpr, editTokenExpr, removeTokenExpr, removeAllTokenExpr,
-                    printExpr, editGlobalsExpr)
+    clearAllExpr = T.clear + T.all
 
-    # listExpr = '[' + List(arithmExpr, Token(',')) + ']'
-    # linkedListExpr = 'll' + listExpr
-    # setExpr = 'set' + listExpr
+    consExpr = Prio(addExpr, removeExpr, editExpr,
+                    addTokenExpr, editTokenExpr, removeTokenExpr, removeAllTokenExpr,
+                    addSoundExpr, printExpr, editGlobalsExpr, clearAllExpr)
 
     addArithmExpr = arithmExpr << Token('+') << arithmExpr
     minusArithmExpr = Opt(arithmExpr) << Token('-') << arithmExpr
     multArithmExpr = arithmExpr << (Token('*') | Token('/') | Token('//') | Token('%')) << arithmExpr
     powerArithmExpr = arithmExpr << Token('**') << arithmExpr
     constantExpr = Token('pi') | Token('e')
+
     parArithmExpr = '(' + arithmExpr + ')'
 
     unaryFuncExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf | T.roundf
@@ -168,26 +161,12 @@ class ConsequenceParser(lrparsing.Grammar):
                      + parArithmExpr
     binaryFuncExpr = (T.minf | T.maxf) + '(' + arithmExpr + ',' + arithmExpr + ')'
 
-    # getItemExpr = arithmExpr + '[' + arithmExpr + ']'
-    # setItemExpr = arithmExpr + '[' + arithmExpr + '<<' + arithmExpr + ']'
-    # insertExpr = T.insertf + '(' + arithmExpr + ',' + arithmExpr + ',' + arithmExpr + ')'
-    # popExpr = T.popf + '(' + arithmExpr + Opt(',' + arithmExpr) + ')'
-    # getSublistExpr = arithmExpr + '[' + Opt(arithmExpr) + ':' + Opt(arithmExpr) + ']'
-    # insertExpr = T.insertf + '(' + arithmExpr + ',' + arithmExpr + ',' + Opt(arithmExpr) + ')'
-    # removeExpr = T.popf + '(' + arithmExpr << '>' << ((arithmExpr << '>') | ('>' << Opt('>') << arithmExpr))
-
     globalsExpr = T.globalsKw + '(' + globalsKeyWord + ')'
 
     arithmExpr = Prio(T.integer, T.float, T.variable, T.selfvariable, T.string, constantExpr,
-                      globalsExpr,
-                      # listExpr,
-                      # linkedListExpr,
-                      # setExpr,
-                      parArithmExpr,
-                      # getItemExpr, getSublistExpr, insertExpr, removeExpr,
-                      unaryFuncExpr, binaryFuncExpr, powerArithmExpr, multArithmExpr, minusArithmExpr, addArithmExpr)
-    # arithmExpr = Prio(T.integer, T.float, T.variable, T.string, constantExpr, parArithmExpr,
-    #                   funcExpr, powerArithExpr, multArithExpr, addArithExpr, minusArithExpr)
+                      globalsExpr, parArithmExpr,
+                      unaryFuncExpr, binaryFuncExpr,
+                      powerArithmExpr, multArithmExpr, minusArithmExpr, addArithmExpr)
 
     START = consExpr
 
@@ -199,16 +178,6 @@ class ConsequenceParser(lrparsing.Grammar):
     @classmethod
     def buildExpression(cls, tree):
         rootName = tree[0]
-
-        def buildNext():
-            return cls.buildExpression(tree[1])
-
-        def clearAll():
-            return ClearAll()
-
-        def buildMultiTypes():
-            chosenType = tree[1]
-            return chosenType[0], chosenType[1]
 
         def buildAdd():
             exprType, exprValue = cls.buildExpression(tree[2])
@@ -229,24 +198,20 @@ class ConsequenceParser(lrparsing.Grammar):
             args, kwargs = cls.buildExpression(tree[4])
             return clsCons(name, args, kwargs)
 
-        def buildRemove():
-            exprType, exprValue = cls.buildExpression(tree[2])
+        def buildAddSound():
+            num = cls.buildExpression(tree[4])
+            return AddSoundConsequence(num)
 
-            exprTypeActions = {
-                ConsequenceParser.T.prop: (RemovePropertyConsequence, 1),
-                ConsequenceParser.T.graphicsSprite: (RemoveSpriteConsequence, 2),
-                ConsequenceParser.T.graphicsLine: (RemoveLineConsequence, 2),
-                ConsequenceParser.T.graphicsOval: (RemoveOvalConsequence, 2),
-                ConsequenceParser.T.graphicsRect: (RemoveRectConsequence, 2),
-                ConsequenceParser.T.graphicsPolygon: (RemovePolygonConsequence, 2),
-                ConsequenceParser.T.graphicsText: (RemoveTextConsequence, 2)
+        def buildAddToken():
+            nodeNum = cls.buildExpression(tree[4])
+            if len(tree) == 6:
+                return AddTokenConsequence(nodeNum, [], {})
+            else:
+                args, kwargs = cls.buildExpression(tree[6])
+                return AddTokenConsequence(nodeNum, args, kwargs)
 
-            }
-
-            clsCons, offset = exprTypeActions[exprType]
-            name = exprValue[offset:]
-            args, kwargs = cls.buildExpression(tree[4])
-            return clsCons(name, args, kwargs)
+        def buildArithmetic():
+            return cls.buildArithmeticExpression(tree)
 
         def buildEdit():
             exprType, exprValue = cls.buildExpression(tree[2])
@@ -267,17 +232,10 @@ class ConsequenceParser(lrparsing.Grammar):
             args2, kwargs2 = cls.buildExpression(tree[6])
             return clsCons(name, args1, kwargs1, args2, kwargs2)
 
-        def buildAddSound():
-            num = cls.buildExpression(tree[4])
-            return AddSoundConsequence(num)
-
-        def buildAddToken():
-            nodeNum = cls.buildExpression(tree[4])
-            if len(tree) == 6:
-                return AddTokenConsequence(nodeNum, [], {})
-            else:
-                args, kwargs = cls.buildExpression(tree[6])
-                return AddTokenConsequence(nodeNum, args, kwargs)
+        def buildEditGlobals():
+            keywordClass = cls.buildSpecialExpression(tree[4])
+            newValue = cls.buildArithmeticExpression(tree[6])
+            return keywordClass(newValue)
 
         def buildEditToken():
             if len(tree) == 5:
@@ -286,60 +244,17 @@ class ConsequenceParser(lrparsing.Grammar):
                 args, kwargs = cls.buildExpression(tree[4])
                 return EditTokenConsequence(args, kwargs)
 
-        def buildRemoveToken():
-            return RemoveTokenConsequence()
-
-        def buildRemoveAllToken():
-            return RemoveAllTokenConsequence()
-
-        def unnamedVariableValue():
-            return UndefinedLitteral()
-
-        def keywordIdValue():
-            return KEYWORD_ID
-
-        def keywordCodeValue():
-            return KEYWORD_CODE
-
-        def keywordXValue():
-            return KEYWORD_X
-
-        def keywordYValue():
-            return KEYWORD_Y
-
-        def keywordXIntValue():
-            value = int(tree[1][1:])
-            return KEYWORD_X_INT[value]
-
-        def keywordYIntValue():
-            value = int(tree[1][1:])
-            return KEYWORD_Y_INT[value]
-
-        def keywordHValue():
-            return KEYWORD_H
-
-        def keywordWValue():
-            return KEYWORD_W
-
-        def keywordColorValue():
-            return KEYWORD_COLOR
-
-        def keywordTextValue():
-            return KEYWORD_TEXT
-
-        def keywordFontNameValue():
-            return KEYWORD_FONT_NAME
-
-        def keywordFontSizeValue():
-            return KEYWORD_FONT_SIZE
-
-        def keywordWidthValue():
-            return KEYWORD_WIDTH
+        def buildMultiTypes():
+            chosenType = tree[1]
+            return chosenType[0], chosenType[1]
 
         def buildNamedParameter():
             name = cls.buildExpression(tree[1])
             parameter = cls.buildExpression(tree[3])
             return name, parameter
+
+        def buildNext():
+            return cls.buildExpression(tree[1])
 
         def buildParameters():
             buildArgs = [cls.buildExpression(arg) for arg in tree[1::2]]
@@ -347,61 +262,130 @@ class ConsequenceParser(lrparsing.Grammar):
             kwargs = {kwarg[0]: kwarg[1] for kwarg in buildArgs if isinstance(kwarg, tuple)}
             return args, kwargs
 
-        def buildArithmetic():
-            return cls.buildArithmeticExpression(tree)
-
         def buildPrintExpr():
             toPrint = [cls.buildExpression(arg) for arg in tree[2::2]]
             return PrintConsequence(toPrint)
 
-        def buildEditGlobals():
-            keywordClass = cls.buildSpecialExpression(tree[4])
-            newValue = cls.buildArithmeticExpression(tree[6])
-            return keywordClass(newValue)
+        def buildRemove():
+            exprType, exprValue = cls.buildExpression(tree[2])
+
+            exprTypeActions = {
+                ConsequenceParser.T.prop: (RemovePropertyConsequence, 1),
+                ConsequenceParser.T.graphicsSprite: (RemoveSpriteConsequence, 2),
+                ConsequenceParser.T.graphicsLine: (RemoveLineConsequence, 2),
+                ConsequenceParser.T.graphicsOval: (RemoveOvalConsequence, 2),
+                ConsequenceParser.T.graphicsRect: (RemoveRectConsequence, 2),
+                ConsequenceParser.T.graphicsPolygon: (RemovePolygonConsequence, 2),
+                ConsequenceParser.T.graphicsText: (RemoveTextConsequence, 2)
+
+            }
+
+            clsCons, offset = exprTypeActions[exprType]
+            name = exprValue[offset:]
+            args, kwargs = cls.buildExpression(tree[4])
+            return clsCons(name, args, kwargs)
+
+        def buildRemoveAllToken():
+            return RemoveAllTokenConsequence()
+
+        def buildRemoveToken():
+            return RemoveTokenConsequence()
+
+        def clearAll():
+            return ClearAll()
+
+        def keywordCodeValue():
+            return KEYWORD_CODE
+
+        def keywordColorValue():
+            return KEYWORD_COLOR
+
+        def keywordFontNameValue():
+            return KEYWORD_FONT_NAME
+
+        def keywordFontSizeValue():
+            return KEYWORD_FONT_SIZE
+
+        def keywordHValue():
+            return KEYWORD_H
+
+        def keywordIdValue():
+            return KEYWORD_ID
+
+        def keywordTextValue():
+            return KEYWORD_TEXT
+
+        def keywordWidthValue():
+            return KEYWORD_WIDTH
+
+        def keywordWValue():
+            return KEYWORD_W
+
+        def keywordXIntValue():
+            value = int(tree[1][1:])
+            return KEYWORD_X_INT[value]
+
+        def keywordXValue():
+            return KEYWORD_X
+
+        def keywordYIntValue():
+            value = int(tree[1][1:])
+            return KEYWORD_Y_INT[value]
+
+        def keywordYValue():
+            return KEYWORD_Y
+
+        def unnamedVariableValue():
+            return UndefinedLitteral()
 
         exprSymbols = {
-            ConsequenceParser.START: buildNext,
-            ConsequenceParser.consExpr: buildNext,
-            ConsequenceParser.clearAllExpr: clearAll,
-
-
-            ConsequenceParser.addType: buildMultiTypes,
-            ConsequenceParser.removeType: buildMultiTypes,
-            ConsequenceParser.editType: buildMultiTypes,
-
             ConsequenceParser.T.uvariable: unnamedVariableValue,
 
             ConsequenceParser.T.idkw: keywordIdValue,
-            ConsequenceParser.T.code: keywordCodeValue,
+
             ConsequenceParser.T.coordX: keywordXValue,
             ConsequenceParser.T.coordY: keywordYValue,
             ConsequenceParser.T.coordXInt: keywordXIntValue,
             ConsequenceParser.T.coordYInt: keywordYIntValue,
-            ConsequenceParser.T.coordH: keywordHValue,
             ConsequenceParser.T.coordW: keywordWValue,
+            ConsequenceParser.T.coordH: keywordHValue,
+
+            ConsequenceParser.T.code: keywordCodeValue,
             ConsequenceParser.T.color: keywordColorValue,
             ConsequenceParser.T.width: keywordWidthValue,
             ConsequenceParser.T.text: keywordTextValue,
             ConsequenceParser.T.fontName: keywordFontNameValue,
             ConsequenceParser.T.fontSize: keywordFontSizeValue,
 
-            ConsequenceParser.addExpr: buildAdd,
-            ConsequenceParser.removeExpr: buildRemove,
-            ConsequenceParser.editExpr: buildEdit,
+            ConsequenceParser.consExpr: buildNext,
 
             ConsequenceParser.namedParameterKW: buildNext,
             ConsequenceParser.namedParameter: buildNamedParameter,
             ConsequenceParser.parameters: buildParameters,
             ConsequenceParser.incompleteNamedParameter: buildNamedParameter,
             ConsequenceParser.incompleteParameters: buildParameters,
-            ConsequenceParser.addSoundExpr: buildAddSound,
+
+            ConsequenceParser.addType: buildMultiTypes,
+            ConsequenceParser.removeType: buildMultiTypes,
+            ConsequenceParser.editType: buildMultiTypes,
+
+            ConsequenceParser.addExpr: buildAdd,
+            ConsequenceParser.removeExpr: buildRemove,
+            ConsequenceParser.editExpr: buildEdit,
+
             ConsequenceParser.addTokenExpr: buildAddToken,
-            ConsequenceParser.editTokenExpr: buildEditToken,
             ConsequenceParser.removeTokenExpr: buildRemoveToken,
             ConsequenceParser.removeAllTokenExpr: buildRemoveAllToken,
+            ConsequenceParser.editTokenExpr: buildEditToken,
+
+            ConsequenceParser.addSoundExpr: buildAddSound,
             ConsequenceParser.printExpr: buildPrintExpr,
             ConsequenceParser.editGlobalsExpr: buildEditGlobals,
-            ConsequenceParser.arithmExpr: buildArithmetic
+            ConsequenceParser.clearAllExpr: clearAll,
+
+            ConsequenceParser.arithmExpr: buildArithmetic,
+
+            ConsequenceParser.START: buildNext,
         }
 
         return exprSymbols[rootName]()
@@ -409,99 +393,6 @@ class ConsequenceParser(lrparsing.Grammar):
     @classmethod
     def buildArithmeticExpression(cls, tree):
         rootName = tree[0]
-
-        def buildNext(i):
-            def _buildNext():
-                return cls.buildArithmeticExpression(tree[i])
-            return _buildNext
-
-        def stringWithoutQuotes():
-            return ALitteral(tree[1][1:-1])
-
-        def intvalue():
-            return ALitteral(int(tree[1]))
-
-        def floatvalue():
-            return ALitteral(float(tree[1]))
-
-        def variableValue():
-            return ALitteral(Variable(tree[1]))
-
-        def selfVariableValue():
-            return SelfLitteral()
-
-        # def listValue():
-        #     args = [cls.buildArithmeticExpression(arg) for arg in tree[2:-1:2]]
-        #     return ListLitteral(args)
-        #
-        # def linkedListValue():
-        #     args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-        #     return LinkedListLitteral(args)
-        #
-        # def setValue():
-        #     args = [cls.buildArithmeticExpression(arg) for arg in tree[2][2:-1:2]]
-        #     return SetLitteral(args)
-        #
-        # def buildGetItemExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     a2 = cls.buildArithmeticExpression(tree[3])
-        #     return GetItemExpression(l1, a2)
-        #
-        # def buildGetSublistExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     s = len(tree)
-        #     if s == 7:
-        #         a1 = cls.buildArithmeticExpression(tree[3])
-        #         a2 = cls.buildArithmeticExpression(tree[5])
-        #     elif s == 5:
-        #         a1 = None
-        #         a2 = None
-        #     elif tree[3][1] == ':':
-        #         a1 = None
-        #         a2 = cls.buildArithmeticExpression(tree[4])
-        #     else:
-        #         a1 = cls.buildArithmeticExpression(tree[3])
-        #         a2 = None
-        #     return GetSublistExpression(l1, a1, a2)
-        #
-        # def buildInsertExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     a2 = cls.buildArithmeticExpression(tree[-1])
-        #     s = len(tree)
-        #     if s == 6:
-        #         a1 = cls.buildArithmeticExpression(tree[3])
-        #     else:
-        #         a1 = None
-        #     return InsertExpression(l1, a1, a2)
-        #
-        # def buildRemoveExpression():
-        #     l1 = cls.buildArithmeticExpression(tree[1])
-        #     s = len(tree)
-        #     if s == 6:
-        #         a2 = cls.buildArithmeticExpression(tree[-1])
-        #         return RemoveAllExpression(l1, a2)
-        #     else:
-        #         if tree[3][1] == '>':
-        #             a2 = cls.buildArithmeticExpression(tree[-1])
-        #             return RemoveExpression(l1, None, a2)
-        #         else:
-        #             a1 = cls.buildArithmeticExpression(tree[3])
-        #             return RemoveExpression(l1, a1, None)
-
-        def buildMinusExpression():
-            if len(tree) == 4:
-                return buildBinaryExpression()
-            else:
-                a1 = cls.buildArithmeticExpression(tree[2])
-                return Subtraction(ALitteral(0), a1)
-
-        def buildConstant():
-            from math import pi, e
-            if tree[1][1] == 'pi':
-                value = pi
-            else:
-                value = e
-            return ALitteral(value)
 
         def buildBinaryExpression():
             a1 = cls.buildArithmeticExpression(tree[1])
@@ -520,6 +411,43 @@ class ConsequenceParser(lrparsing.Grammar):
                 return Modulo(a1, a3)
             elif tree[2][1] == '**':
                 return Power(a1, a3)
+
+        def buildBinaryFunctionExpression():
+            x1 = cls.buildArithmeticExpression(tree[3])
+            x2 = cls.buildArithmeticExpression(tree[5])
+            if tree[1][1] == 'min':
+                return Min(x1, x2)
+            elif tree[1][1] == 'max':
+                return Max(x1, x2)
+
+        def buildConstant():
+            from math import pi, e
+            if tree[1][1] == 'pi':
+                value = pi
+            else:
+                value = e
+            return ALitteral(value)
+
+        def buildGlobalFpsKeyWord():
+            return globalsFpsExpression
+
+        def buildGlobalHeightKeyWord():
+            return globalsHeightExpression
+
+        def buildGlobalWidthKeyWord():
+            return globalsWidthExpression
+
+        def buildMinusExpression():
+            if len(tree) == 4:
+                return buildBinaryExpression()
+            else:
+                a1 = cls.buildArithmeticExpression(tree[2])
+                return Subtraction(ALitteral(0), a1)
+
+        def buildNext(i):
+            def _buildNext():
+                return cls.buildArithmeticExpression(tree[i])
+            return _buildNext
 
         def buildUnaryFunctionExpression():
             a = cls.buildArithmeticExpression(tree[2])
@@ -587,49 +515,48 @@ class ConsequenceParser(lrparsing.Grammar):
             elif tree[1][1] == 'round':
                 return Func(a, round)
 
-        def buildBinaryFunctionExpression():
-            x1 = cls.buildArithmeticExpression(tree[3])
-            x2 = cls.buildArithmeticExpression(tree[5])
-            if tree[1][1] == 'min':
-                return Min(x1, x2)
-            elif tree[1][1] == 'max':
-                return Max(x1, x2)
+        def floatvalue():
+            return ALitteral(float(tree[1]))
 
-        def buildGlobalFpsKeyWord():
-            return globalsFpsExpression
+        def intvalue():
+            return ALitteral(int(tree[1]))
 
-        def buildGlobalWidthKeyWord():
-            return globalsWidthExpression
+        def selfVariableValue():
+            return SelfLitteral()
 
-        def buildGlobalHeightKeyWord():
-            return globalsHeightExpression
+        def stringWithoutQuotes():
+            return ALitteral(tree[1][1:-1])
+
+        def variableValue():
+            return ALitteral(Variable(tree[1]))
 
         arithmeticSymbols = {
-            ConsequenceParser.arithmExpr: buildNext(1),
-            ConsequenceParser.parArithmExpr: buildNext(2),
             ConsequenceParser.T.integer: intvalue,
             ConsequenceParser.T.float: floatvalue,
+            ConsequenceParser.T.string: stringWithoutQuotes,
+
             ConsequenceParser.T.variable: variableValue,
             ConsequenceParser.T.selfvariable: selfVariableValue,
-            ConsequenceParser.T.string: stringWithoutQuotes,
-            # ConsequenceParser.listExpr: listValue,
-            # ConsequenceParser.linkedListExpr: linkedListValue,
-            # ConsequenceParser.setExpr: setValue,
-            # ConsequenceParser.getItemArithExpr: buildGetItemExpression,
-            # ConsequenceParser.getSublistArithExpr: buildGetSublistExpression,
-            # ConsequenceParser.insertArithExpr: buildInsertExpression,
-            # ConsequenceParser.removeArithExpr: buildRemoveExpression,
+
+            ConsequenceParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
+            ConsequenceParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
+            ConsequenceParser.T.globalsWidthKw: buildGlobalWidthKeyWord,
+
+            ConsequenceParser.globalsKeyWord: buildNext(1),
+
+            ConsequenceParser.arithmExpr: buildNext(1),
+
             ConsequenceParser.addArithmExpr: buildBinaryExpression,
             ConsequenceParser.minusArithmExpr: buildMinusExpression,
             ConsequenceParser.multArithmExpr: buildBinaryExpression,
             ConsequenceParser.powerArithmExpr: buildBinaryExpression,
             ConsequenceParser.constantExpr: buildConstant,
+
+            ConsequenceParser.parArithmExpr: buildNext(2),
+
             ConsequenceParser.unaryFuncExpr: buildUnaryFunctionExpression,
             ConsequenceParser.binaryFuncExpr: buildBinaryFunctionExpression,
-            ConsequenceParser.T.globalsFpsKw: buildGlobalFpsKeyWord,
-            ConsequenceParser.T.globalsHeightKw: buildGlobalHeightKeyWord,
-            ConsequenceParser.T.globalsWidthKw: buildGlobalWidthKeyWord,
-            ConsequenceParser.globalsKeyWord: buildNext(1),
+
             ConsequenceParser.globalsExpr: buildNext(3)
         }
 
