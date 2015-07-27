@@ -12,20 +12,32 @@ class _Keyword(object):
 
 
 class _KeyWordX(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_x'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_X = _KeyWordX()
 
 
 class _KeyWordY(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_y'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_Y = _KeyWordY()
 
 
 class _KeyWordXInt(object):
     class _NewKeyword(_Keyword):
-        pass
+        def __str__(self):
+            return 'kw_x(' + str(id(self)) + ')'
+
+    def __repr__(self):
+        return str(self)
 
     keywords = defaultdict(lambda: _KeyWordXInt._NewKeyword())
 
@@ -38,7 +50,11 @@ KEYWORD_X_INT = _KeyWordXInt()
 
 class _KeyWordYInt(object):
     class _NewKeyword(_Keyword):
-        pass
+        def __str__(self):
+            return 'kw_y(' + str(id(self)) + ')'
+
+    def __repr__(self):
+        return str(self)
 
     @staticmethod
     def _getNewKeyWordYInt():
@@ -54,54 +70,90 @@ KEYWORD_Y_INT = _KeyWordYInt()
 
 
 class _KeyWordW(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_w'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_W = _KeyWordW()
 
 
 class _KeyWordH(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_h'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_H = _KeyWordH()
 
 
 class _KeyWordCode(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_code'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_CODE = _KeyWordCode()
 
 
 class _KeyWordWidth(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_width'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_WIDTH = _KeyWordWidth()
 
 
 class _KeyWordColor(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_color'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_COLOR = _KeyWordColor()
 
 
 class _KeyWordText(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_text'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_TEXT = _KeyWordText()
 
 
 class _KeyWordFontName(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_fontName'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_FONT_NAME = _KeyWordFontName()
 
 
 class _KeyWordFontSize(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_fontSize'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_FONT_SIZE = _KeyWordFontSize()
 
 
 class _KeyWordId(_Keyword):
-    pass
+    def __str__(self):
+        return 'kw_id'
+
+    def __repr__(self):
+        return str(self)
 
 KEYWORD_ID = _KeyWordId()
