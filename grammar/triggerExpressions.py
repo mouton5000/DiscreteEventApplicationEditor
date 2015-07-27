@@ -1,5 +1,5 @@
 import abc
-from random import random, randint
+from random import randint
 from itertools import chain
 
 from utils.dictSet import DictContainer
@@ -160,57 +160,6 @@ class Timer(object):
                 yield previousEvaluation
         except (ArithmeticError, TypeError, ValueError):
             pass
-
-
-class Rand(object):
-    def __init__(self, prob):
-        self._prob = prob
-
-    def __str__(self):
-        return '( rand ' + str(self._prob) + ')'
-
-    def eval(self, _, previousEvaluation):
-        try:
-            prob = self._prob.value(previousEvaluation)
-            if random() < prob:
-                yield previousEvaluation
-        except (ArithmeticError, TypeError, ValueError):
-            pass
-
-
-class RandInt(object):
-    def __init__(self, var, maxInt):
-        self._var = var
-        self._maxInt = maxInt
-
-    def __str__(self):
-        return '( randInt ' + str(self._var) + ', ' + str(self._maxInt) + ')'
-
-    def eval(self, _, previousEvaluation):
-        try:
-            maxInt = int(self._maxInt.value(previousEvaluation))
-        except (ArithmeticError, TypeError, ValueError):
-            maxInt = -1
-
-        if maxInt > 0:
-            j = randint(0, maxInt - 1)
-
-            if isinstance(self._var, Variable):
-                try:
-                    i = previousEvaluation[self._var]
-                    if i == j:
-                        yield previousEvaluation
-                except KeyError:
-                    neval = previousEvaluation.copy()
-                    neval[self._var] = j
-                    yield neval
-            else:
-                try:
-                    i = self._var.value(previousEvaluation)
-                    if int(i) == j:
-                        yield previousEvaluation
-                except (ArithmeticError, TypeError, ValueError):
-                    pass
 
 
 class eLock(object):
