@@ -192,7 +192,6 @@ class NamedExpression(ParameterizedExpression):
 
         size = len(args1)
 
-        print kwargs1
         if size != len(unevaluatedArgs2) and KEYWORD_ID not in kwargs1:
             return
 
