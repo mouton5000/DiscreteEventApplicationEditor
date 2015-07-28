@@ -10,7 +10,7 @@ from triggerExpressions import BLitteral, Timer, eLock, \
     LineTriggerExpression, OvalTriggerExpression, RectTriggerExpression, PolygonTriggerExpression
 from database import Variable
 from keywords import KEYWORD_ID, KEYWORD_CODE, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_H, \
-    KEYWORD_TEXT, KEYWORD_WIDTH, KEYWORD_W, KEYWORD_X_INT, KEYWORD_X, KEYWORD_Y_INT, KEYWORD_Y, \
+    KEYWORD_TEXT, KEYWORD_WIDTH, KEYWORD_W, KEYWORD_X_INT, KEYWORD_X, KEYWORD_Y_INT, KEYWORD_Y, KEYWORD_Z, \
     KEYWORD_ROTATE, KEYWORD_SCALE
 from utils.mathutils import sign
 from random import random, randint
@@ -43,6 +43,7 @@ class TriggerParser(lrparsing.Grammar):
 
         coordX = Token('x')
         coordY = Token('y')
+        coordZ = Token('z')
         coordXInt = Token(re='x[1-9][0-9]*')
         coordYInt = Token(re='y[1-9][0-9]*')
         coordW = Token('w')
@@ -115,7 +116,7 @@ class TriggerParser(lrparsing.Grammar):
     parameter = Prio(T.variable, arithmExpr) | T.uvariable
 
     namedParameterKW = arithmExpr | T.idkw | \
-                       T.coordX | T.coordY | \
+                       T.coordX | T.coordY | T.coordZ | \
                        T.coordXInt | T.coordYInt | \
                        T.coordH | T.coordW | \
                        T.rotate | T.scale | \
@@ -372,6 +373,9 @@ class TriggerParser(lrparsing.Grammar):
         def keywordYValue():
             return KEYWORD_Y
 
+        def keywordZValue():
+            return KEYWORD_Z
+
         def unnamedVariableValue():
             return UndefinedLitteral()
 
@@ -389,6 +393,7 @@ class TriggerParser(lrparsing.Grammar):
 
             TriggerParser.T.coordX: keywordXValue,
             TriggerParser.T.coordY: keywordYValue,
+            TriggerParser.T.coordZ: keywordZValue,
             TriggerParser.T.coordXInt: keywordXIntValue,
             TriggerParser.T.coordYInt: keywordYIntValue,
             TriggerParser.T.coordW: keywordWValue,

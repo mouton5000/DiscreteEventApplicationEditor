@@ -2,12 +2,13 @@ __author__ = 'mouton'
 
 from pygame.sprite import Sprite
 import pygame
+from collections import defaultdict
 
 
 _spritesDictionnary = None
 _rootDir = None
 
-spritesList = pygame.sprite.OrderedUpdates()
+_spritesList = defaultdict(pygame.sprite.OrderedUpdates)
 
 
 def init(spritesDictionnary, rootDir):
@@ -18,18 +19,25 @@ def init(spritesDictionnary, rootDir):
 
 
 def reinit():
-    spritesList.empty()
+    _spritesList.clear()
 
+
+def getLayers():
+    return iter(_spritesList.keys())
+
+
+def draw(z, scene):
+    _spritesList[z].draw(scene)
 
 class SpriteReg(Sprite):
 
-    def __init__(self, code, x, y, rotate, scale):
+    def __init__(self, code, x, y, z, rotate, scale):
         Sprite.__init__(self)
         self.num = None
-        self.reload(code, x, y, rotate, scale)
-        spritesList.add(self)
+        self.z = None
+        self.reload(code, x, y, z, rotate, scale)
 
-    def reload(self, code, x, y, rotate, scale):
+    def reload(self, code, x, y, z, rotate, scale):
         filePath = _rootDir + '/' + _spritesDictionnary[code]
         import game.gameWindow as gameWindow
         scene = gameWindow.getScene()
@@ -46,6 +54,11 @@ class SpriteReg(Sprite):
             transformedRect.center = self.rect.center
             self.rect = transformedRect
 
+        if self.z is not None:
+            self.remove()
+        _spritesList[z].add(self)
+        self.z = z
+
     def __str__(self):
         return str((self.num, self.rect))
 
@@ -53,4 +66,4 @@ class SpriteReg(Sprite):
         return str((self.num, self.rect))
 
     def remove(self):
-        spritesList.remove(self)
+        _spritesList[self.z].remove(self)

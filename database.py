@@ -9,7 +9,7 @@ from grammar.keywords import KEYWORD_ID, \
     KEYWORD_X, KEYWORD_Y, KEYWORD_X_INT, KEYWORD_Y_INT,\
     KEYWORD_H, KEYWORD_W,\
     KEYWORD_CODE, KEYWORD_COLOR, KEYWORD_WIDTH, \
-    KEYWORD_TEXT, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_ROTATE, KEYWORD_SCALE
+    KEYWORD_TEXT, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_ROTATE, KEYWORD_SCALE, KEYWORD_Z
 from itertools import count, takewhile
 
 
@@ -306,16 +306,17 @@ class SpriteProperty(NamedExpression):
             int(self._kwargs[KEYWORD_CODE]), \
             int(self._kwargs[KEYWORD_X]), \
             int(self._kwargs[KEYWORD_Y]), \
+            int(self._kwargs.setdefault(KEYWORD_Z, 0)), \
             int(self._kwargs.setdefault(KEYWORD_ROTATE, 0)), \
             float(self._kwargs.setdefault(KEYWORD_SCALE, 1))
 
     def initSpriteRegister(self):
-        code, x, y, rotate, scale = self.getSpriteInfo()
-        self._spriteRegister = SpriteRegistery.SpriteReg(code, x, y, rotate, scale)
+        code, x, y, z, rotate, scale = self.getSpriteInfo()
+        self._spriteRegister = SpriteRegistery.SpriteReg(code, x, y, z, rotate, scale)
 
     def reloadSpriteRegister(self):
-        code, x, y, rotate, scale = self.getSpriteInfo()
-        self._spriteRegister.reload(code, x, y, rotate, scale)
+        code, x, y, z, rotate, scale = self.getSpriteInfo()
+        self._spriteRegister.reload(code, x, y, z, rotate, scale)
 
     def getSpriteRegister(self):
         return self._spriteRegister
@@ -365,17 +366,18 @@ class TextProperty(NamedExpression):
             str(self._kwargs[KEYWORD_TEXT]), \
             int(self._kwargs[KEYWORD_X]), \
             int(self._kwargs[KEYWORD_Y]), \
+            int(self._kwargs.setdefault(KEYWORD_Z,0)), \
             str(self._kwargs.setdefault(KEYWORD_COLOR, TextRegistery.DEFAULT_COLOR)), \
             str(self._kwargs.setdefault(KEYWORD_FONT_NAME, TextRegistery.DEFAULT_FONT_NAME)), \
             int(self._kwargs.setdefault(KEYWORD_FONT_SIZE, TextRegistery.DEFAULT_FONT_SIZE))
 
     def initTextRegister(self):
-        text, x, y, color, fontName, fontSize = self.getTextInfo()
-        self._textRegister = TextRegistery.TextReg(text, x, y, color, fontName, fontSize)
+        text, x, y, z, color, fontName, fontSize = self.getTextInfo()
+        self._textRegister = TextRegistery.TextReg(text, x, y, z, color, fontName, fontSize)
 
     def reloadTextRegister(self):
-        text, x, y, color, fontName, fontSize = self.getTextInfo()
-        self._textRegister.reload(text, x, y, color, fontName, fontSize)
+        text, x, y, z, color, fontName, fontSize = self.getTextInfo()
+        self._textRegister.reload(text, x, y, z, color, fontName, fontSize)
 
     def getTextRegister(self):
         return self._textRegister
@@ -426,16 +428,17 @@ class LineProperty(NamedExpression):
             int(self._kwargs[KEYWORD_Y_INT[1]]), \
             int(self._kwargs[KEYWORD_X_INT[2]]), \
             int(self._kwargs[KEYWORD_Y_INT[2]]), \
+            int(self._kwargs.setdefault(KEYWORD_Z, 0)), \
             int(self._kwargs.setdefault(KEYWORD_WIDTH, LineRegistery.DEFAULT_WIDTH)), \
             str(self._kwargs.setdefault(KEYWORD_COLOR, LineRegistery.DEFAULT_COLOR))
 
     def initLineRegister(self):
-        x1, y1, x2, y2, width, color = self.getLineInfo()
-        self._lineRegister = LineRegistery.LineReg(x1, y1, x2, y2, width, color)
+        x1, y1, x2, y2, z, width, color = self.getLineInfo()
+        self._lineRegister = LineRegistery.LineReg(x1, y1, x2, y2, z, width, color)
 
     def reloadLineRegister(self):
-        x1, y1, x2, y2, width, color = self.getLineInfo()
-        self._lineRegister.reload(x1, y1, x2, y2, width, color)
+        x1, y1, x2, y2, z, width, color = self.getLineInfo()
+        self._lineRegister.reload(x1, y1, x2, y2, z, width, color)
 
     def getLineRegister(self):
         return self._lineRegister
@@ -485,16 +488,17 @@ class OvalProperty(NamedExpression):
             int(self._kwargs[KEYWORD_Y]), \
             int(self._kwargs[KEYWORD_W]), \
             int(self._kwargs[KEYWORD_H]), \
+            int(self._kwargs.setdefault(KEYWORD_Z, 0)), \
             int(self._kwargs.setdefault(KEYWORD_WIDTH, OvalRegistery.DEFAULT_WIDTH)), \
             str(self._kwargs.setdefault(KEYWORD_COLOR, OvalRegistery.DEFAULT_COLOR))
 
     def initOvalRegister(self):
-        x, y, w, h, width, color = self.getOvalInfo()
-        self._ovalRegister = OvalRegistery.OvalReg(x, y, w, h, width, color)
+        x, y, w, h, z, width, color = self.getOvalInfo()
+        self._ovalRegister = OvalRegistery.OvalReg(x, y, w, h, z, width, color)
 
     def reloadOvalRegister(self):
-        x, y, w, h, width, color = self.getOvalInfo()
-        self._ovalRegister.reload(x, y, w, h, width, color)
+        x, y, w, h, z, width, color = self.getOvalInfo()
+        self._ovalRegister.reload(x, y, w, h, z, width, color)
 
     def getOvalRegister(self):
         return self._ovalRegister
@@ -544,16 +548,17 @@ class RectProperty(NamedExpression):
             int(self._kwargs[KEYWORD_Y]), \
             int(self._kwargs[KEYWORD_W]), \
             int(self._kwargs[KEYWORD_H]), \
+            int(self._kwargs.setdefault(KEYWORD_Z, 0)), \
             int(self._kwargs.setdefault(KEYWORD_WIDTH, OvalRegistery.DEFAULT_WIDTH)), \
             str(self._kwargs.setdefault(KEYWORD_COLOR, OvalRegistery.DEFAULT_COLOR))
 
     def initRectRegister(self):
-        x, y, w, h, width, color = self.getRectInfo()
-        self._rectRegister = RectRegistery.RectReg(x, y, w, h, width, color)
+        x, y, w, h, z, width, color = self.getRectInfo()
+        self._rectRegister = RectRegistery.RectReg(x, y, w, h, z, width, color)
 
     def reloadRectRegister(self):
-        x, y, w, h, width, color = self.getRectInfo()
-        self._rectRegister.reload(x, y, w, h, width, color)
+        x, y, w, h, z, width, color = self.getRectInfo()
+        self._rectRegister.reload(x, y, w, h, z, width, color)
 
     def getRectRegister(self):
         return self._rectRegister
@@ -610,16 +615,17 @@ class PolygonProperty(NamedExpression):
         points = [(int(x), int(y)) for x, y in takewhile(_correctValues, _generator())]
         return \
             points,\
+            int(self._kwargs.setdefault(KEYWORD_Z, 0)), \
             int(self._kwargs.setdefault(KEYWORD_WIDTH, PolygonRegistery.DEFAULT_WIDTH)), \
             str(self._kwargs.setdefault(KEYWORD_COLOR, PolygonRegistery.DEFAULT_COLOR))
 
     def initPolygonRegister(self):
-        points, width, color = self.getPolygonInfo()
-        self._polygonRegister = PolygonRegistery.PolygonReg(points, width, color)
+        points, z, width, color = self.getPolygonInfo()
+        self._polygonRegister = PolygonRegistery.PolygonReg(points, z, width, color)
 
     def reloadPolygonRegister(self):
-        points, width, color = self.getPolygonInfo()
-        self._polygonRegister.reload(points, width, color)
+        points, z, width, color = self.getPolygonInfo()
+        self._polygonRegister.reload(points, z, width, color)
 
     def getPolygonRegister(self):
         return self._polygonRegister

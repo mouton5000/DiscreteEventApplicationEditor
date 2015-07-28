@@ -13,6 +13,8 @@ import game.Registeries.RectRegistery as rectReg
 import game.Registeries.OvalRegistery as ovalReg
 import game.Registeries.PolygonRegistery as polygonReg
 
+from itertools import chain
+
 pygame.init()
 pygame.display.init()
 pygame.joystick.init()
@@ -36,7 +38,6 @@ def init(fps, width, height, spritesDictionnary, soundsDictionnary, rootDir):
     _width = width
     _height = height
     spriteReg.init(spritesDictionnary, rootDir)
-    spriteReg.spritesList.draw(_scene)
     soundReg.init(soundsDictionnary, rootDir)
 
     textReg.init(rootDir)
@@ -64,31 +65,19 @@ def tick():
 
     _scene.fill((255, 255, 255))
 
-    spriteReg.spritesList.draw(_scene)
+    regs = [spriteReg, lineReg, ovalReg, rectReg, polygonReg, textReg]
+    print list(spriteReg.getLayers())
 
-    for lineItem in lineReg.lineItemsIterator():
-        color = Color('#' + lineItem.colorName)
-        pygame.draw.line(_scene, color, (lineItem.x1, lineItem.y1), (lineItem.x2, lineItem.y2), lineItem.width)
+    # Il est necessaire de passer par cette fonction auxilliaire, sinon c'est le meme code qui est attribue a tous
+    # les generateurs
+    def _getLayersTuple(code, reg):
+        return ((layer, code) for layer in reg.getLayers())
+    layers = chain(*(_getLayersTuple(code, reg) for code, reg in enumerate(regs)))
 
-    for rectItem in rectReg.rectItemsIterator():
-        color = Color('#' + rectItem.colorName)
-        pygame.draw.rect(_scene, color, Rect(rectItem.x, rectItem.y, rectItem.w, rectItem.h), rectItem.width)
+    layers = sorted(layers)
 
-    for ovalItem in ovalReg.ovalItemsIterator():
-        color = Color('#' + ovalItem.colorName)
-        pygame.draw.ellipse(_scene, color, Rect(ovalItem.x - ovalItem.w / 2, ovalItem.y - ovalItem.h / 2,
-                                                     ovalItem.w, ovalItem.h), ovalItem.width)
-
-    for polygonItem in polygonReg.polygonItemsIterator():
-        color = Color('#' + polygonItem.colorName)
-        pygame.draw.polygon(_scene, color, polygonItem.pointList, polygonItem.width)
-
-    for textItem in textReg.textItemsIterator():
-        label = textItem.label
-        textPos = label.get_rect()
-        textPos.centerx = textItem.x
-        textPos.centery = textItem.y
-        _scene.blit(label, textPos)
+    for layer, code in layers:
+        regs[code].draw(layer, _scene)
 
     pygame.display.flip()
 

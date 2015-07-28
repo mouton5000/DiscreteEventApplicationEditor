@@ -31,6 +31,16 @@ class _KeyWordY(_Keyword):
 KEYWORD_Y = _KeyWordY()
 
 
+class _KeyWordZ(_Keyword):
+    def __str__(self):
+        return 'kw_z'
+
+    def __repr__(self):
+        return str(self)
+
+KEYWORD_Z = _KeyWordZ()
+
+
 class _KeyWordXInt(object):
     class _NewKeyword(_Keyword):
         def __str__(self):

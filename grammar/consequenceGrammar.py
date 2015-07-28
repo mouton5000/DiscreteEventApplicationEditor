@@ -7,7 +7,7 @@ from database import Variable
 from grammar.keywords import KEYWORD_ID, KEYWORD_CODE, \
     KEYWORD_Y, KEYWORD_X, KEYWORD_X_INT, KEYWORD_Y_INT, \
     KEYWORD_W, KEYWORD_H, KEYWORD_ROTATE, KEYWORD_SCALE, \
-    KEYWORD_WIDTH, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_TEXT
+    KEYWORD_WIDTH, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_TEXT, KEYWORD_Z
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddSoundConsequence, \
@@ -47,6 +47,7 @@ class ConsequenceParser(lrparsing.Grammar):
 
         coordX = Token('x')
         coordY = Token('y')
+        coordZ = Token('z')
         coordXInt = Token(re='x[1-9][0-9]*')
         coordYInt = Token(re='y[1-9][0-9]*')
         coordW = Token('w')
@@ -101,7 +102,7 @@ class ConsequenceParser(lrparsing.Grammar):
     arithmExpr = Ref('arithmExpr')
 
     namedParameterKW = arithmExpr | \
-                       T.coordX | T.coordY | \
+                       T.coordX | T.coordY | T.coordZ | \
                        T.coordXInt | T.coordYInt | \
                        T.coordH | T.coordW | \
                        T.rotate | T.scale | \
@@ -351,6 +352,9 @@ class ConsequenceParser(lrparsing.Grammar):
         def keywordYValue():
             return KEYWORD_Y
 
+        def keywordZValue():
+            return KEYWORD_Z
+
         def unnamedVariableValue():
             return UndefinedLitteral()
 
@@ -361,6 +365,7 @@ class ConsequenceParser(lrparsing.Grammar):
 
             ConsequenceParser.T.coordX: keywordXValue,
             ConsequenceParser.T.coordY: keywordYValue,
+            ConsequenceParser.T.coordZ: keywordZValue,
             ConsequenceParser.T.coordXInt: keywordXIntValue,
             ConsequenceParser.T.coordYInt: keywordYIntValue,
             ConsequenceParser.T.coordW: keywordWValue,
