@@ -381,7 +381,8 @@ class SceneWidget(QGraphicsScene):
         if self.isComponentMode():
             # selected is a connected component if exists
             if item is not None and self._selected is not None and item in self._selected:
-                x, y = event.scenePos().x(), event.scenePos().y()
+                x = NODE_GRID(event.scenePos().x())
+                y = NODE_GRID(event.scenePos().y())
                 self._selected.move(x, y)
         else:
             super(SceneWidget, self).mouseMoveEvent(event)
@@ -405,7 +406,8 @@ class SceneWidget(QGraphicsScene):
 
     def mouseReleaseEventNodeMode(self, event, mouseGrabberItem):
         if mouseGrabberItem is None:
-            x, y = event.scenePos().x(), event.scenePos().y()
+            x = NODE_GRID(event.scenePos().x())
+            y = NODE_GRID(event.scenePos().y())
             self.addNode(x, y)
         elif isinstance(mouseGrabberItem, NodeItem):
             self.setSelected(mouseGrabberItem)
@@ -487,7 +489,8 @@ class SceneWidget(QGraphicsScene):
                     self._selectConnectedComponent(mouseGrabberItem)
                 mouseGrabberItem.mouseReleaseEvent(event)
             else:
-                x, y = event.scenePos().x(), event.scenePos().y()
+                x = NODE_GRID(event.scenePos().x())
+                y = NODE_GRID(event.scenePos().y())
                 self.copyConnectedComponent(self._selected, x, y)
         else:
             if mouseGrabberItem is not None:
