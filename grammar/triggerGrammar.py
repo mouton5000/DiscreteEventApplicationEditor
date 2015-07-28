@@ -9,8 +9,9 @@ from triggerExpressions import BLitteral, Timer, eLock, \
     EventTriggerExpression, TokenExpression, SpriteTriggerExpression, TextTriggerExpression, \
     LineTriggerExpression, OvalTriggerExpression, RectTriggerExpression, PolygonTriggerExpression
 from database import Variable
-from Keywords import KEYWORD_ID, KEYWORD_CODE, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_H, \
-    KEYWORD_TEXT, KEYWORD_WIDTH, KEYWORD_W, KEYWORD_X_INT, KEYWORD_X, KEYWORD_Y_INT, KEYWORD_Y
+from keywords import KEYWORD_ID, KEYWORD_CODE, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_H, \
+    KEYWORD_TEXT, KEYWORD_WIDTH, KEYWORD_W, KEYWORD_X_INT, KEYWORD_X, KEYWORD_Y_INT, KEYWORD_Y, \
+    KEYWORD_ROTATE, KEYWORD_SCALE
 from utils.mathutils import sign
 from random import random, randint
 from math import cos, sin, tan, exp, log, floor, ceil, acos, asin, atan, cosh, sinh, tanh, acosh, atanh, asinh
@@ -46,6 +47,8 @@ class TriggerParser(lrparsing.Grammar):
         coordYInt = Token(re='y[1-9][0-9]*')
         coordW = Token('w')
         coordH = Token('h')
+        rotate = Token('rotate')
+        scale = Token('scale')
 
         code = Token('code')
         color = Token('color')
@@ -115,6 +118,7 @@ class TriggerParser(lrparsing.Grammar):
                        T.coordX | T.coordY | \
                        T.coordXInt | T.coordYInt | \
                        T.coordH | T.coordW | \
+                       T.rotate | T.scale | \
                        T.code | \
                        T.color | T.width | \
                        T.text | T.fontName | T.fontSize
@@ -339,6 +343,12 @@ class TriggerParser(lrparsing.Grammar):
         def keywordIdValue():
             return KEYWORD_ID
 
+        def keywordRotateValue():
+            return KEYWORD_ROTATE
+
+        def keywordScaleValue():
+            return KEYWORD_SCALE
+
         def keywordTextValue():
             return KEYWORD_TEXT
 
@@ -383,6 +393,8 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.T.coordYInt: keywordYIntValue,
             TriggerParser.T.coordW: keywordWValue,
             TriggerParser.T.coordH: keywordHValue,
+            TriggerParser.T.rotate: keywordRotateValue,
+            TriggerParser.T.scale: keywordScaleValue,
 
             TriggerParser.T.code: keywordCodeValue,
             TriggerParser.T.color: keywordColorValue,

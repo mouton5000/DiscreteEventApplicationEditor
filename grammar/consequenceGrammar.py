@@ -1,12 +1,13 @@
 import lrparsing
-from lrparsing import List, Prio, Ref, Token, Opt, Sequence
+from lrparsing import List, Prio, Ref, Token, Opt
 from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Division, EuclideanDivision, Modulo, \
     Power, Func, UndefinedLitteral, SelfLitteral, Min, Max, globalsFpsExpression, globalsHeightExpression, \
     globalsWidthExpression
 from database import Variable
-from grammar.Keywords import KEYWORD_ID, KEYWORD_CODE, \
+from grammar.keywords import KEYWORD_ID, KEYWORD_CODE, \
     KEYWORD_Y, KEYWORD_X, KEYWORD_X_INT, KEYWORD_Y_INT, \
-    KEYWORD_W, KEYWORD_H, KEYWORD_WIDTH, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_TEXT
+    KEYWORD_W, KEYWORD_H, KEYWORD_ROTATE, KEYWORD_SCALE, \
+    KEYWORD_WIDTH, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_TEXT
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddSoundConsequence, \
@@ -50,6 +51,8 @@ class ConsequenceParser(lrparsing.Grammar):
         coordYInt = Token(re='y[1-9][0-9]*')
         coordW = Token('w')
         coordH = Token('h')
+        rotate = Token('rotate')
+        scale = Token('scale')
 
         code = Token('code')
         color = Token('color')
@@ -101,6 +104,7 @@ class ConsequenceParser(lrparsing.Grammar):
                        T.coordX | T.coordY | \
                        T.coordXInt | T.coordYInt | \
                        T.coordH | T.coordW | \
+                       T.rotate | T.scale | \
                        T.code | \
                        T.color | T.width | \
                        T.text | T.fontName | T.fontSize
@@ -318,6 +322,12 @@ class ConsequenceParser(lrparsing.Grammar):
         def keywordIdValue():
             return KEYWORD_ID
 
+        def keywordRotateValue():
+            return KEYWORD_ROTATE
+
+        def keywordScaleValue():
+            return KEYWORD_SCALE
+
         def keywordTextValue():
             return KEYWORD_TEXT
 
@@ -355,6 +365,8 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.T.coordYInt: keywordYIntValue,
             ConsequenceParser.T.coordW: keywordWValue,
             ConsequenceParser.T.coordH: keywordHValue,
+            ConsequenceParser.T.rotate: keywordRotateValue,
+            ConsequenceParser.T.scale: keywordScaleValue,
 
             ConsequenceParser.T.code: keywordCodeValue,
             ConsequenceParser.T.color: keywordColorValue,

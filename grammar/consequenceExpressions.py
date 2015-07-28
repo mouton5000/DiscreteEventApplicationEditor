@@ -279,7 +279,8 @@ class AddTokenConsequence(object):
                          for key, value in self._kwargs.iteritems()}
             stateMachine.addTokenByNodeNum(nodeNum, newArgs, newKWArgs)
         except (ArithmeticError, TypeError, ValueError):
-            pass
+            import traceback
+            print traceback.format_exc()
 
 
 class EditTokenConsequence(object):
@@ -291,7 +292,8 @@ class EditTokenConsequence(object):
         try:
             token.setArgs(self._args, self._kwargs, evaluation)
         except (ArithmeticError, TypeError, ValueError):
-            pass
+            import traceback
+            print traceback.format_exc()
 
 
 class RemoveTokenConsequence(object):
@@ -318,7 +320,8 @@ class PrintConsequence(object):
         try:
             print ' '.join(str(_evalArg(foo, evaluation)) for foo in self.toPrint)
         except (ArithmeticError, TypeError, ValueError):
-            pass
+            import traceback
+            print traceback.format_exc()
 
 
 class EditGlobalFps(object):
@@ -366,7 +369,8 @@ class AddSoundConsequence():
             num = int(_evalArg(self._num, evaluation))
             soundRegistery.playSound(num)
         except (ArithmeticError, TypeError, ValueError):
-            pass
+            import traceback
+            print traceback.format_exc()
 
     @property
     def num(self):

@@ -89,6 +89,26 @@ class _KeyWordH(_Keyword):
 KEYWORD_H = _KeyWordH()
 
 
+class _KeyWordRotate(_Keyword):
+    def __str__(self):
+        return 'kw_rotate'
+
+    def __repr__(self):
+        return str(self)
+
+KEYWORD_ROTATE = _KeyWordRotate()
+
+
+class _KeyWordScale(_Keyword):
+    def __str__(self):
+        return 'kw_scale'
+
+    def __repr__(self):
+        return str(self)
+
+KEYWORD_SCALE = _KeyWordScale()
+
+
 class _KeyWordCode(_Keyword):
     def __str__(self):
         return 'kw_code'

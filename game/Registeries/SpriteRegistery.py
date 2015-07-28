@@ -23,23 +23,28 @@ def reinit():
 
 class SpriteReg(Sprite):
 
-    def __init__(self, code, x, y):
+    def __init__(self, code, x, y, rotate, scale):
         Sprite.__init__(self)
         self.num = None
-        self.reload(code, x, y)
+        self.reload(code, x, y, rotate, scale)
         spritesList.add(self)
 
-    def reload(self, code, x, y):
+    def reload(self, code, x, y, rotate, scale):
         filePath = _rootDir + '/' + _spritesDictionnary[code]
         import game.gameWindow as gameWindow
         scene = gameWindow.getScene()
 
-        if self.num is None or self.num != code:
+        if self.num is None or self.num != code or rotate != 0 or scale != 1:
             self.num = code
             self.image = pygame.image.load(filePath).convert_alpha(scene)
             self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        if rotate != 0 or scale != 1:
+            self.image = pygame.transform.rotozoom(self.image, rotate, scale)
+            transformedRect = self.image.get_rect()
+            transformedRect.center = self.rect.center
+            self.rect = transformedRect
 
     def __str__(self):
         return str((self.num, self.rect))

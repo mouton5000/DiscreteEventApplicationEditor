@@ -5,11 +5,11 @@ from game.Registeries import SpriteRegistery, \
     LineRegistery, RectRegistery, OvalRegistery, PolygonRegistery, \
     TextRegistery
 from collections import defaultdict
-from grammar.Keywords import KEYWORD_ID, \
+from grammar.keywords import KEYWORD_ID, \
     KEYWORD_X, KEYWORD_Y, KEYWORD_X_INT, KEYWORD_Y_INT,\
     KEYWORD_H, KEYWORD_W,\
     KEYWORD_CODE, KEYWORD_COLOR, KEYWORD_WIDTH, \
-    KEYWORD_TEXT, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE
+    KEYWORD_TEXT, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_ROTATE, KEYWORD_SCALE
 from itertools import count, takewhile
 
 
@@ -305,15 +305,17 @@ class SpriteProperty(NamedExpression):
         return \
             int(self._kwargs[KEYWORD_CODE]), \
             int(self._kwargs[KEYWORD_X]), \
-            int(self._kwargs[KEYWORD_Y])
+            int(self._kwargs[KEYWORD_Y]), \
+            int(self._kwargs.setdefault(KEYWORD_ROTATE, 0)), \
+            float(self._kwargs.setdefault(KEYWORD_SCALE, 1))
 
     def initSpriteRegister(self):
-        code, x, y = self.getSpriteInfo()
-        self._spriteRegister = SpriteRegistery.SpriteReg(code, x, y)
+        code, x, y, rotate, scale = self.getSpriteInfo()
+        self._spriteRegister = SpriteRegistery.SpriteReg(code, x, y, rotate, scale)
 
     def reloadSpriteRegister(self):
-        code, x, y = self.getSpriteInfo()
-        self._spriteRegister.reload(code, x, y)
+        code, x, y, rotate, scale = self.getSpriteInfo()
+        self._spriteRegister.reload(code, x, y, rotate, scale)
 
     def getSpriteRegister(self):
         return self._spriteRegister
