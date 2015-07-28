@@ -3,6 +3,7 @@ __author__ = 'mouton'
 import pygame
 from pygame import Color
 
+pygame.font.init()
 
 DEFAULT_COLOR = '000000'
 DEFAULT_FONT_NAME = 'Arial'
@@ -10,9 +11,12 @@ DEFAULT_FONT_SIZE = 40
 
 
 _textsList = []
+_rootDir = None
 
 
-def init():
+def init(rootDir):
+    global _rootDir
+    _rootDir = rootDir
     reinit()
 
 
@@ -35,9 +39,13 @@ class TextReg:
         self.x = x
         self.y = y
         self.colorName = colorName
+        fontName = _rootDir + '/' + fontName
         self.fontName = fontName
         self.fontSize = fontSize
-        labelFont = pygame.font.SysFont(fontName, fontSize)
+        try:
+            labelFont = pygame.font.Font(fontName, fontSize)
+        except IOError:
+            labelFont = pygame.font.SysFont('', fontSize)
         self.label = labelFont.render(text, True, Color('#' + self.colorName))
 
     def __str__(self):

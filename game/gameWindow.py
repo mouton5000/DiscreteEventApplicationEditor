@@ -17,7 +17,7 @@ pygame.init()
 pygame.display.init()
 pygame.joystick.init()
 pygame.mixer.init()
-
+pygame.font.init()
 
 _scene = None
 
@@ -39,7 +39,7 @@ def init(fps, width, height, spritesDictionnary, soundsDictionnary, rootDir):
     spriteReg.spritesList.draw(_scene)
     soundReg.init(soundsDictionnary, rootDir)
 
-    textReg.init()
+    textReg.init(rootDir)
     lineReg.init()
     rectReg.init()
     ovalReg.init()
@@ -64,6 +64,8 @@ def tick():
 
     _scene.fill((255, 255, 255))
 
+    spriteReg.spritesList.draw(_scene)
+
     for lineItem in lineReg.lineItemsIterator():
         color = Color('#' + lineItem.colorName)
         pygame.draw.line(_scene, color, (lineItem.x1, lineItem.y1), (lineItem.x2, lineItem.y2), lineItem.width)
@@ -80,8 +82,6 @@ def tick():
     for polygonItem in polygonReg.polygonItemsIterator():
         color = Color('#' + polygonItem.colorName)
         pygame.draw.polygon(_scene, color, polygonItem.pointList, polygonItem.width)
-
-    spriteReg.spritesList.draw(_scene)
 
     for textItem in textReg.textItemsIterator():
         label = textItem.label
