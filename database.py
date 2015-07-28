@@ -489,11 +489,11 @@ class OvalProperty(NamedExpression):
 
     def initOvalRegister(self):
         x, y, w, h, width, color = self.getOvalInfo()
-        self._ovalRegister = OvalRegistery.OvalReg(x, y, h, w, width, color)
+        self._ovalRegister = OvalRegistery.OvalReg(x, y, w, h, width, color)
 
     def reloadOvalRegister(self):
         x, y, w, h, width, color = self.getOvalInfo()
-        self._ovalRegister.reload(x, y, h, w, width, color)
+        self._ovalRegister.reload(x, y, w, h, width, color)
 
     def getOvalRegister(self):
         return self._ovalRegister
@@ -548,11 +548,11 @@ class RectProperty(NamedExpression):
 
     def initRectRegister(self):
         x, y, w, h, width, color = self.getRectInfo()
-        self._rectRegister = RectRegistery.RectReg(x, y, h, w, width, color)
+        self._rectRegister = RectRegistery.RectReg(x, y, w, h, width, color)
 
     def reloadRectRegister(self):
         x, y, w, h, width, color = self.getRectInfo()
-        self._rectRegister.reload(x, y, h, w, width, color)
+        self._rectRegister.reload(x, y, w, h, width, color)
 
     def getRectRegister(self):
         return self._rectRegister
