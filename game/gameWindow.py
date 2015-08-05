@@ -1,8 +1,6 @@
 __author__ = 'mouton'
 
 import pygame
-from pygame import Color
-from pygame.rect import Rect
 
 from database import Event
 import game.Registeries.SoundRegistery as soundReg
@@ -66,7 +64,6 @@ def tick():
     _scene.fill((255, 255, 255))
 
     regs = [spriteReg, lineReg, ovalReg, rectReg, polygonReg, textReg]
-    print list(spriteReg.getLayers())
 
     # Il est necessaire de passer par cette fonction auxilliaire, sinon c'est le meme code qui est attribue a tous
     # les generateurs
@@ -131,6 +128,8 @@ def _readEvents():
             return False
         elif event.type == pygame.KEYDOWN:
             _readKeyDownEvent(event)
+        elif event.type == pygame.MOUSEBUTTONUP:
+            _readMouseButtonUpEvent(event)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             _readMouseButtonDownEvent(event)
         elif event.type == pygame.JOYBUTTONDOWN:
@@ -153,6 +152,10 @@ def _readKeyDownEvent(event):
         Event.add('Key', ['down'], {})
     elif event.key == pygame.K_UP:
         Event.add('Key', ['up'], {})
+
+
+def _readMouseButtonUpEvent(event):
+    Event.add('MouseUp', [event.pos[0], event.pos[1]], {})
 
 
 def _readMouseButtonDownEvent(event):
