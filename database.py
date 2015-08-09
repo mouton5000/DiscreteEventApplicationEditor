@@ -8,7 +8,7 @@ from collections import defaultdict
 from grammar.keywords import KEYWORD_ID, \
     KEYWORD_X, KEYWORD_Y, KEYWORD_X_INT, KEYWORD_Y_INT,\
     KEYWORD_H, KEYWORD_W,\
-    KEYWORD_CODE, KEYWORD_COLOR, KEYWORD_WIDTH, \
+    KEYWORD_FILENAME, KEYWORD_COLOR, KEYWORD_WIDTH, \
     KEYWORD_TEXT, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_ROTATE, KEYWORD_SCALE, KEYWORD_Z
 from itertools import count, takewhile
 
@@ -303,7 +303,7 @@ class SpriteProperty(NamedExpression):
 
     def getSpriteInfo(self):
         return \
-            int(self._kwargs[KEYWORD_CODE]), \
+            str(self._kwargs[KEYWORD_FILENAME]), \
             int(self._kwargs[KEYWORD_X]), \
             int(self._kwargs[KEYWORD_Y]), \
             int(self._kwargs.setdefault(KEYWORD_Z, 0)), \
@@ -311,12 +311,12 @@ class SpriteProperty(NamedExpression):
             float(self._kwargs.setdefault(KEYWORD_SCALE, 1))
 
     def initSpriteRegister(self):
-        code, x, y, z, rotate, scale = self.getSpriteInfo()
-        self._spriteRegister = SpriteRegistery.SpriteReg(code, x, y, z, rotate, scale)
+        fileName, x, y, z, rotate, scale = self.getSpriteInfo()
+        self._spriteRegister = SpriteRegistery.SpriteReg(fileName, x, y, z, rotate, scale)
 
     def reloadSpriteRegister(self):
-        code, x, y, z, rotate, scale = self.getSpriteInfo()
-        self._spriteRegister.reload(code, x, y, z, rotate, scale)
+        fileName, x, y, z, rotate, scale = self.getSpriteInfo()
+        self._spriteRegister.reload(fileName, x, y, z, rotate, scale)
 
     def getSpriteRegister(self):
         return self._spriteRegister

@@ -28,14 +28,14 @@ _height = 0
 _clock = pygame.time.Clock()
 
 
-def init(fps, width, height, spritesDictionnary, soundsDictionnary, rootDir):
+def init(fps, width, height, soundsDictionnary, rootDir):
     global _scene, _fps, _width, _height
     _scene = pygame.display.set_mode([width, height])
     _scene.fill((255, 255, 255))
     _fps = fps
     _width = width
     _height = height
-    spriteReg.init(spritesDictionnary, rootDir)
+    spriteReg.init(rootDir)
     soundReg.init(soundsDictionnary, rootDir)
 
     textReg.init(rootDir)

@@ -9,7 +9,7 @@ from triggerExpressions import BLitteral, Timer, eLock, \
     EventTriggerExpression, TokenExpression, SpriteTriggerExpression, TextTriggerExpression, \
     LineTriggerExpression, OvalTriggerExpression, RectTriggerExpression, PolygonTriggerExpression
 from database import Variable
-from keywords import KEYWORD_ID, KEYWORD_CODE, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_H, \
+from keywords import KEYWORD_ID, KEYWORD_FILENAME, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_H, \
     KEYWORD_TEXT, KEYWORD_WIDTH, KEYWORD_W, KEYWORD_X_INT, KEYWORD_X, KEYWORD_Y_INT, KEYWORD_Y, KEYWORD_Z, \
     KEYWORD_ROTATE, KEYWORD_SCALE
 from utils.mathutils import sign
@@ -51,7 +51,7 @@ class TriggerParser(lrparsing.Grammar):
         rotate = Token('rotate')
         scale = Token('scale')
 
-        code = Token('code')
+        fileName = Token('fileName')
         color = Token('color')
         width = Token('width')
         text = Token('text')
@@ -120,7 +120,7 @@ class TriggerParser(lrparsing.Grammar):
                        T.coordXInt | T.coordYInt | \
                        T.coordH | T.coordW | \
                        T.rotate | T.scale | \
-                       T.code | \
+                       T.fileName | \
                        T.color | T.width | \
                        T.text | T.fontName | T.fontSize
     namedParameter = namedParameterKW + '=' + parameter
@@ -326,11 +326,11 @@ class TriggerParser(lrparsing.Grammar):
             expr = cls.buildExpression(tree[2])
             return UniqueEval(expr)
 
-        def keywordCodeValue():
-            return KEYWORD_CODE
-
         def keywordColorValue():
             return KEYWORD_COLOR
+
+        def keywordFileNameValue():
+            return KEYWORD_FILENAME
 
         def keywordFontNameValue():
             return KEYWORD_FONT_NAME
@@ -401,7 +401,7 @@ class TriggerParser(lrparsing.Grammar):
             TriggerParser.T.rotate: keywordRotateValue,
             TriggerParser.T.scale: keywordScaleValue,
 
-            TriggerParser.T.code: keywordCodeValue,
+            TriggerParser.T.fileName: keywordFileNameValue,
             TriggerParser.T.color: keywordColorValue,
             TriggerParser.T.width: keywordWidthValue,
             TriggerParser.T.text: keywordTextValue,

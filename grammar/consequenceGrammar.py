@@ -4,7 +4,7 @@ from arithmeticExpressions import ALitteral, Addition, Subtraction, Product, Div
     Power, Func, UndefinedLitteral, SelfLitteral, Min, Max, globalsFpsExpression, globalsHeightExpression, \
     globalsWidthExpression
 from database import Variable
-from grammar.keywords import KEYWORD_ID, KEYWORD_CODE, \
+from grammar.keywords import KEYWORD_ID, KEYWORD_FILENAME, \
     KEYWORD_Y, KEYWORD_X, KEYWORD_X_INT, KEYWORD_Y_INT, \
     KEYWORD_W, KEYWORD_H, KEYWORD_ROTATE, KEYWORD_SCALE, \
     KEYWORD_WIDTH, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_TEXT, KEYWORD_Z
@@ -55,7 +55,7 @@ class ConsequenceParser(lrparsing.Grammar):
         rotate = Token('rotate')
         scale = Token('scale')
 
-        code = Token('code')
+        fileName = Token('fileName')
         color = Token('color')
         width = Token('width')
         text = Token('text')
@@ -106,7 +106,7 @@ class ConsequenceParser(lrparsing.Grammar):
                        T.coordXInt | T.coordYInt | \
                        T.coordH | T.coordW | \
                        T.rotate | T.scale | \
-                       T.code | \
+                       T.fileName | \
                        T.color | T.width | \
                        T.text | T.fontName | T.fontSize
 
@@ -305,11 +305,11 @@ class ConsequenceParser(lrparsing.Grammar):
         def clearAll():
             return ClearAll()
 
-        def keywordCodeValue():
-            return KEYWORD_CODE
-
         def keywordColorValue():
             return KEYWORD_COLOR
+
+        def keywordFileNameValue():
+            return KEYWORD_FILENAME
 
         def keywordFontNameValue():
             return KEYWORD_FONT_NAME
@@ -373,7 +373,7 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.T.rotate: keywordRotateValue,
             ConsequenceParser.T.scale: keywordScaleValue,
 
-            ConsequenceParser.T.code: keywordCodeValue,
+            ConsequenceParser.T.fileName: keywordFileNameValue,
             ConsequenceParser.T.color: keywordColorValue,
             ConsequenceParser.T.width: keywordWidthValue,
             ConsequenceParser.T.text: keywordTextValue,

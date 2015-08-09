@@ -119,14 +119,14 @@ class _KeyWordScale(_Keyword):
 KEYWORD_SCALE = _KeyWordScale()
 
 
-class _KeyWordCode(_Keyword):
+class _KeyWordFileName(_Keyword):
     def __str__(self):
-        return 'kw_code'
+        return 'kw_fileName'
 
     def __repr__(self):
         return str(self)
 
-KEYWORD_CODE = _KeyWordCode()
+KEYWORD_FILENAME = _KeyWordFileName()
 
 
 class _KeyWordWidth(_Keyword):

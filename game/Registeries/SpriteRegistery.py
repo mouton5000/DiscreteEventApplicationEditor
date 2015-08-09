@@ -4,16 +4,13 @@ from pygame.sprite import Sprite
 import pygame
 from collections import defaultdict
 
-
-_spritesDictionnary = None
 _rootDir = None
 
 _spritesList = defaultdict(pygame.sprite.OrderedUpdates)
 
 
-def init(spritesDictionnary, rootDir):
-    global _spritesDictionnary, _rootDir
-    _spritesDictionnary = spritesDictionnary
+def init(rootDir):
+    global _rootDir
     _rootDir = rootDir
     reinit()
 
@@ -29,21 +26,22 @@ def getLayers():
 def draw(z, scene):
     _spritesList[z].draw(scene)
 
+
 class SpriteReg(Sprite):
 
-    def __init__(self, code, x, y, z, rotate, scale):
+    def __init__(self, fileName, x, y, z, rotate, scale):
         Sprite.__init__(self)
-        self.num = None
+        self.fileName = None
         self.z = None
-        self.reload(code, x, y, z, rotate, scale)
+        self.reload(fileName, x, y, z, rotate, scale)
 
-    def reload(self, code, x, y, z, rotate, scale):
-        filePath = _rootDir + '/' + _spritesDictionnary[code]
+    def reload(self, fileName, x, y, z, rotate, scale):
+        filePath = _rootDir + '/' + fileName
         import game.gameWindow as gameWindow
         scene = gameWindow.getScene()
 
-        if self.num is None or self.num != code or rotate != 0 or scale != 1:
-            self.num = code
+        if self.fileName is None or self.fileName != fileName or rotate != 0 or scale != 1:
+            self.fileName = fileName
             self.image = pygame.image.load(filePath).convert_alpha(scene)
             self.rect = self.image.get_rect()
         self.rect.x = x
@@ -60,10 +58,10 @@ class SpriteReg(Sprite):
         self.z = z
 
     def __str__(self):
-        return str((self.num, self.rect))
+        return str((self.fileName, self.rect))
 
     def __repr__(self):
-        return str((self.num, self.rect))
+        return str((self.fileName, self.rect))
 
     def remove(self):
         _spritesList[self.z].remove(self)
