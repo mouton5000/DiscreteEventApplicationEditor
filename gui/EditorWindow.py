@@ -335,10 +335,9 @@ class MainWindow(QMainWindow):
         maxTick = setW.getMaxTick()
         width = setW.getWidth()
         height = setW.getHeight()
-        soundsDictionnary = setW.getSoundsDictionnary()
         rootDir = self._lastSaveOpenFileDirectory
 
-        gameWindow.init(fps, width, height, soundsDictionnary, rootDir)
+        gameWindow.init(fps, width, height, rootDir)
 
         frame = 0
         tick = 0

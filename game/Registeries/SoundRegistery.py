@@ -3,13 +3,11 @@ __author__ = 'mouton'
 from pygame.mixer import Sound
 
 
-_soundsDictionnary = None
 _rootDir = None
 
 
-def init(soundsDictionnary, rootDir):
-    global _soundsDictionnary, _rootDir
-    _soundsDictionnary = soundsDictionnary
+def init(rootDir):
+    global _rootDir
     _rootDir = rootDir
     reinit()
 
@@ -18,7 +16,7 @@ def reinit():
     pass
 
 
-def playSound(num):
-    soundFile = _rootDir + '/' + _soundsDictionnary[num]
+def playSound(filename):
+    soundFile = _rootDir + '/' + filename
     sound = Sound(soundFile)
     sound.play()

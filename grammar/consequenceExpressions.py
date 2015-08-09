@@ -361,25 +361,13 @@ class ClearAll(object):
 
 
 class AddSoundConsequence():
-    def __init__(self, num):
-        self._num = num
+    def __init__(self, filename):
+        self._filename = filename
 
     def eval_update(self, evaluation, *_):
         try:
-            num = int(_evalArg(self._num, evaluation))
-            soundRegistery.playSound(num)
+            filename = str(_evalArg(self._filename, evaluation))
+            soundRegistery.playSound(filename)
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
-
-    @property
-    def num(self):
-        return self._num
-
-    @property
-    def x(self):
-        return self._x
-
-    @property
-    def y(self):
-        return self._y

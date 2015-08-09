@@ -205,8 +205,8 @@ class ConsequenceParser(lrparsing.Grammar):
             return clsCons(name, args, kwargs)
 
         def buildAddSound():
-            num = cls.buildExpression(tree[4])
-            return AddSoundConsequence(num)
+            filename = cls.buildExpression(tree[4])
+            return AddSoundConsequence(filename)
 
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
