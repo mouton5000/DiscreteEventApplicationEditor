@@ -126,8 +126,6 @@ def _readEvents():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return False
-        elif event.type == pygame.KEYDOWN:
-            _readKeyDownEvent(event)
         elif event.type == pygame.MOUSEBUTTONUP:
             _readMouseButtonUpEvent(event)
         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -140,18 +138,34 @@ def _readEvents():
             _readJoystickHatMotionEvent(event)
         elif event.type == pygame.JOYBALLMOTION:
             _readJoystickBallMotionEvent(event)
+
+    _readKeyDownEvent()
+
     return True
 
 
-def _readKeyDownEvent(event):
-    if event.key == pygame.K_LEFT:
+def _readKeyDownEvent():
+    pressed = pygame.key.get_pressed()
+    if pressed[pygame.K_LEFT]:
         Event.add('Key', ['left'], {})
-    elif event.key == pygame.K_RIGHT:
+    if pressed[pygame.K_RIGHT]:
         Event.add('Key', ['right'], {})
-    elif event.key == pygame.K_DOWN:
+    if pressed[pygame.K_DOWN]:
         Event.add('Key', ['down'], {})
-    elif event.key == pygame.K_UP:
+    if pressed[pygame.K_UP]:
         Event.add('Key', ['up'], {})
+    if pressed[pygame.K_z]:
+        Event.add('Key', ['Z'], {})
+    if pressed[pygame.K_q]:
+        Event.add('Key', ['Q'], {})
+    if pressed[pygame.K_s]:
+        Event.add('Key', ['S'], {})
+    if pressed[pygame.K_d]:
+        Event.add('Key', ['D'], {})
+    if pressed[pygame.K_SPACE]:
+        Event.add('Key', ['SPACE'], {})
+    if pressed[pygame.K_KP0]:
+        Event.add('Key', ['KP0'], {})
 
 
 def _readMouseButtonUpEvent(event):
