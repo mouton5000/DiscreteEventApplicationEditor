@@ -44,6 +44,7 @@ def init(fps, width, height, rootDir):
     ovalReg.init()
     polygonReg.init()
 
+    _scene.fill((255, 255, 255))
     pygame.display.flip()
 
 
@@ -55,6 +56,9 @@ def reinit():
     ovalReg.reinit()
     polygonReg.reinit()
     soundReg.reinit()
+
+    _scene.fill((255, 255, 255))
+    pygame.display.flip()
 
 
 def tick():
@@ -76,7 +80,11 @@ def tick():
     for layer, code in layers:
         regs[code].draw(layer, _scene)
 
-    pygame.display.flip()
+    rectsToUpdate = sum((reg.getRectsToUpdate() for reg in regs), [])
+    pygame.display.update(rectsToUpdate)
+
+    for reg in regs:
+        reg.clearRectsToUpdate()
 
     _clock.tick(_fps)
 

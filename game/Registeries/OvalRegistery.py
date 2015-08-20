@@ -9,6 +9,7 @@ DEFAULT_WIDTH = 1
 DEFAULT_COLOR = '000000'
 
 _ovalsList = defaultdict(list)
+_rectsToUpdate = []
 
 
 def init():
@@ -17,6 +18,7 @@ def init():
 
 def reinit():
     _ovalsList.clear()
+    del _rectsToUpdate[:]
 
 
 def getLayers():
@@ -30,13 +32,35 @@ def draw(z, scene):
                                                      ovalItem.w, ovalItem.h), ovalItem.width)
 
 
+def addRectToUpdate(rectToUpdate):
+    _rectsToUpdate.append(rectToUpdate)
+
+
+def getRectsToUpdate():
+    return _rectsToUpdate
+
+
+def clearRectsToUpdate():
+    del _rectsToUpdate[:]
+
+
 class OvalReg:
 
     def __init__(self, x, y, w, h, z, width, colorName):
         self.z = None
+        self.x = None
         self.reload(x, y, w, h, z, width, colorName)
 
     def reload(self, x, y, w, h, z, width, colorName):
+        if self.x is not None:
+            rectToUpdate = Rect(self.x - self.w / 2 - 1, self.y - self.h / 2 - 1, self.w + 2, self.h + 2)
+            r2 = Rect(x - w / 2 - 1, y - h / 2 - 1, w + 2, h + 2)
+            rectToUpdate.union_ip(r2)
+            addRectToUpdate(rectToUpdate)
+        else:
+            rectToUpdate = Rect(x - w / 2 - 1, y - h / 2 - 1, w + 2, h + 2)
+            addRectToUpdate(rectToUpdate)
+
         self.x = x
         self.y = y
         self.w = w
@@ -56,3 +80,5 @@ class OvalReg:
 
     def remove(self):
         _ovalsList[self.z].remove(self)
+        rectToUpdate = Rect(self.x - self.w / 2 - 1, self.y - self.h / 2 - 1, self.w + 2, self.h + 2)
+        addRectToUpdate(rectToUpdate)
