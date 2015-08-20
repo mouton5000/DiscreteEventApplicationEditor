@@ -189,13 +189,12 @@ class NamedExpression(ParameterizedExpression):
 
     @staticmethod
     def _edit(name, args1, kwargs1, unevaluatedArgs2, unevaluatedKWArgs2, evaluation, container, beforeEdit, afterEdit):
-
         size = len(args1)
 
         if size != len(unevaluatedArgs2) and KEYWORD_ID not in kwargs1:
             return
 
-        def editElem(elem, doFilter=True):
+        def doEditElem(elem, doFilter=True):
             if doFilter and not elem.filter(args1, kwargs1):
                 return
 
@@ -204,6 +203,9 @@ class NamedExpression(ParameterizedExpression):
             if not all(elem.containsKey(key2) for _, key2 in keys2):
                 return
 
+            return keys2
+
+        def editElem(elem, keys2):
             newArgCommands = []
             for (index, arg), param in zip(enumerate(unevaluatedArgs2), elem.iterArgs()):
                 newArg = arg.value(evaluation, selfParam=param)
@@ -224,10 +226,11 @@ class NamedExpression(ParameterizedExpression):
 
         if KEYWORD_ID in kwargs1:
             elem = NamedExpression.namedExpressionsById[kwargs1[KEYWORD_ID]]
-            if elem not in container[name]:
+            keys2 = doEditElem(elem, False)
+            if elem not in container[name] or keys2 is None:
                 return
             beforeEdit(elem)
-            editElem(elem, False)
+            editElem(elem, keys2)
             afterEdit(elem)
             return
 
@@ -237,9 +240,11 @@ class NamedExpression(ParameterizedExpression):
             return
 
         for elem in elems:
-            beforeEdit(elem)
-            editElem(elem)
-            afterEdit(elem)
+            keys2 = doEditElem(elem)
+            if keys2 is not None:
+                beforeEdit(elem)
+                editElem(elem, keys2)
+                afterEdit(elem)
 
 
 class Property(NamedExpression):
