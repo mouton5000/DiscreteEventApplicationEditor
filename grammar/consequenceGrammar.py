@@ -97,7 +97,6 @@ class ConsequenceParser(lrparsing.Grammar):
         edit = Token('edit')
         printToken = Token('print')
 
-
     consExpr = Ref('consExpr')
     arithmExpr = Ref('arithmExpr')
 
