@@ -190,12 +190,16 @@ class NamedExpression(ParameterizedExpression):
     @staticmethod
     def _edit(name, args1, kwargs1, unevaluatedArgs2, unevaluatedKWArgs2, evaluation, container, beforeEdit, afterEdit):
         size = len(args1)
+        size2 = len(unevaluatedArgs2)
 
-        if size != len(unevaluatedArgs2) and KEYWORD_ID not in kwargs1:
+        if size != size2 and KEYWORD_ID not in kwargs1:
             return
 
         def doEditElem(elem, doFilter=True):
             if doFilter and not elem.filter(args1, kwargs1):
+                return
+
+            if size2 != elem.lenArgs():
                 return
 
             keys2 = [(unevaluatedKey2, unevaluatedKey2.value(evaluation)) for unevaluatedKey2 in unevaluatedKWArgs2]
@@ -371,7 +375,7 @@ class TextProperty(NamedExpression):
             str(self._kwargs[KEYWORD_TEXT]), \
             int(self._kwargs[KEYWORD_X]), \
             int(self._kwargs[KEYWORD_Y]), \
-            int(self._kwargs.setdefault(KEYWORD_Z,0)), \
+            int(self._kwargs.setdefault(KEYWORD_Z, 0)), \
             str(self._kwargs.setdefault(KEYWORD_COLOR, TextRegistery.DEFAULT_COLOR)), \
             str(self._kwargs.setdefault(KEYWORD_FONT_NAME, TextRegistery.DEFAULT_FONT_NAME)), \
             int(self._kwargs.setdefault(KEYWORD_FONT_SIZE, TextRegistery.DEFAULT_FONT_SIZE))
@@ -688,3 +692,6 @@ class Variable(object):
 
     def __repr__(self):
         return str(self.name)
+
+    def export(self):
+        return 'Variable(\'' + self.name + '\')'
