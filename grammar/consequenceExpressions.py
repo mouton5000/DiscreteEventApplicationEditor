@@ -35,6 +35,13 @@ class AddParameterizedNamedConsequence(object):
             import traceback
             print traceback.format_exc()
 
+    def export(self):
+        return self.__class__.__name__ + '(' + \
+            '\'' + self._name + '\'' + \
+            ',' + '[' + ','.join(arg.export() for arg in self._args) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
+            ')'
+
 
 class RemoveParameterizedNamedConsequence(object):
 
@@ -53,6 +60,13 @@ class RemoveParameterizedNamedConsequence(object):
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
+
+    def export(self):
+        return self.__class__.__name__ + '(' + \
+            '\'' + self._name + '\'' + \
+            ',' + '[' + ','.join(arg.export() for arg in self._args) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
+            ')'
 
 
 class EditParameterizedNamedConsequence(object):
@@ -74,6 +88,15 @@ class EditParameterizedNamedConsequence(object):
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
+
+    def export(self):
+        return self.__class__.__name__ + '(' + \
+            '\'' + self._name + '\'' + \
+            ',' + '[' + ','.join(arg.export() for arg in self._args1) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs1.iteritems()) + '}' + \
+            ',' + '[' + ','.join(arg.export() for arg in self._args2) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs2.iteritems()) + '}' + \
+            ')'
 
 
 class AddPropertyConsequence(AddParameterizedNamedConsequence):
@@ -282,6 +305,13 @@ class AddTokenConsequence(object):
             import traceback
             print traceback.format_exc()
 
+    def export(self):
+        return 'AddTokenConsequence(' + \
+            self._nodeNum.export() + \
+            ',' + '[' + ','.join(arg.export() for arg in self._args) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
+            ')'
+
 
 class EditTokenConsequence(object):
     def __init__(self, args, kwargs):
@@ -295,6 +325,12 @@ class EditTokenConsequence(object):
             import traceback
             print traceback.format_exc()
 
+    def export(self):
+        return 'EditTokenConsequence(' + \
+            '[' + ','.join(arg.export() for arg in self._args) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
+            ')'
+
 
 class RemoveTokenConsequence(object):
     def __init__(self):
@@ -303,6 +339,9 @@ class RemoveTokenConsequence(object):
     def eval_update(self, _, token):
         stateMachine.removeToken(token)
 
+    def export(self):
+        return 'RemoveTokenConsequence()'
+
 
 class RemoveAllTokenConsequence(object):
     def __init__(self):
@@ -310,6 +349,9 @@ class RemoveAllTokenConsequence(object):
 
     def eval_update(self, *_):
         stateMachine.removeAllToken()
+
+    def export(self):
+        return 'RemoveAllTokenConsequence()'
 
 
 class PrintConsequence(object):
@@ -323,6 +365,9 @@ class PrintConsequence(object):
             import traceback
             print traceback.format_exc()
 
+    def export(self):
+        return 'PrintConsequence(' + str([foo.export() for foo in self.toPrint]) + ')'
+
 
 class EditGlobalFps(object):
     def __init__(self, newValue):
@@ -331,6 +376,9 @@ class EditGlobalFps(object):
     def eval_update(self, evaluation, *_):
         fps = _evalArg(self.newValue, evaluation)
         gameWindow.setFps(fps)
+
+    def export(self):
+        return 'EditGlobalFps(' + self.newValue.export() + ')'
 
 
 class EditGlobalWidth(object):
@@ -341,6 +389,9 @@ class EditGlobalWidth(object):
         width = _evalArg(self.newValue, evaluation)
         gameWindow.setWidth(width)
 
+    def export(self):
+        return 'EditGlobalWidth(' + self.newValue.export() + ')'
+
 
 class EditGlobalHeight(object):
     def __init__(self, newValue):
@@ -350,6 +401,9 @@ class EditGlobalHeight(object):
         height = _evalArg(self.newValue, evaluation)
         gameWindow.setHeight(height)
 
+    def export(self):
+        return 'EditGlobalHeight(' + self.newValue.export() + ')'
+
 
 class ClearAll(object):
     def __init__(self):
@@ -358,6 +412,9 @@ class ClearAll(object):
     def eval_update(self, evaluation, *_):
         stateMachine.reinit()
         gameWindow.reinit()
+
+    def export(self):
+        return 'ClearAll()'
 
 
 class AddSoundConsequence():
@@ -371,3 +428,6 @@ class AddSoundConsequence():
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
+
+    def export(self):
+        return 'AddSoundConsequence(' + self._filename.export() + ')'

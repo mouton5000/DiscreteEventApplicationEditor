@@ -25,6 +25,16 @@ class ALitteral(object):
         else:
             return self._value
 
+    def export(self):
+        try:
+            exportValue = self._value.export()
+        except AttributeError:
+            if isinstance(self._value, basestring):
+                exportValue = '\'' + self._value + '\''
+            else:
+                exportValue = str(self._value)
+        return 'ALitteral(' + exportValue + ')'
+
 
 class UndefinedLitteral(object):
     def __init__(self):
@@ -39,6 +49,9 @@ class UndefinedLitteral(object):
     def value(self, _, selfParam=None):
         from database import UNDEFINED_PARAMETER
         return UNDEFINED_PARAMETER
+
+    def export(self):
+        return 'UndefinedLitteral()'
 
 
 # class ListLitteral(object):
@@ -96,6 +109,8 @@ class ABiOp(object):
             raise TypeError
         return self.operation(v1, v2)
 
+    def export(self):
+        return self.__class__.__name__ + '(' + self._a1.export() + ', ' + self._a2.export() + ')'
 
 class Addition(ABiOp):
     def __init__(self, a1, a2):
@@ -414,6 +429,9 @@ class Func(AUnOp):
     def operation(self, v):
         return self._func(v)
 
+    def export(self):
+        return 'Func(' + self._a.export() + ', ' + str(self._func.__name__) + ')'
+
 
 class _GlobalFPS(object):
     def __init__(self):
@@ -424,6 +442,9 @@ class _GlobalFPS(object):
 
     def value(self, _, selfParam=None):
         return gameWindow.getFps()
+
+    def export(self):
+        return 'globalsFpsExpression'
 
 globalsFpsExpression = _GlobalFPS()
 
@@ -438,6 +459,9 @@ class _GlobalWidth(object):
     def value(self, _, selfParam=None):
         return gameWindow.getWidth()
 
+    def export(self):
+        return 'globalsWidthExpression'
+
 globalsWidthExpression = _GlobalWidth()
 
 
@@ -451,6 +475,9 @@ class _GlobalHeight(object):
     def value(self, _, selfParam=None):
         return gameWindow.getHeight()
 
+    def export(self):
+        return 'globalsHeightExpression'
+
 globalsHeightExpression = _GlobalHeight()
 
 
@@ -462,3 +489,6 @@ class SelfLitteral():
         if selfParam is None:
             raise ValueError
         return selfParam
+
+    def export(self):
+        return 'SelfLitteral()'

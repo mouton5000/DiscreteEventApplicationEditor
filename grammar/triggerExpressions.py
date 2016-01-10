@@ -37,6 +37,9 @@ class BExpression(object):
     def eval(self, token):
         return self._expr.eval(token, Evaluation())
 
+    def export(self):
+        return 'BExpression(' + self._expr.export() + ')'
+
 
 class Evaluation(object):
     def __init__(self):
@@ -103,6 +106,9 @@ class BLitteral(object):
         if self._value:
             yield previousEvaluation
 
+    def export(self):
+        return 'BLitteral(' + str(self._value) + ')'
+
 
 class BBiOp(object):
     def __init__(self, a1, a2):
@@ -122,6 +128,9 @@ class And(BBiOp):
         return chain.from_iterable(self._a2.eval(token, eval1) for eval1 in self._a1.eval(token, previousEvaluation)
                                    if eval1 is not None)
 
+    def export(self):
+        return 'And(' + self._a1.export() + ',' + self._a2.export() + ')'
+
 
 class Or(BBiOp):
     def __init__(self, a1, a2):
@@ -133,6 +142,9 @@ class Or(BBiOp):
             yield eval1
         for eval2 in self._a2.eval(token, previousEvaluation):
             yield eval2
+
+    def export(self):
+        return 'Or(' + self._a1.export() + ',' + self._a2.export() + ')'
 
 
 class Not(object):
@@ -147,6 +159,9 @@ class Not(object):
             self._a1.eval(token, previousEvaluation).next()
         except StopIteration:
             yield previousEvaluation
+
+    def export(self):
+        return 'Not(' + self._a1.export() + ')'
 
 
 class Timer(object):
@@ -164,6 +179,9 @@ class Timer(object):
                 yield previousEvaluation
         except (ArithmeticError, TypeError, ValueError):
             pass
+
+    def export(self):
+        return 'Timer(' + self._nbFrames.export() + ')'
 
 
 class eLock(object):
@@ -193,6 +211,9 @@ class eLock(object):
         keys = tuple([evalArg(key) for key in self._keys])
         return keys
 
+    def export(self):
+        return 'eLock(' + self._priority.export() + ',' + self._keys.export() + ')'
+
 
 class Is(BBiOp):
     def __init__(self, variable, function):
@@ -209,6 +230,9 @@ class Is(BBiOp):
         except (ArithmeticError, TypeError, ValueError):
             pass
 
+    def export(self):
+        return 'Is(' + self._a1.export() + ',' + self._a2.export() + ')'
+
 
 class Del(object):
     def __init__(self, variable):
@@ -221,6 +245,9 @@ class Del(object):
         except KeyError:
             pass
         yield neval
+
+    def export(self):
+        return 'Del(' + self._a1.export() + ')'
 
 
 class Compare(BBiOp):
@@ -249,6 +276,9 @@ class Equals(Compare):
     def comp(self, v1, v2):
         return v1 == v2
 
+    def export(self):
+        return 'Equals(' + self._a1.export() + ',' + self._a2.export() + ')'
+
 
 class GreaterThan(Compare):
     def __init__(self, a1, a2):
@@ -257,6 +287,9 @@ class GreaterThan(Compare):
 
     def comp(self, v1, v2):
         return v1 > v2
+
+    def export(self):
+        return 'GreaterThan(' + self._a1.export() + ',' + self._a2.export() + ')'
 
 
 class LowerThan(Compare):
@@ -267,6 +300,9 @@ class LowerThan(Compare):
     def comp(self, v1, v2):
         return v1 < v2
 
+    def export(self):
+        return 'LowerThan(' + self._a1.export() + ',' + self._a2.export() + ')'
+
 
 class GeqThan(Compare):
     def __init__(self, a1, a2):
@@ -275,6 +311,9 @@ class GeqThan(Compare):
 
     def comp(self, v1, v2):
         return v1 >= v2
+
+    def export(self):
+        return 'GeqThan(' + self._a1.export() + ',' + self._a2.export() + ')'
 
 
 class LeqThan(Compare):
@@ -285,6 +324,9 @@ class LeqThan(Compare):
     def comp(self, v1, v2):
         return v1 <= v2
 
+    def export(self):
+        return 'LeqThan(' + self._a1.export() + ',' + self._a2.export() + ')'
+
 
 class NotEquals(Compare):
     def __init__(self, a1, a2):
@@ -293,6 +335,9 @@ class NotEquals(Compare):
 
     def comp(self, v1, v2):
         return v1 != v2
+
+    def export(self):
+        return 'NotEquals(' + self._a1.export() + ',' + self._a2.export() + ')'
 
 
 class ParameterizedExpression(object):
@@ -427,6 +472,12 @@ class NamedExpression(ParameterizedExpression):
         except AttributeError:
             return False
 
+    def export(self):
+        return self.__class__.__name__ + '(' + '\'' + str(self._name) + '\'' + \
+            ',' + '[' + ','.join(arg.export() for arg in self._args) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
+            ')'
+
 
 class PropertyTriggerExpression(NamedExpression):
 
@@ -522,6 +573,12 @@ class TokenExpression(ParameterizedExpression):
             if neval is not None:
                 yield neval
 
+    def export(self):
+        return 'TokenExpression(' + \
+            '[' + ','.join(arg.export() for arg in self._args) + ']' + \
+            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
+            ')'
+
 
 class AnyEval(object):
     def __init__(self, expr):
@@ -540,6 +597,9 @@ class AnyEval(object):
             yield evaluations.next()
         except StopIteration:
             pass
+
+    def export(self):
+        return 'AnyEval(' + self._expr.export() + ')'
 
 
 class RandomEval(object):
@@ -564,6 +624,9 @@ class RandomEval(object):
 
         if selectedEvaluation is not None:
             yield selectedEvaluation
+
+    def export(self):
+        return 'RandomEval(' + self._expr.export() + ')'
 
 
 class SelectEval(object):
@@ -605,6 +668,9 @@ class SelectMinEval(SelectEval):
     def __repr__(self):
         return 'SelectMinEval(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
 
+    def export(self):
+        return 'SelectMinEval(' + self._expr.export() + ',' + self._arithmExpr.export() + ')'
+
 
 class SelectMaxEval(SelectEval):
     def __init__(self, expr, arithmExpr):
@@ -617,6 +683,9 @@ class SelectMaxEval(SelectEval):
 
     def __repr__(self):
         return 'SelectMaxEval(' + str(self._expr) + ',' + str(self._arithmExpr) + ')'
+
+    def export(self):
+        return 'SelectMaxEval(' + self._expr.export() + ',' + self._arithmExpr.export() + ')'
 
 
 class UniqueEval(object):
@@ -635,3 +704,6 @@ class UniqueEval(object):
         for evaluation in self._expr.eval(token, previousEvaluation):
             if dc.add(evaluation.variables):
                 yield evaluation
+
+    def export(self):
+        return 'UniqueEval(' + self._expr.export() + ')'

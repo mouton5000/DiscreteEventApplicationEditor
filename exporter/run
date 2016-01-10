@@ -1,0 +1,15 @@
+gameWindow.init(fps, width, height, rootDir)
+
+frame = 0
+tick = 0
+while maxTick <= 0 or tick < maxTick:
+    retick = True
+    while retick and (maxTick <= 0 or tick < maxTick):
+        tick += 1
+        retick = stateMachine.tick()
+    frame += 1
+    stateMachine.updateTokensNbFrames()
+    if not gameWindow.tick():
+        break
+
+gameWindow.hide()

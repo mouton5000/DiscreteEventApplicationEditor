@@ -1,7 +1,12 @@
+# NO EXPORT
+
 from grammar.triggerGrammar import TriggerParser
 from grammar.triggerExpressions import BExpression
 from grammar.consequenceGrammar import ConsequenceParser
 from grammar.tokenGrammar import TokenParametersParser
+
+# EXPORT
+
 import database
 from database import Property, Event, \
     SpriteProperty, TextProperty, LineProperty, \
@@ -60,6 +65,10 @@ def clearTokens():
     _tokens.clear()
 
 
+def getTokens():
+    return _tokens
+
+
 def updateTokensNbFrames():
     for token in _tokens:
         token.oneMoreFrame()
@@ -69,6 +78,10 @@ def addNode(num, label):
     node = Node(num, label)
     _nodes[num] = node
     return node
+
+
+def getNodes():
+    return _nodes.values()
 
 
 def getNodeByNum(num):
@@ -289,6 +302,12 @@ class Token(ParameterizedExpression):
     def nbFrameSinceLastMove(self):
         return self._nbFrameSinceLastMove
 
+    def exportArgs(self):
+        return '[' + ','.join(arg.export() for arg in self._args) + ']'
+
+    def exportKWArgs(self):
+        return '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}'
+
     def __str__(self):
         s = super(Token, self).__str__()
         return '(' + str(self._node.num) + ',' + str(self._nbFrameSinceLastMove) + ',' + s + ')'
@@ -306,6 +325,10 @@ class Node:
     @property
     def num(self):
         return self._num
+
+    @property
+    def name(self):
+        return self._name
 
     def __str__(self):
         return str(self._name)
@@ -341,23 +364,28 @@ class TransitionConsequenceParserException(Exception):
 
 
 class Transition:
-    def __init__(self, in1, in2, trigger, consequences):
+    def __init__(self, in1, in2, trigger, consequences, parse=True):
         self.n1 = in1
         in1.outputArcs.append(self)
         self.n2 = in2
 
-        try:
-            self._trigger = BExpression(TriggerParser.parse(trigger))
-        except LrParsingError as triggerParseError:
-            raise TransitionTriggerParserException(self, trigger, triggerParseError)
+        if parse:
 
-        def parseConsequence(consequence):
             try:
-                return ConsequenceParser.parse(consequence)
-            except LrParsingError as consequenceParseError:
-                raise TransitionConsequenceParserException(self, consequence, consequenceParseError)
+                self._trigger = BExpression(TriggerParser.parse(trigger))
+            except LrParsingError as triggerParseError:
+                raise TransitionTriggerParserException(self, trigger, triggerParseError)
 
-        self._consequences = [parseConsequence(cons) for cons in consequences]
+            def parseConsequence(consequence):
+                try:
+                    return ConsequenceParser.parse(consequence)
+                except LrParsingError as consequenceParseError:
+                    raise TransitionConsequenceParserException(self, consequence, consequenceParseError)
+
+            self._consequences = [parseConsequence(cons) for cons in consequences]
+        else:
+            self._trigger = trigger
+            self._consequences = consequences
 
     def eval(self, token):
         return self._trigger.eval(token)
@@ -365,6 +393,12 @@ class Transition:
     def applyConsequences(self, evaluation, token):
         for parsedCons in self._consequences:
             parsedCons.eval_update(evaluation, token)
+
+    def exportFormula(self):
+        return self._trigger.export()
+
+    def exportConsequences(self):
+        return '[' + ','.join(parsedCons.export() for parsedCons in self._consequences) + ']'
 
     def __str__(self):
         return str(self.n1) + ' ' + str(self.n2)

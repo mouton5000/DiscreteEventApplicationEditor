@@ -14,6 +14,7 @@ from ScenesManagerItems import ViewsManagerWidget
 from collections import deque
 from gui.EditorItem import NodesIdsGenerator, ModeController
 from gui.TabItem import TabbedEditor
+import exporter.exporter
 
 
 class MainWindow(QMainWindow):
@@ -60,6 +61,10 @@ class MainWindow(QMainWindow):
         loadAction.setShortcut('Ctrl+O')
         loadAction.triggered.connect(self.load)
 
+        exportAction = QAction('&Export', self)
+        exportAction.setShortcut('Ctrl+E')
+        exportAction.triggered.connect(self.export)
+
         newSceneAction = QAction('New Scene', self)
         newSceneAction.setShortcut('Ctrl+M')
         newSceneAction.triggered.connect(self.addNewScene)
@@ -69,6 +74,8 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(saveAction)
         fileMenu.addAction(saveAsAction)
         fileMenu.addAction(loadAction)
+        fileMenu.addSeparator()
+        fileMenu.addAction(exportAction)
         fileMenu.addSeparator()
         fileMenu.addAction(newSceneAction)
 
@@ -211,6 +218,7 @@ class MainWindow(QMainWindow):
             fname = str(QFileDialog.getOpenFileName(self, 'Choose file to open',
                                                     self._lastSaveOpenFileDirectory, 'JSON files (*.json)'))
 
+
             with open(fname) as f:
                 d = json.load(f)
 
@@ -283,6 +291,26 @@ class MainWindow(QMainWindow):
 
             self.stack.clear()
 
+    def export(self):
+
+        rootDir = self._lastSaveOpenFileDirectory
+
+        self._compile()
+
+        setW = self.settingsWidget()
+        fps = setW.getFPS()
+        maxTick = setW.getMaxTick()
+        width = setW.getWidth()
+        height = setW.getHeight()
+
+        folderName = rootDir + '/export'
+
+        exporter.exporter.copyFiles(folderName, rootDir)
+        exporter.exporter.writeStaticInfos(folderName)
+        exporter.exporter.writeImportInfos(folderName)
+        exporter.exporter.writeVariableInfos(folderName)
+        exporter.exporter.writeLaunchInfos(folderName, fps, maxTick, width, height, rootDir)
+
     def setCurrentFile(self, currentFile):
         self._currentFile = currentFile
         if currentFile is None:
@@ -304,12 +332,10 @@ class MainWindow(QMainWindow):
     def redo(self):
         self.stack.redo()
 
-    def run(self):
+    def _compile(self):
 
         stateMachine.clearNodes()
         stateMachine.clearTokens()
-
-        DEBUG = False
 
         def compileNode(node):
             return stateMachine.addNode(node.num, str(node.num) + ':' + str(node.getLabel()))
@@ -329,6 +355,12 @@ class MainWindow(QMainWindow):
         for node, compNode in self._nodeDict.iteritems():
             for token in node.getTokens():
                 stateMachine.addToken(compNode, token)
+
+    def run(self):
+
+        DEBUG = False
+
+        self._compile()
 
         setW = self.settingsWidget()
         fps = setW.getFPS()
