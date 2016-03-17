@@ -337,7 +337,10 @@ class RemoveTokenConsequence(object):
         pass
 
     def eval_update(self, _, token):
-        stateMachine.removeToken(token)
+        try:
+            stateMachine.removeToken(token)
+        except KeyError:
+            pass
 
     def export(self):
         return 'RemoveTokenConsequence()'
