@@ -289,18 +289,15 @@ class EditPolygonConsequence(EditParameterizedNamedConsequence):
 
 
 class AddTokenConsequence(object):
-    def __init__(self, nodeNum, args, kwargs):
+    def __init__(self, nodeNum, variables):
         self._nodeNum = nodeNum
-        self._args = args
-        self._kwargs = kwargs
+        self._variables = variables
 
     def eval_update(self, evaluation, *_):
         try:
             nodeNum = int(_evalArg(self._nodeNum, evaluation))
-            newArgs = [_evalArg(arg, evaluation) for arg in self._args]
-            newKWArgs = {_evalArg(key, evaluation): _evalArg(value, evaluation)
-                         for key, value in self._kwargs.iteritems()}
-            stateMachine.addTokenByNodeNum(nodeNum, newArgs, newKWArgs)
+            evaluatedVariables = {variable: evaluation[variable] for variable in self._variables}
+            stateMachine.addTokenByNodeNum(nodeNum, evaluatedVariables)
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
@@ -308,27 +305,7 @@ class AddTokenConsequence(object):
     def export(self):
         return 'AddTokenConsequence(' + \
             self._nodeNum.export() + \
-            ',' + '[' + ','.join(arg.export() for arg in self._args) + ']' + \
-            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
-            ')'
-
-
-class EditTokenConsequence(object):
-    def __init__(self, args, kwargs):
-        self._args = args
-        self._kwargs = kwargs
-
-    def eval_update(self, evaluation, token):
-        try:
-            token.setArgs(self._args, self._kwargs, evaluation)
-        except (ArithmeticError, TypeError, ValueError):
-            import traceback
-            print traceback.format_exc()
-
-    def export(self):
-        return 'EditTokenConsequence(' + \
-            '[' + ','.join(arg.export() for arg in self._args) + ']' + \
-            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
+            ',' + '[' + ','.join(variable.export() for variable in self._variables) + ']' + \
             ')'
 
 
@@ -355,6 +332,23 @@ class RemoveAllTokenConsequence(object):
 
     def export(self):
         return 'RemoveAllTokenConsequence()'
+
+
+class AddVariableConsequence(object):
+    def __init__(self, variable):
+        self._variable = variable
+
+    def eval_update(self, evaluation, token):
+        print ">", evaluation
+        token.evaluation[self._variable] = evaluation[self._variable]
+
+
+class RemoveVariableConsequence(object):
+    def __init__(self, variable):
+        self._variable = variable
+
+    def eval_update(self, _, token):
+        del token.evaluation[self._variable]
 
 
 class PrintConsequence(object):

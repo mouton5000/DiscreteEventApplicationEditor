@@ -354,7 +354,7 @@ class MainWindow(QMainWindow):
         stateMachine.init()
         for node, compNode in self._nodeDict.iteritems():
             for token in node.getTokens():
-                stateMachine.addToken(compNode, token)
+                stateMachine.addToken(compNode)
 
     def run(self):
 

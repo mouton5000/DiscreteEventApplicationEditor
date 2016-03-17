@@ -6,7 +6,7 @@ from triggerExpressions import BLitteral, Timer, eLock, \
     Equals, GreaterThan, LowerThan, GeqThan, LeqThan, \
     NotEquals, And, Or, Not, Is, AnyEval, RandomEval, Del, \
     SelectMinEval, SelectMaxEval, UniqueEval, PropertyTriggerExpression, \
-    EventTriggerExpression, TokenExpression, SpriteTriggerExpression, TextTriggerExpression, \
+    EventTriggerExpression, SpriteTriggerExpression, TextTriggerExpression, \
     LineTriggerExpression, OvalTriggerExpression, RectTriggerExpression, PolygonTriggerExpression
 from database import Variable
 from keywords import KEYWORD_ID, KEYWORD_FILENAME, KEYWORD_COLOR, KEYWORD_FONT_NAME, KEYWORD_FONT_SIZE, KEYWORD_H, \
@@ -37,7 +37,6 @@ class TriggerParser(lrparsing.Grammar):
         graphicsPolygon = Token(re='gp[A-Z][A-Za-z_0-9]*')
         graphicsText = Token(re='gt[A-Z][A-Za-z_0-9]*')
         sound = Token('sound')
-        token = Token('token')
 
         idkw = Token('id')
 
@@ -128,7 +127,7 @@ class TriggerParser(lrparsing.Grammar):
         Prio(List(parameter, Token(',')) + Opt(',' + List(namedParameter, Token(','))),
              List(namedParameter, Token(',')))
 
-    parameterizedType = T.prop | T.event | T.token | T.graphicsSprite | T.graphicsText | T.graphicsLine | \
+    parameterizedType = T.prop | T.event | T.graphicsSprite | T.graphicsText | T.graphicsLine | \
                         T.graphicsOval | T.graphicsRect | T.graphicsPolygon
     parameterizedExpr = parameterizedType + '(' + parameters + ')'
 
@@ -292,8 +291,7 @@ class TriggerParser(lrparsing.Grammar):
                 TriggerParser.T.graphicsOval: (OvalTriggerExpression, 2),
                 TriggerParser.T.graphicsRect: (RectTriggerExpression, 2),
                 TriggerParser.T.graphicsPolygon: (PolygonTriggerExpression, 2),
-                TriggerParser.T.graphicsText: (TextTriggerExpression, 2),
-                TriggerParser.T.token: (TokenExpression, -1)
+                TriggerParser.T.graphicsText: (TextTriggerExpression, 2)
             }
 
             clsCons, offset = exprTypeAction[exprType]

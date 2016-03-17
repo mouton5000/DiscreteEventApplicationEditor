@@ -11,7 +11,7 @@ import database
 from database import Property, Event, \
     SpriteProperty, TextProperty, LineProperty, \
     OvalProperty, RectProperty, PolygonProperty, \
-    UNDEFINED_PARAMETER, ParameterizedExpression
+    UNDEFINED_PARAMETER, Variable
 from lrparsing import LrParsingError
 
 
@@ -39,17 +39,19 @@ def clear():
     i = 0
 
 
-def addTokenByNodeNum(nodeNum, args, kwargs):
+def addTokenByNodeNum(nodeNum, variables):
     node = getNodeByNum(nodeNum)
-    token = Token(node, args, kwargs)
+    token = Token(node)
+    for variable, value in variables.iteritems():
+        token.evaluation[variable] = value
     _tokens.add(token)
 
 
-def addToken(node, tokenStr):
+def addToken(node):
     try:
-        token = Token(node, *TokenParametersParser.parse(tokenStr))
+        token = Token(node)
     except LrParsingError as e:
-        raise TokenParseException(node, tokenStr, e)
+        raise TokenParseException(node, e)
     _tokens.add(token)
 
 
@@ -256,11 +258,65 @@ def tick(debug=False):
     return True
 
 
-class Token(ParameterizedExpression):
-    def __init__(self, node, args, kwargs):
-        super(Token, self).__init__(args, kwargs)
+class Evaluation(object):
+    def __init__(self):
+        self.variables = dict()
+        self.locks = dict()
+
+    def __getitem__(self, key):
+        if isinstance(key, Variable):
+            return self.variables[key]
+        else:
+            return self.locks[key]
+
+    def __setitem__(self, key, value):
+        if isinstance(key, Variable):
+            self.variables[key] = value
+        else:
+            self.locks[key] = value
+
+    def __str__(self):
+        return str(self.variables) + ' ' + str(self.locks)
+
+    def __repr__(self):
+        return str(self)
+
+    def copy(self):
+        e = Evaluation()
+        e.variables = self.variables.copy()
+        e.locks = self.locks.copy()
+        return e
+
+    def __contains__(self, key):
+        if isinstance(key, Variable):
+            return key in self.variables
+        else:
+            return key in self.locks
+
+    def __delitem__(self, key):
+        if isinstance(key, Variable):
+            del self.variables[key]
+        else:
+            del self.locks[key]
+
+    def __len__(self):
+        return len(self.variables) + len(self.locks)
+
+    def popitem(self):
+        try:
+            return self.variables.popitem()
+        except KeyError:
+            return self.locks.popitem()
+
+    def __eq__(self, other):
+        return self.variables == other.variables and self.locks == other.locks
+
+
+class Token(object):
+    def __init__(self, node):
         self._node = node
         self._nbFrameSinceLastMove = 0
+        self.evaluation = Evaluation()
 
     @property
     def node(self):
@@ -289,7 +345,7 @@ class Token(ParameterizedExpression):
 
         newKWArgs = (evalKWArgs(unevaluatedKey, unevaluatedValue, self) for unevaluatedKey, unevaluatedValue in
                      unevaluatedKWArgs.iteritems())
-        self._kwargs = {key: value for key, value in newKWArgs if key is not None and value is not None}
+        self._kwargs.update({key: value for key, value in newKWArgs if key is not None and value is not None})
 
     def moveTo(self, node):
         self._node = node

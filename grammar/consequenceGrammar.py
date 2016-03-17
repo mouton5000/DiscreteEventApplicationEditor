@@ -11,7 +11,8 @@ from grammar.keywords import KEYWORD_ID, KEYWORD_FILENAME, \
 from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequence, EditPropertyConsequence, \
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddSoundConsequence, \
-    AddTokenConsequence, EditTokenConsequence, RemoveTokenConsequence, RemoveAllTokenConsequence, \
+    AddTokenConsequence, RemoveTokenConsequence, RemoveAllTokenConsequence, \
+    AddVariableConsequence, RemoveVariableConsequence, \
     AddTextConsequence, EditTextConsequence, RemoveTextConsequence, \
     RemoveLineConsequence, EditLineConsequence, AddLineConsequence, \
     AddRectConsequence, EditRectConsequence, RemoveRectConsequence, \
@@ -135,12 +136,14 @@ class ConsequenceParser(lrparsing.Grammar):
     removeExpr = T.remove + removeType + '(' + (incompleteParameters | idNamedParameter) + ')'
     editExpr = T.edit + editType + '(' + (incompleteParameters | idNamedParameter) + '|' + incompleteParameters + ')'
 
-    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + parameters) + ')'
+    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + List(T.variable, Token(','))) + ')'
     removeTokenExpr = T.remove + T.token
     removeAllTokenExpr = T.remove + T.all + T.token
-    editTokenExpr = T.edit + T.token + '(' + Opt(incompleteParameters) + ')'
 
     addSoundExpr = T.add + T.sound + '(' + arithmExpr + ')'
+
+    addVariableExpr = T.add + T.variable
+    removeVariableExpr = T.remove + T.variable
 
     printExpr = T.printToken + List(arithmExpr, Token(','))
 
@@ -150,7 +153,8 @@ class ConsequenceParser(lrparsing.Grammar):
     clearAllExpr = T.clear + T.all
 
     consExpr = Prio(addExpr, removeExpr, editExpr,
-                    addTokenExpr, editTokenExpr, removeTokenExpr, removeAllTokenExpr,
+                    addTokenExpr, removeTokenExpr, removeAllTokenExpr,
+                    addVariableExpr, removeVariableExpr,
                     addSoundExpr, printExpr, editGlobalsExpr, clearAllExpr)
 
     addArithmExpr = arithmExpr << Token('+') << arithmExpr
@@ -210,10 +214,14 @@ class ConsequenceParser(lrparsing.Grammar):
         def buildAddToken():
             nodeNum = cls.buildExpression(tree[4])
             if len(tree) == 6:
-                return AddTokenConsequence(nodeNum, [], {})
+                return AddTokenConsequence(nodeNum, [])
             else:
-                args, kwargs = cls.buildExpression(tree[6])
-                return AddTokenConsequence(nodeNum, args, kwargs)
+                variables = [cls.buildExpression(variable) for variable in tree[6::2]]
+                return AddTokenConsequence(nodeNum, variables)
+
+        def buildAddVariable():
+            variable = cls.buildExpression(tree[2])
+            return AddVariableConsequence(variable)
 
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)
@@ -241,13 +249,6 @@ class ConsequenceParser(lrparsing.Grammar):
             keywordClass = cls.buildSpecialExpression(tree[4])
             newValue = cls.buildArithmeticExpression(tree[6])
             return keywordClass(newValue)
-
-        def buildEditToken():
-            if len(tree) == 5:
-                return EditTokenConsequence([], {})
-            else:
-                args, kwargs = cls.buildExpression(tree[4])
-                return EditTokenConsequence(args, kwargs)
 
         def buildIdNamedParameter():
             keywordId = cls.buildExpression(tree[1])
@@ -300,6 +301,10 @@ class ConsequenceParser(lrparsing.Grammar):
 
         def buildRemoveToken():
             return RemoveTokenConsequence()
+
+        def buildRemoveVariable():
+            variable = cls.buildExpression(tree[2])
+            return RemoveVariableConsequence(variable)
 
         def clearAll():
             return ClearAll()
@@ -357,7 +362,11 @@ class ConsequenceParser(lrparsing.Grammar):
         def unnamedVariableValue():
             return UndefinedLitteral()
 
+        def variableValue():
+            return Variable(tree[1])
+
         exprSymbols = {
+            ConsequenceParser.T.variable: variableValue,
             ConsequenceParser.T.uvariable: unnamedVariableValue,
 
             ConsequenceParser.T.idkw: keywordIdValue,
@@ -399,7 +408,9 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.addTokenExpr: buildAddToken,
             ConsequenceParser.removeTokenExpr: buildRemoveToken,
             ConsequenceParser.removeAllTokenExpr: buildRemoveAllToken,
-            ConsequenceParser.editTokenExpr: buildEditToken,
+
+            ConsequenceParser.addVariableExpr: buildAddVariable,
+            ConsequenceParser.removeVariableExpr: buildRemoveVariable,
 
             ConsequenceParser.addSoundExpr: buildAddSound,
             ConsequenceParser.printExpr: buildPrintExpr,

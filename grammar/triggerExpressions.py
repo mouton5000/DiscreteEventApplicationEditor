@@ -35,64 +35,10 @@ class BExpression(object):
         return str(self._expr)
 
     def eval(self, token):
-        return self._expr.eval(token, Evaluation())
+        return self._expr.eval(token, token.evaluation)
 
     def export(self):
         return 'BExpression(' + self._expr.export() + ')'
-
-
-class Evaluation(object):
-    def __init__(self):
-        self.variables = dict()
-        self.locks = dict()
-
-    def __getitem__(self, key):
-        if isinstance(key, Variable):
-            return self.variables[key]
-        else:
-            return self.locks[key]
-
-    def __setitem__(self, key, value):
-        if isinstance(key, Variable):
-            self.variables[key] = value
-        else:
-            self.locks[key] = value
-
-    def __str__(self):
-        return str(self.variables) + ' ' + str(self.locks)
-
-    def __repr__(self):
-        return str(self)
-
-    def copy(self):
-        e = Evaluation()
-        e.variables = self.variables.copy()
-        e.locks = self.locks.copy()
-        return e
-
-    def __contains__(self, key):
-        if isinstance(key, Variable):
-            return key in self.variables
-        else:
-            return key in self.locks
-
-    def __delitem__(self, key):
-        if isinstance(key, Variable):
-            del self.variables[key]
-        else:
-            del self.locks[key]
-
-    def __len__(self):
-        return len(self.variables) + len(self.locks)
-
-    def popitem(self):
-        try:
-            return self.variables.popitem()
-        except KeyError:
-            return self.locks.popitem()
-
-    def __eq__(self, other):
-        return self.variables == other.variables and self.locks == other.locks
 
 
 class BLitteral(object):
@@ -549,35 +495,6 @@ class PolygonTriggerExpression(NamedExpression):
 
     def _getContainer(self):
         return PolygonProperty.polygons
-
-
-class TokenExpression(ParameterizedExpression):
-    def __init__(self, args, kwargs):
-        super(TokenExpression, self).__init__(args, kwargs)
-
-    def __str__(self):
-        return 'TokenExpression' + super(TokenExpression, self).__str__()
-
-    def __repr__(self):
-        return 'TokenExpression' + super(TokenExpression, self).__repr__()
-
-    def weakCompare(self, token):
-        try:
-            return self.lenArgs() == token.lenArgs() and self.lenKWArgs() <= token.lenKWArgs()
-        except AttributeError:
-            return False
-
-    def eval(self, token, previousEvaluation):
-        if self.weakCompare(token):
-            neval = self.unify(token, previousEvaluation)
-            if neval is not None:
-                yield neval
-
-    def export(self):
-        return 'TokenExpression(' + \
-            '[' + ','.join(arg.export() for arg in self._args) + ']' + \
-            ',' + '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}' + \
-            ')'
 
 
 class AnyEval(object):
