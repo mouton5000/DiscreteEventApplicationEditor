@@ -12,7 +12,7 @@ from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequ
     AddEventConsequence, AddSpriteConsequence, EditSpriteConsequence, RemoveSpriteConsequence, \
     AddSoundConsequence, \
     AddTokenConsequence, RemoveTokenConsequence, RemoveAllTokenConsequence, \
-    AddVariableConsequence, RemoveVariableConsequence, \
+    AddVariableConsequence, EditVariableConsequence, RemoveVariableConsequence, \
     AddTextConsequence, EditTextConsequence, RemoveTextConsequence, \
     RemoveLineConsequence, EditLineConsequence, AddLineConsequence, \
     AddRectConsequence, EditRectConsequence, RemoveRectConsequence, \
@@ -41,8 +41,6 @@ class ConsequenceParser(lrparsing.Grammar):
         graphicsText = Token(re='gt[A-Z][A-Za-z_0-9]*')
         sound = Token('sound')
         token = Token('token')
-
-        asToken = Token('as')
 
         all = Token('all')
 
@@ -119,7 +117,7 @@ class ConsequenceParser(lrparsing.Grammar):
 
     incompleteNamedParameter = namedParameterKW + '=' + (T.uvariable | arithmExpr)
     incompleteParameters = \
-        Prio(List((arithmExpr, T.uvariable), Token(',')) + Opt(',' + List(incompleteNamedParameter, Token(','))),
+        Prio(List(Prio(arithmExpr, T.uvariable), Token(',')) + Opt(',' + List(incompleteNamedParameter, Token(','))),
              List(incompleteNamedParameter, Token(',')))
     idNamedParameter = T.idkw + '=' + arithmExpr
 
@@ -138,15 +136,16 @@ class ConsequenceParser(lrparsing.Grammar):
     removeExpr = T.remove + removeType + '(' + (incompleteParameters | idNamedParameter) + ')'
     editExpr = T.edit + editType + '(' + (incompleteParameters | idNamedParameter) + '|' + incompleteParameters + ')'
 
-    asVariableExpr = arithmExpr + T.asToken + T.variable
+    asVariableExpr = T.variable + '=' + arithmExpr
 
-    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + List(T.variable | asVariableExpr, Token(','))) + ')'
+    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + List(Prio(T.variable, asVariableExpr), Token(','))) + ')'
     removeTokenExpr = T.remove + T.token
     removeAllTokenExpr = T.remove + T.all + T.token
 
     addSoundExpr = T.add + T.sound + '(' + arithmExpr + ')'
 
     addVariableExpr = T.add + T.variable
+    editVariableExpr = T.edit + T.variable + arithmExpr
     removeVariableExpr = T.remove + T.variable
 
     printExpr = T.printToken + List(arithmExpr, Token(','))
@@ -158,7 +157,7 @@ class ConsequenceParser(lrparsing.Grammar):
 
     consExpr = Prio(addExpr, removeExpr, editExpr,
                     addTokenExpr, removeTokenExpr, removeAllTokenExpr,
-                    addVariableExpr, removeVariableExpr,
+                    addVariableExpr, editVariableExpr, removeVariableExpr,
                     addSoundExpr, printExpr, editGlobalsExpr, clearAllExpr)
 
     addArithmExpr = arithmExpr << Token('+') << arithmExpr
@@ -231,8 +230,8 @@ class ConsequenceParser(lrparsing.Grammar):
             return cls.buildArithmeticExpression(tree)
 
         def buildAsVariable():
-            variable = cls.buildExpression(tree[3])
-            expr = cls.buildExpression(tree[1])
+            variable = cls.buildExpression(tree[1])
+            expr = cls.buildExpression(tree[3])
             return variable, expr
 
         def buildEdit():
@@ -263,6 +262,11 @@ class ConsequenceParser(lrparsing.Grammar):
             keywordId = cls.buildExpression(tree[1])
             idValue = cls.buildExpression(tree[3])
             return [], {keywordId: idValue}
+
+        def buildEditVariable():
+            variable = cls.buildExpression(tree[2])
+            expr = cls.buildExpression(tree[3])
+            return EditVariableConsequence(variable, expr)
 
         def buildMultiTypes():
             chosenType = tree[1]
@@ -422,6 +426,7 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.removeAllTokenExpr: buildRemoveAllToken,
 
             ConsequenceParser.addVariableExpr: buildAddVariable,
+            ConsequenceParser.editVariableExpr: buildEditVariable,
             ConsequenceParser.removeVariableExpr: buildRemoveVariable,
 
             ConsequenceParser.addSoundExpr: buildAddSound,

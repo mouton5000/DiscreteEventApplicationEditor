@@ -341,8 +341,21 @@ class AddVariableConsequence(object):
         self._variable = variable
 
     def eval_update(self, evaluation, token):
-        print ">", evaluation
         token.evaluation[self._variable] = evaluation[self._variable]
+
+
+class EditVariableConsequence(object):
+    def __init__(self, variable, expr):
+        self._variable = variable
+        self._expr = expr
+
+    def eval_update(self, evaluation, token):
+        try:
+            evalExpr = self._expr.value(evaluation, selfParam=evaluation[self._variable])
+            token.evaluation[self._variable] = evalExpr
+        except (ArithmeticError, TypeError, ValueError):
+            import traceback
+            print traceback.format_exc()
 
 
 class RemoveVariableConsequence(object):
