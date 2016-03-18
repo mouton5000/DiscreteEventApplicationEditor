@@ -42,6 +42,8 @@ class ConsequenceParser(lrparsing.Grammar):
         sound = Token('sound')
         token = Token('token')
 
+        asToken = Token('as')
+
         all = Token('all')
 
         idkw = Token('id')
@@ -136,7 +138,9 @@ class ConsequenceParser(lrparsing.Grammar):
     removeExpr = T.remove + removeType + '(' + (incompleteParameters | idNamedParameter) + ')'
     editExpr = T.edit + editType + '(' + (incompleteParameters | idNamedParameter) + '|' + incompleteParameters + ')'
 
-    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + List(T.variable, Token(','))) + ')'
+    asVariableExpr = arithmExpr + T.asToken + T.variable
+
+    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + List(T.variable | asVariableExpr, Token(','))) + ')'
     removeTokenExpr = T.remove + T.token
     removeAllTokenExpr = T.remove + T.all + T.token
 
@@ -216,8 +220,8 @@ class ConsequenceParser(lrparsing.Grammar):
             if len(tree) == 6:
                 return AddTokenConsequence(nodeNum, [])
             else:
-                variables = [cls.buildExpression(variable) for variable in tree[6::2]]
-                return AddTokenConsequence(nodeNum, variables)
+                inputEvaluation = [cls.buildExpression(variable) for variable in tree[6::2]]
+                return AddTokenConsequence(nodeNum, inputEvaluation)
 
         def buildAddVariable():
             variable = cls.buildExpression(tree[2])
@@ -225,6 +229,11 @@ class ConsequenceParser(lrparsing.Grammar):
 
         def buildArithmetic():
             return cls.buildArithmeticExpression(tree)
+
+        def buildAsVariable():
+            variable = cls.buildExpression(tree[3])
+            expr = cls.buildExpression(tree[1])
+            return variable, expr
 
         def buildEdit():
             exprType, exprValue = cls.buildExpression(tree[2])
@@ -366,6 +375,7 @@ class ConsequenceParser(lrparsing.Grammar):
             return Variable(tree[1])
 
         exprSymbols = {
+
             ConsequenceParser.T.variable: variableValue,
             ConsequenceParser.T.uvariable: unnamedVariableValue,
 
@@ -404,6 +414,8 @@ class ConsequenceParser(lrparsing.Grammar):
             ConsequenceParser.addExpr: buildAdd,
             ConsequenceParser.removeExpr: buildRemove,
             ConsequenceParser.editExpr: buildEdit,
+
+            ConsequenceParser.asVariableExpr: buildAsVariable,
 
             ConsequenceParser.addTokenExpr: buildAddToken,
             ConsequenceParser.removeTokenExpr: buildRemoveToken,
