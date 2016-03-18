@@ -341,7 +341,10 @@ class AddVariableConsequence(object):
         self._variable = variable
 
     def eval_update(self, evaluation, token):
-        token.evaluation[self._variable] = evaluation[self._variable]
+        try:
+            token.evaluation[self._variable] = evaluation[self._variable]
+        except KeyError:
+            pass
 
 
 class EditVariableConsequence(object):
