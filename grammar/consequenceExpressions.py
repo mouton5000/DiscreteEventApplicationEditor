@@ -368,8 +368,10 @@ class RemoveVariableConsequence(object):
         self._variable = variable
 
     def eval_update(self, _, token):
-        del token.evaluation[self._variable]
-
+        try:  
+            del token.evaluation[self._variable]
+        except KeyError:
+            pass
 
 class PrintConsequence(object):
     def __init__(self, toPrint):
