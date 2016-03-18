@@ -354,7 +354,9 @@ class EditVariableConsequence(object):
 
     def eval_update(self, evaluation, token):
         try:
-            evalExpr = self._expr.value(evaluation, selfParam=evaluation[self._variable])
+            evalExpr = self._expr.value(evaluation, selfParam=token.evaluation[self._variable])
+            if evaluation == token.evaluation:
+                token.evaluation = token.evaluation.copy()
             token.evaluation[self._variable] = evalExpr
         except (ArithmeticError, TypeError, ValueError):
             import traceback
