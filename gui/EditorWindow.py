@@ -306,8 +306,8 @@ class MainWindow(QMainWindow):
         folderName = rootDir + '/export'
 
         exporter.exporter.copyFiles(folderName, rootDir)
-        exporter.exporter.writeStaticInfos(folderName)
         exporter.exporter.writeImportInfos(folderName)
+        exporter.exporter.writeStaticInfos(folderName)
         exporter.exporter.writeVariableInfos(folderName)
         exporter.exporter.writeLaunchInfos(folderName, fps, maxTick, width, height, rootDir)
 

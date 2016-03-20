@@ -6,7 +6,6 @@ import stateMachine
 import game.Registeries.SoundRegistery as soundRegistery
 import game.gameWindow as gameWindow
 
-
 def _evalArg(arg, evaluation):
     return arg.value(evaluation)
 
@@ -305,9 +304,14 @@ class AddTokenConsequence(object):
             print traceback.format_exc()
 
     def export(self):
+
+        toExport = [variable.export() for variable in self._variables] + \
+                   ['(' + variable.export() + ',' + expr.export() + ')' for variable, expr in self._asVariables]
+
         return 'AddTokenConsequence(' + \
             self._nodeNum.export() + \
-            ',' + '[' + ','.join(variable.export() for variable in self._variables) + ']' + \
+            ',' + '[' + ','.join(toExport) + \
+                  ']' + \
             ')'
 
 
@@ -346,6 +350,11 @@ class AddVariableConsequence(object):
         except KeyError:
             pass
 
+    def export(self):
+        return 'AddVariableConsequence(' + \
+            self._variable.export() + \
+            ')'
+
 
 class EditVariableConsequence(object):
     def __init__(self, variable, expr):
@@ -362,6 +371,12 @@ class EditVariableConsequence(object):
             import traceback
             print traceback.format_exc()
 
+    def export(self):
+        return 'EditVariableConsequence(' + \
+            self._variable.export() + ',' + \
+            self._expr.export() + \
+            ')'
+
 
 class RemoveVariableConsequence(object):
     def __init__(self, variable):
@@ -372,6 +387,12 @@ class RemoveVariableConsequence(object):
             del token.evaluation[self._variable]
         except KeyError:
             pass
+
+    def export(self):
+        return 'RemoveVariableConsequence(' + \
+            self._variable.export() + ',' + \
+            ')'
+
 
 class PrintConsequence(object):
     def __init__(self, toPrint):

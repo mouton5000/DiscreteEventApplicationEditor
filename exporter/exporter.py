@@ -29,6 +29,7 @@ def writeStaticInfos(exportFolder):
                         'database.py',
                         'utils/__init__.py',
                         'utils/dictSet.py',
+                        'utils/mathutils.py',
                         'grammar/__init__.py',
                         'grammar/arithmeticExpressions.py',
                         'grammar/consequenceExpressions.py',
@@ -79,6 +80,7 @@ def writeImportInfos(exportFolderName):
             exportMainFile.write('from grammar.consequenceExpressions import *\n')
             exportMainFile.write('from grammar.arithmeticExpressions import *\n')
             exportMainFile.write('from grammar.keywords import *\n')
+            exportMainFile.write('from utils.mathutils import sign\n')
 
             exportMainFile.write('from random import random, randint\n')
             exportMainFile.write('from math import cos, sin, tan, exp, log, floor, '
@@ -96,6 +98,9 @@ def writeVariableInfos(exportFolderName):
 
     try:
         with open(exportFolderName + '/' + exportMainFileName, 'a') as exportMainFile:
+
+            exportMainFile.write('def _random(x):\n')
+            exportMainFile.write('  return random() * x\n\n')
 
             exportMainFile.write('def _random(x):\n')
             exportMainFile.write('  return random() * x\n\n')
@@ -126,10 +131,8 @@ def writeVariableInfos(exportFolderName):
             exportMainFile.write('\n\n')
 
             for token in tokens:
-                args = token.exportArgs()
-                kwargs = token.exportKWArgs()
                 exportMainFile.write('stateMachine.addTokenByNodeNum(' + str(token.node.num) +
-                                     ',' + args + ',' + kwargs + ')')
+                                     ', {})')
 
             exportMainFile.write('\n\n')
     except IOError as e:

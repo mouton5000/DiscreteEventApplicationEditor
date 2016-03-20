@@ -1,5 +1,4 @@
 from database import Variable
-from collections import deque
 from database import UNDEFINED_PARAMETER
 import game.gameWindow as gameWindow
 
