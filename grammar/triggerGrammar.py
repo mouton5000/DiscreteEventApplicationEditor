@@ -36,7 +36,6 @@ class TriggerParser(lrparsing.Grammar):
         graphicsRect = Token(re='gr[A-Z][A-Za-z_0-9]*')
         graphicsPolygon = Token(re='gp[A-Z][A-Za-z_0-9]*')
         graphicsText = Token(re='gt[A-Z][A-Za-z_0-9]*')
-        sound = Token('sound')
 
         idkw = Token('id')
 
