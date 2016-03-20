@@ -19,6 +19,7 @@ from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequ
     AddOvalConsequence, EditOvalConsequence, RemoveOvalConsequence, \
     AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, \
     PrintConsequence, EditGlobalFps, EditGlobalHeight, EditGlobalWidth, ClearAll
+from random import random, randint
 
 
 class ConsequenceParser(lrparsing.Grammar):
@@ -82,6 +83,8 @@ class ConsequenceParser(lrparsing.Grammar):
         achf = Token('ach')
         ashf = Token('ash')
         athf = Token('ath')
+        rand = Token('rand')
+        randint = Token('randint')
 
         lenf = Token('len')
         minf = Token('min')
@@ -169,7 +172,8 @@ class ConsequenceParser(lrparsing.Grammar):
     parArithmExpr = '(' + arithmExpr + ')'
 
     unaryFuncExpr = (T.cosf | T.sinf | T.tanf | T.expf | T.logf | T.absf | T.signf | T.floorf | T.ceilf | T.roundf
-                     | T.acosf | T.asinf | T.atanf | T.shf | T.chf | T.thf | T.ashf | T.achf | T.athf | T.lenf) \
+                           | T.acosf | T.asinf | T.atanf | T.shf | T.chf | T.thf | T.ashf | T.achf | T.athf | T.lenf
+                           | T.rand | T.randint) \
                      + parArithmExpr
     binaryFuncExpr = (T.minf | T.maxf) + '(' + arithmExpr + ',' + arithmExpr + ')'
 
@@ -561,10 +565,18 @@ class ConsequenceParser(lrparsing.Grammar):
             elif tree[1][1] == 'floor':
                 from math import floor
                 return Func(a, floor)
-            elif tree[1][1] == 'len':
-                return Func(a, len)
             elif tree[1][1] == 'round':
                 return Func(a, round)
+            elif tree[1][1] == 'len':
+                return Func(a, len)
+            elif tree[1][1] == 'rand':
+                def _random(x):
+                    return random() * x
+                return Func(a, _random)
+            elif tree[1][1] == 'randint':
+                def _randint(x):
+                    return randint(0, x - 1)
+                return Func(a, _randint)
 
         def floatvalue():
             return ALitteral(float(tree[1]))
