@@ -188,6 +188,9 @@ class TriggerParser(lrparsing.Grammar):
                       powerArithmExpr, multArithmExpr, minusArithmExpr, addArithmExpr)
 
     START = boolExpr
+    COMMENTS = (                      # Allow C and Python comments
+        Token(re="#(?:[^\r\n]*(?:\r\n?|\n\r?))") |
+        Token(re="/[*](?:[^*]|[*][^/])*[*]/"))
 
     @classmethod
     def parse(cls, expr, tree_factory=None, on_error=None, log=None):
