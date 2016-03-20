@@ -20,6 +20,7 @@ from consequenceExpressions import AddPropertyConsequence, RemovePropertyConsequ
     AddPolygonConsequence, EditPolygonConsequence, RemovePolygonConsequence, \
     PrintConsequence, EditGlobalFps, EditGlobalHeight, EditGlobalWidth, ClearAll
 from random import random, randint
+from utils.mathutils import sign
 
 
 class ConsequenceParser(lrparsing.Grammar):
@@ -551,13 +552,6 @@ class ConsequenceParser(lrparsing.Grammar):
             elif tree[1][1] == 'abs':
                 return Func(a, abs)
             elif tree[1][1] == 'sign':
-                def sign(x):
-                    if x == 0:
-                        return 0
-                    elif x > 0:
-                        return 1
-                    else:
-                        return -1
                 return Func(a, sign)
             elif tree[1][1] == 'ceil':
                 from math import ceil
