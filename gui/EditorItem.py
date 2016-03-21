@@ -27,7 +27,6 @@ class ViewWidget(QGraphicsView):
     DEFAULT_W = 400
     DEFAULT_H = 400
 
-
     def __init__(self, parent=None, mainWindow=None, nodesIdsGenerator=None, modeController=None):
         super(ViewWidget, self).__init__(parent)
         self.mainWindow = mainWindow
@@ -171,6 +170,7 @@ class SceneWidget(QGraphicsScene):
         self.removeItem(nodeItem.getLabelItem())
         self.removeItem(nodeItem)
         self.parent().showTab()
+        self.setSelected(None)
 
     def undoRemoveNodeWithoutStack(self, nodeItem, arcs):
         self.addNodeWithoutStack(nodeItem)
@@ -237,6 +237,7 @@ class SceneWidget(QGraphicsScene):
         self.removeItem(arcItem.getLabelItem())
         self.removeItem(arcItem)
         self.parent().showTab()
+        self.setSelected(None)
 
     def changeConnectedComponentSceneByIndex(self, connectedComponent, newSceneIndex):
         if newSceneIndex == -1:
@@ -355,7 +356,6 @@ class SceneWidget(QGraphicsScene):
             self.removeArc(self._selected)
         elif isinstance(self._selected, ConnectedComponent):
             self.removeConnectedComponent(self._selected)
-        self.setSelected(None)
 
     def reinitSelectedProperties(self):
         if self._selected is not None:
