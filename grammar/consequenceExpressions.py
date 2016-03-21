@@ -406,7 +406,8 @@ class PrintConsequence(object):
             print traceback.format_exc()
 
     def export(self):
-        return 'PrintConsequence(' + str([foo.export() for foo in self.toPrint]) + ')'
+        toExport = [foo.export() for foo in self.toPrint]
+        return 'PrintConsequence(' + '[' + ','.join(toExport) + ']' + ')'
 
 
 class EditGlobalFps(object):
