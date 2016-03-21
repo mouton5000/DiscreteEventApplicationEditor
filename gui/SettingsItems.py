@@ -1,6 +1,6 @@
-from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QTextEdit
-
 __author__ = 'mouton'
+
+from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QTextEdit
 
 
 class SettingsWidget(QWidget):
@@ -36,15 +36,10 @@ class SettingsWidget(QWidget):
         vbox.addLayout(hboxFPSTick)
         vbox.addLayout(hboxSize)
 
-        self._spritesTE = QTextEdit(self)
-        self._spritesTE.setUndoRedoEnabled(True)
+        self._initConsequencesTE = QTextEdit(self)
+        self._initConsequencesTE.setUndoRedoEnabled(True)
 
-        vbox.addWidget(self._spritesTE)
-
-        self._soundsTE = QTextEdit(self)
-        self._soundsTE.setUndoRedoEnabled(True)
-
-        vbox.addWidget(self._soundsTE)
+        vbox.addWidget(self._initConsequencesTE)
 
         self.init()
 
@@ -52,42 +47,9 @@ class SettingsWidget(QWidget):
         self._maxTickTE.textChanged.connect(self.window().setModified)
         self._widthTE.textChanged.connect(self.window().setModified)
         self._heightTE.textChanged.connect(self.window().setModified)
-        self._spritesTE.textChanged.connect(self.window().setModified)
-        self._soundsTE.textChanged.connect(self.window().setModified)
+        self._initConsequencesTE.textChanged.connect(self.window().setModified)
 
         self.setLayout(vbox)
-
-    def setSprites(self, sprites):
-        self._spritesTE.setText(sprites)
-
-    def getSprites(self):
-        return str(self._spritesTE.toPlainText())
-
-    def getSpritesDictionnary(self):
-        dic = {}
-        sprites = self.getSprites()
-        if sprites != '':
-            listOfSprites = sprites.split('\n')
-            for sprStr in listOfSprites:
-                    num, filePath = sprStr.split()
-                    dic[int(num)] = str(filePath)
-        return dic
-
-    def setSounds(self, sounds):
-        self._soundsTE.setText(sounds)
-
-    def getSounds(self):
-        return str(self._soundsTE.toPlainText())
-
-    def getSoundsDictionnary(self):
-        dic = {}
-        sounds = self.getSounds()
-        if sounds != '':
-            listOfSounds = sounds.split('\n')
-            for sndStr in listOfSounds:
-                    num, filePath = sndStr.split()
-                    dic[int(num)] = str(filePath)
-        return dic
 
     def init(self):
         self._fpsTE.setText(str(SettingsWidget.DEFAULT_FPS))
@@ -130,3 +92,17 @@ class SettingsWidget(QWidget):
 
     def setHeight(self, height):
         self._heightTE.setText(str(height))
+
+    def setInitConsequences(self, consequences):
+        consequencesStr = ';'.join(consequences) + ';'
+        self._initConsequencesTE.setText(consequencesStr)
+
+    def getInitConsequences(self):
+        consequencesStr = str(self._initConsequencesTE.toPlainText()).strip()
+        if consequencesStr == '':
+            return []
+        else:
+            consequences = consequencesStr.split(';')
+            if consequences[-1] == '':
+                del consequences[-1]
+            return consequences

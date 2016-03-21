@@ -194,8 +194,7 @@ class MainWindow(QMainWindow):
 
         setW = self.settingsWidget()
         settingsDict = {"fps": int(setW.getFPS()), "maxTick": int(setW.getMaxTick()), "width": int(setW.getWidth()),
-                        "height": int(setW.getHeight()), "spritesRegistery": setW.getSprites(),
-                        "soundsRegistery": setW.getSounds()}
+                        "height": int(setW.getHeight()), 'initConsequences': setW.getInitConsequences()}
 
         d = {"nodeId": nig.getNodeId(),
              "nextIds": list(nig.getNextIds()),
@@ -286,8 +285,7 @@ class MainWindow(QMainWindow):
             setW.setMaxTick(settingsDict['maxTick'])
             setW.setWidth(settingsDict['width'])
             setW.setHeight(settingsDict['height'])
-            setW.setSprites(settingsDict['spritesRegistery'])
-            setW.setSounds(settingsDict['soundsRegistery'])
+            setW.setInitConsequences(settingsDict['initConsequences'])
 
             self.stack.clear()
 
@@ -352,9 +350,6 @@ class MainWindow(QMainWindow):
                 compileArc(arc)
 
         stateMachine.init()
-        for node, compNode in self._nodeDict.iteritems():
-            for token in node.getTokens():
-                stateMachine.addToken(compNode)
 
     def run(self):
 
@@ -370,6 +365,8 @@ class MainWindow(QMainWindow):
         rootDir = self._lastSaveOpenFileDirectory
 
         gameWindow.init(fps, width, height, rootDir)
+
+        stateMachine.applyInitConsequences(setW.getInitConsequences())
 
         frame = 0
         tick = 0

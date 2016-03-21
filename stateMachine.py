@@ -3,7 +3,6 @@
 from grammar.triggerGrammar import TriggerParser
 from grammar.triggerExpressions import BExpression
 from grammar.consequenceGrammar import ConsequenceParser
-from grammar.tokenGrammar import TokenParametersParser
 
 # EXPORT
 
@@ -11,21 +10,45 @@ import database
 from database import Property, Event, \
     SpriteProperty, TextProperty, LineProperty, \
     OvalProperty, RectProperty, PolygonProperty, \
-    UNDEFINED_PARAMETER, Variable
+    Variable
 from lrparsing import LrParsingError
 
 
-class TokenParseException(Exception):
-    def __init__(self, node, tokenText, parseError):
-        super(TokenParseException, self).__init__(
-            TokenParseException.getMessage(node, tokenText, parseError))
+class TransitionTriggerParserException(Exception):
+    def __init__(self, tr, trigger, parseError):
+        super(TransitionTriggerParserException, self).__init__(
+            TransitionTriggerParserException.getMessage(tr, trigger, parseError))
 
     @staticmethod
-    def getMessage(node, tokenText, parseError):
-        s1 = 'Error while parsing token of node ' + str(node.num)
-        s2 = 'Token text : ' + tokenText
+    def getMessage(tr, trigger, parseError):
+        s1 = 'Error while parsing trigger of transition between ' + str(tr.n1.num) + ' and ' + str(tr.n2.num)
+        s2 = 'Trigger : ' + trigger
         s3 = str(parseError)
         return s1 + '\n' + s2 + '\n' + s3
+
+
+class TransitionConsequenceParserException(Exception):
+    def __init__(self, tr, consequence, parseError):
+        super(TransitionConsequenceParserException, self).__init__(
+            TransitionConsequenceParserException.getMessage(tr, consequence, parseError))
+
+    @staticmethod
+    def getMessage(tr, consequence, parseError):
+        if tr is None:
+            s1 = 'Error while parsing init consequences'
+        else:
+            s1 = 'Error while parsing consequences of transition between ' + str(tr.n1.num) + ' and ' + str(tr.n2.num)
+        s2 = 'Consequence : ' + consequence
+        s3 = str(parseError)
+        return s1 + '\n' + s2 + '\n' + s3
+
+
+def _parseConsequence(consequence, transition):
+    try:
+        return ConsequenceParser.parse(consequence)
+    except LrParsingError as consequenceParseError:
+        raise TransitionConsequenceParserException(transition, consequence, consequenceParseError)
+
 
 _tokens = set([])
 _nodes = {}
@@ -44,14 +67,6 @@ def addTokenByNodeNum(nodeNum, variables):
     token = Token(node)
     for variable, value in variables.iteritems():
         token.evaluation[variable] = value
-    _tokens.add(token)
-
-
-def addToken(node):
-    try:
-        token = Token(node)
-    except LrParsingError as e:
-        raise TokenParseException(node, e)
     _tokens.add(token)
 
 
@@ -101,6 +116,12 @@ def init():
 def reinit():
     clearTokens()
     database.reinit()
+
+
+def applyInitConsequences(initConsequences):
+    parsedConsequences = (_parseConsequence(consequence, None) for consequence in initConsequences)
+    for parsedCons in parsedConsequences:
+            parsedCons.eval_update(Evaluation(), None)
 
 
 def tick(debug=False):
@@ -322,31 +343,6 @@ class Token(object):
     def node(self):
         return self._node
 
-    def setArgs(self, unevaluatedArgs, unevaluatedKWArgs, evaluation):
-        def evalArg(uArg, tArg):
-            if uArg is None:
-                return
-            value = uArg.value(evaluation, selfParam=tArg)
-            if value == UNDEFINED_PARAMETER:
-                value = tArg
-            return value
-
-        def evalKWArgs(unevaluatedKey, unevaluatedValue, token):
-            key1 = unevaluatedKey.value(evaluation)
-            try:
-                value2 = token.getKWArg(key1)
-                value1 = unevaluatedValue.value(evaluation, selfParam=value2)
-            except KeyError:
-                value1 = unevaluatedValue.value(evaluation)
-            return key1, value1
-
-        newArgs = (evalArg(unevaluatedArg, arg) for unevaluatedArg, arg in map(None, unevaluatedArgs, self.iterArgs()))
-        self._args[:] = [arg for arg in newArgs if arg is not None]
-
-        newKWArgs = (evalKWArgs(unevaluatedKey, unevaluatedValue, self) for unevaluatedKey, unevaluatedValue in
-                     unevaluatedKWArgs.iteritems())
-        self._kwargs.update({key: value for key, value in newKWArgs if key is not None and value is not None})
-
     def moveTo(self, node):
         self._node = node
         self._nbFrameSinceLastMove = 0
@@ -357,12 +353,6 @@ class Token(object):
     @property
     def nbFrameSinceLastMove(self):
         return self._nbFrameSinceLastMove
-
-    def exportArgs(self):
-        return '[' + ','.join(arg.export() for arg in self._args) + ']'
-
-    def exportKWArgs(self):
-        return '{' + ','.join(key.export() + ':' + value.export() for key, value in self._kwargs.iteritems()) + '}'
 
     def __str__(self):
         s = super(Token, self).__str__()
@@ -393,32 +383,6 @@ class Node:
         return str(self._name)
 
 
-class TransitionTriggerParserException(Exception):
-    def __init__(self, tr, trigger, parseError):
-        super(TransitionTriggerParserException, self).__init__(
-            TransitionTriggerParserException.getMessage(tr, trigger, parseError))
-
-    @staticmethod
-    def getMessage(tr, trigger, parseError):
-        s1 = 'Error while parsing trigger of transition between ' + str(tr.n1.num) + ' and ' + str(tr.n2.num)
-        s2 = 'Trigger : ' + trigger
-        s3 = str(parseError)
-        return s1 + '\n' + s2 + '\n' + s3
-
-
-class TransitionConsequenceParserException(Exception):
-    def __init__(self, tr, consequence, parseError):
-        super(TransitionConsequenceParserException, self).__init__(
-            TransitionConsequenceParserException.getMessage(tr, consequence, parseError))
-
-    @staticmethod
-    def getMessage(tr, consequence, parseError):
-        s1 = 'Error while parsing consequence of transition between ' + str(tr.n1.num) + ' and ' + str(tr.n2.num)
-        s2 = 'Consequence : ' + consequence
-        s3 = str(parseError)
-        return s1 + '\n' + s2 + '\n' + s3
-
-
 class Transition:
     def __init__(self, in1, in2, trigger, consequences, parse=True):
         self.n1 = in1
@@ -426,7 +390,6 @@ class Transition:
         self.n2 = in2
 
         if parse:
-
             try:
                 self._trigger = BExpression(TriggerParser.parse(trigger))
             except LrParsingError as triggerParseError:
