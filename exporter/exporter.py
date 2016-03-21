@@ -94,7 +94,6 @@ def writeImportInfos(exportFolderName):
 
 def writeVariableInfos(exportFolderName):
     nodes = stateMachine.getNodes()
-    tokens = stateMachine.getTokens()
 
     try:
         with open(exportFolderName + '/' + exportMainFileName, 'a') as exportMainFile:
@@ -130,17 +129,13 @@ def writeVariableInfos(exportFolderName):
 
             exportMainFile.write('\n\n')
 
-            for token in tokens:
-                exportMainFile.write('stateMachine.addTokenByNodeNum(' + str(token.node.num) +
-                                     ', {})')
-
             exportMainFile.write('\n\n')
     except IOError as e:
         print e
         pass
 
 
-def writeLaunchInfos(exportFolderName, fps, maxTick, width, height, rootDir):
+def writeLaunchInfos(exportFolderName, fps, maxTick, width, height, rootDir, initConsequences):
 
     try:
         with open(exportFolderName + '/' + exportMainFileName, 'a') as exportMainFile:
@@ -149,6 +144,10 @@ def writeLaunchInfos(exportFolderName, fps, maxTick, width, height, rootDir):
             exportMainFile.write('width = ' + str(width) + '\n')
             exportMainFile.write('height = ' + str(height) + '\n')
             exportMainFile.write('rootDir = \'' + rootDir + '/export\'' + '\n')
+
+            exportMainFile.write('\n')
+
+            exportMainFile.write('initConsequences = ' + stateMachine.exportInitConsequences(initConsequences) + '\n')
 
             exportMainFile.write('\n')
 

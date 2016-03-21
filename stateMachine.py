@@ -118,10 +118,18 @@ def reinit():
     database.reinit()
 
 
-def applyInitConsequences(initConsequences):
-    parsedConsequences = (_parseConsequence(consequence, None) for consequence in initConsequences)
+def applyInitConsequences(initConsequences, parse=True):
+    if parse:
+        parsedConsequences = (_parseConsequence(consequence, None) for consequence in initConsequences)
+    else:
+        parsedConsequences = initConsequences
     for parsedCons in parsedConsequences:
-            parsedCons.eval_update(Evaluation(), None)
+        parsedCons.eval_update(Evaluation(), None)
+
+
+def exportInitConsequences(initConsequences):
+    parsedConsequences = (_parseConsequence(consequence, None) for consequence in initConsequences)
+    return '[' + ','.join(parsedCons.export() for parsedCons in parsedConsequences) + ']'
 
 
 def tick(debug=False):

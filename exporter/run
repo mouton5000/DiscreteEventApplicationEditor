@@ -1,5 +1,7 @@
 gameWindow.init(fps, width, height, rootDir)
 
+stateMachine.applyInitConsequences(initConsequences, False)
+
 frame = 0
 tick = 0
 while maxTick <= 0 or tick < maxTick:
