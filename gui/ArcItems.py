@@ -99,14 +99,16 @@ class ArcItem(QGraphicsPathItem):
         return self._consequences
 
     def getConsequencesStr(self):
-        return ';'.join(self._consequences)
+        return ';'.join(self._consequences) + ';'
 
     def setConsequences(self, consequences):
         try:
             if consequences == '':
                 self._consequences = []
             else:
-                self._consequences = consequences.split(';')  # consequences is a string
+                self._consequences = consequences.strip().split(';')  # consequences is a string
+                if self._consequences[-1] == '':
+                    del self._consequences[-1]
         except AttributeError:
             self._consequences = consequences  # consequences is a list
 
