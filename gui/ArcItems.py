@@ -102,8 +102,8 @@ class ArcItem(QGraphicsPathItem):
         return ';'.join(self._consequences) + ';'
 
     def setConsequences(self, consequences):
-        consequences = consequences.strip()
         try:
+            consequences = consequences.strip()
             if consequences == '':
                 self._consequences = []
             else:
