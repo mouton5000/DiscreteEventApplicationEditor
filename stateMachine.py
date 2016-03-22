@@ -53,14 +53,16 @@ def _parseConsequence(consequence, transition):
 _tokens = set([])
 _nodes = {}
 _nodesByLabel = {}
+_parsedConsequences = None
 i = 0
 
 
 def clear():
-    global _tokens, _nodes, _nodesByLabel, i
+    global _tokens, _nodes, _nodesByLabel, i, _parsedConsequences
     _tokens = set([])
     _nodes = {}
     _nodesByLabel = {}
+    _parsedConsequences = None
     i = 0
 
 
@@ -126,12 +128,16 @@ def reinit():
     database.reinit()
 
 
-def applyInitConsequences(initConsequences, parse=True):
+def setInitConsequences(initConsequences, parse=True):
+    global _parsedConsequences
     if parse:
-        parsedConsequences = (_parseConsequence(consequence, None) for consequence in initConsequences)
+        _parsedConsequences = (_parseConsequence(consequence, None) for consequence in initConsequences)
     else:
-        parsedConsequences = initConsequences
-    for parsedCons in parsedConsequences:
+        _parsedConsequences = initConsequences
+
+
+def applyInitConsequences():
+    for parsedCons in _parsedConsequences:
         parsedCons.eval_update(Evaluation(), None)
 
 

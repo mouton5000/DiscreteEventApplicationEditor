@@ -307,8 +307,8 @@ class MainWindow(QMainWindow):
         exporter.exporter.copyFiles(folderName, rootDir)
         exporter.exporter.writeImportInfos(folderName)
         exporter.exporter.writeStaticInfos(folderName)
-        exporter.exporter.writeVariableInfos(folderName)
-        exporter.exporter.writeLaunchInfos(folderName, fps, maxTick, width, height, rootDir, initConsequences)
+        exporter.exporter.writeVariableInfos(folderName, initConsequences)
+        exporter.exporter.writeLaunchInfos(folderName, fps, maxTick, width, height, rootDir)
 
     def setCurrentFile(self, currentFile):
         self._currentFile = currentFile
@@ -352,6 +352,10 @@ class MainWindow(QMainWindow):
 
         stateMachine.init()
 
+        setW = self.settingsWidget()
+        initConsequences = setW.getInitConsequences()
+        stateMachine.setInitConsequences(initConsequences)
+
     def run(self):
 
         DEBUG = False
@@ -364,11 +368,10 @@ class MainWindow(QMainWindow):
         width = setW.getWidth()
         height = setW.getHeight()
         rootDir = self._lastSaveOpenFileDirectory
-        initConsequences = setW.getInitConsequences()
 
         gameWindow.init(fps, width, height, rootDir)
 
-        stateMachine.applyInitConsequences(initConsequences)
+        stateMachine.applyInitConsequences()
 
         frame = 0
         tick = 0

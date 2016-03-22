@@ -92,7 +92,7 @@ def writeImportInfos(exportFolderName):
         pass
 
 
-def writeVariableInfos(exportFolderName):
+def writeVariableInfos(exportFolderName, initConsequences):
     nodes = stateMachine.getNodes()
 
     try:
@@ -129,13 +129,16 @@ def writeVariableInfos(exportFolderName):
 
             exportMainFile.write('\n\n')
 
+            exportMainFile.write('initConsequences = ' + stateMachine.exportInitConsequences(initConsequences) + '\n')
+            exportMainFile.write('stateMachine.setInitConsequences(initConsequences, False)\n')
+
             exportMainFile.write('\n\n')
     except IOError as e:
         print e
         pass
 
 
-def writeLaunchInfos(exportFolderName, fps, maxTick, width, height, rootDir, initConsequences):
+def writeLaunchInfos(exportFolderName, fps, maxTick, width, height, rootDir):
 
     try:
         with open(exportFolderName + '/' + exportMainFileName, 'a') as exportMainFile:
@@ -145,11 +148,7 @@ def writeLaunchInfos(exportFolderName, fps, maxTick, width, height, rootDir, ini
             exportMainFile.write('height = ' + str(height) + '\n')
             exportMainFile.write('rootDir = \'' + rootDir + '/export\'' + '\n')
 
-            exportMainFile.write('\n')
-
-            exportMainFile.write('initConsequences = ' + stateMachine.exportInitConsequences(initConsequences) + '\n')
-
-            exportMainFile.write('\n')
+            exportMainFile.write('\n\n')
 
             runFile = open('./exporter/run', 'r')
             exportMainFile.write(runFile.read())

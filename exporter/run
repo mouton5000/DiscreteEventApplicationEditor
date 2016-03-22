@@ -1,6 +1,6 @@
 gameWindow.init(fps, width, height, rootDir)
 
-stateMachine.applyInitConsequences(initConsequences, False)
+stateMachine.applyInitConsequences()
 
 frame = 0
 tick = 0

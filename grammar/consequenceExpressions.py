@@ -308,7 +308,7 @@ class AddTokenConsequence(object):
                    ['(' + variable.export() + ',' + expr.export() + ')' for variable, expr in self._asVariables]
 
         return 'AddTokenConsequence(' + \
-            self._nodeLabel + \
+            '\'' + self._nodeLabel + '\'' + \
             ',' + '[' + ','.join(toExport) + \
                   ']' + \
             ')'
