@@ -96,7 +96,6 @@ def updateTokensNbFrames():
 def addNode(num, label):
     node = Node(num, label)
     _nodes[num] = node
-    print label
     if label != '':
         _nodesByLabel[label] = node
     return node

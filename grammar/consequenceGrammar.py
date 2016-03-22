@@ -225,7 +225,6 @@ class ConsequenceParser(lrparsing.Grammar):
 
         def buildAddToken():
             nodeLabel = tree[2][1][2:]
-            print len(tree), tree
             if len(tree) == 5:
                 return AddTokenConsequence(nodeLabel, [])
             else:
