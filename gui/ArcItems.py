@@ -99,7 +99,10 @@ class ArcItem(QGraphicsPathItem):
         return self._consequences
 
     def getConsequencesStr(self):
-        return ';'.join(self._consequences) + ';'
+        consequencesStr = ';'.join(self._consequences).strip()
+        if consequencesStr == '':
+            return consequencesStr
+        return consequencesStr + ';'
 
     def setConsequences(self, consequences):
         try:
