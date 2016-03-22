@@ -52,18 +52,20 @@ def _parseConsequence(consequence, transition):
 
 _tokens = set([])
 _nodes = {}
+_nodesByLabel = {}
 i = 0
 
 
 def clear():
-    global _tokens, _nodes, i
+    global _tokens, _nodes, _nodesByLabel, i
     _tokens = set([])
     _nodes = {}
+    _nodesByLabel = {}
     i = 0
 
 
-def addTokenByNodeNum(nodeNum, variables):
-    node = getNodeByNum(nodeNum)
+def addToken(nodeLabel, variables):
+    node = getNodeByLabel(nodeLabel)
     token = Token(node)
     for variable, value in variables.iteritems():
         token.evaluation[variable] = value
@@ -94,6 +96,9 @@ def updateTokensNbFrames():
 def addNode(num, label):
     node = Node(num, label)
     _nodes[num] = node
+    print label
+    if label != '':
+        _nodesByLabel[label] = node
     return node
 
 
@@ -103,6 +108,10 @@ def getNodes():
 
 def getNodeByNum(num):
     return _nodes[num]
+
+
+def getNodeByLabel(label):
+    return _nodesByLabel[label]
 
 
 def clearNodes():

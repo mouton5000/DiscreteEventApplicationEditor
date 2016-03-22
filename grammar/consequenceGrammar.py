@@ -42,6 +42,7 @@ class ConsequenceParser(lrparsing.Grammar):
         graphicsPolygon = Token(re='gp[A-Z][A-Za-z_0-9]*')
         graphicsText = Token(re='gt[A-Z][A-Za-z_0-9]*')
         sound = Token('sound')
+        tokenName = Token(re='to[A-Z][A-Za-z_0-9]*')
         token = Token('token')
 
         all = Token('all')
@@ -142,7 +143,7 @@ class ConsequenceParser(lrparsing.Grammar):
 
     asVariableExpr = T.variable + '=' + arithmExpr
 
-    addTokenExpr = T.add + T.token + '(' + arithmExpr + Opt(',' + List(Prio(T.variable, asVariableExpr), Token(','))) + ')'
+    addTokenExpr = T.add + T.tokenName + '(' + Opt(List(Prio(T.variable, asVariableExpr), Token(','))) + ')'
     removeTokenExpr = T.remove + T.token
     removeAllTokenExpr = T.remove + T.all + T.token
 
@@ -223,12 +224,13 @@ class ConsequenceParser(lrparsing.Grammar):
             return AddSoundConsequence(filename)
 
         def buildAddToken():
-            nodeNum = cls.buildExpression(tree[4])
-            if len(tree) == 6:
-                return AddTokenConsequence(nodeNum, [])
+            nodeLabel = tree[2][1][2:]
+            print len(tree), tree
+            if len(tree) == 5:
+                return AddTokenConsequence(nodeLabel, [])
             else:
-                inputEvaluation = [cls.buildExpression(variable) for variable in tree[6::2]]
-                return AddTokenConsequence(nodeNum, inputEvaluation)
+                inputEvaluation = [cls.buildExpression(variable) for variable in tree[4::2]]
+                return AddTokenConsequence(nodeLabel, inputEvaluation)
 
         def buildAddVariable():
             variable = cls.buildExpression(tree[2])

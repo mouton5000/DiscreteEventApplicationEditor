@@ -337,7 +337,7 @@ class MainWindow(QMainWindow):
         stateMachine.clearTokens()
 
         def compileNode(node):
-            return stateMachine.addNode(node.num, str(node.num) + ':' + str(node.getLabel()))
+            return stateMachine.addNode(node.num, str(node.getLabel()))
 
         def compileArc(a):
             n1 = self._nodeDict[a.node1]

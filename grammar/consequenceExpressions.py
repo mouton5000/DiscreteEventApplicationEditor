@@ -288,17 +288,16 @@ class EditPolygonConsequence(EditParameterizedNamedConsequence):
 
 
 class AddTokenConsequence(object):
-    def __init__(self, nodeNum, inputEvaluation):
-        self._nodeNum = nodeNum
+    def __init__(self, nodeLabel, inputEvaluation):
+        self._nodeLabel = nodeLabel
         self._variables = [variable for variable in inputEvaluation if isinstance(variable, Variable)]
         self._asVariables = [asVariable for asVariable in inputEvaluation if not isinstance(asVariable, Variable)]
 
     def eval_update(self, evaluation, *_):
         try:
-            nodeNum = int(_evalArg(self._nodeNum, evaluation))
             evaluatedVariables = {variable: evaluation[variable] for variable in self._variables}
             evaluatedVariables.update({variable: _evalArg(expr, evaluation) for variable, expr in self._asVariables})
-            stateMachine.addTokenByNodeNum(nodeNum, evaluatedVariables)
+            stateMachine.addToken(self._nodeLabel, evaluatedVariables)
         except (ArithmeticError, TypeError, ValueError):
             import traceback
             print traceback.format_exc()
@@ -309,7 +308,7 @@ class AddTokenConsequence(object):
                    ['(' + variable.export() + ',' + expr.export() + ')' for variable, expr in self._asVariables]
 
         return 'AddTokenConsequence(' + \
-            self._nodeNum.export() + \
+            self._nodeLabel + \
             ',' + '[' + ','.join(toExport) + \
                   ']' + \
             ')'
